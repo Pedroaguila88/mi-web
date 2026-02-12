@@ -3,57 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Web con Fotos</title>
+    <title>Mi Web Profesional con Fotos</title>
     <style>
         body {
             margin: 0;
+            padding: 0;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
-            /* Configuramos el fondo para que la imagen cubra toda la pantalla */
-            background-image: url('foto1.jpg');
+            font-family: 'Segoe UI', sans-serif;
+
+            /* Ajuste de imagen para que cubra toda la pantalla */
+            background-image: url('foto1.jpeg');
             background-size: cover;
             background-position: center;
-            transition: background-image 0.5s ease-in-out;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+
+            transition: background-image 0.6s ease-in-out;
         }
 
         .contenedor {
-            background: rgba(255, 255, 255, 0.8); /* Fondo blanco transparente */
-            padding: 30px;
-            border-radius: 20px;
+            /* Efecto de cristal transparente para que se vea la foto atrás */
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 30px;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        h1 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         button {
             background-color: #25d366;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
+            padding: 15px 35px;
+            font-size: 1.2rem;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
 
 <div class="contenedor">
-    <h1>Galería Mágica</h1>
-    <p>Presiona el botón para cambiar el paisaje</p>
+    <h1>Galería Familiar</h1>
+    <p>Presiona para cambiar el recuerdo</p>
     <button onclick="cambiarFoto()">Siguiente Imagen</button>
 </div>
 
 <script>
-    // Aquí pones los nombres exactos de tus fotos
-    const misFotos = ['foto1.jpg', 'foto2.jpg', 'foto3.jpg'];
+    // Asegúrate de que los nombres coincidan con tus archivos .jpeg en GitHub
+    const misFotos = ['foto1.jpeg', 'foto2.jpeg', 'foto3.jpeg'];
     let indice = 0;
 
     function cambiarFoto() {
-        indice = (indice + 1) % misFotos.length; // Esto hace que al llegar al final, vuelva a la primera
+        indice = (indice + 1) % misFotos.length;
         document.body.style.backgroundImage = "url('" + misFotos[indice] + "')";
     }
 </script>
