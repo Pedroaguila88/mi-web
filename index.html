@@ -3,50 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Web Profesional</title>
+    <title>Mi Web con Fotos</title>
     <style>
         body {
-            transition: background-color 0.4s;
-            font-family: sans-serif;
+            margin: 0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            /* Configuramos el fondo para que la imagen cubra toda la pantalla */
+            background-image: url('foto1.jpg');
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
         }
-        .card {
-            background: white;
-            padding: 40px;
+
+        .contenedor {
+            background: rgba(255, 255, 255, 0.8); /* Fondo blanco transparente */
+            padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
+
         button {
-            background-color: #007bff;
+            background-color: #25d366;
             color: white;
             border: none;
             padding: 15px 30px;
-            font-size: 1.2rem;
-            border-radius: 10px;
+            font-size: 18px;
+            border-radius: 50px;
             cursor: pointer;
+            font-weight: bold;
         }
-        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1 id="titulo">Página en Vivo</h1>
-    <p>¡Te quiero mucho amor, la mar hermosa Estefi Goméz!</p>
-    <button onclick="cambiar()">¡Magia!</button>
+
+<div class="contenedor">
+    <h1>Galería Mágica</h1>
+    <p>Presiona el botón para cambiar el paisaje</p>
+    <button onclick="cambiarFoto()">Siguiente Imagen</button>
 </div>
 
 <script>
-    function cambiar() {
-        const color = '#' + Math.floor(Math.random()*16777215).toString(16);
-        document.body.style.backgroundColor = color;
-        document.getElementById('titulo').innerText = "Color: " + color;
+    // Aquí pones los nombres exactos de tus fotos
+    const misFotos = ['foto1.jpg', 'foto2.jpg', 'foto3.jpg'];
+    let indice = 0;
+
+    function cambiarFoto() {
+        indice = (indice + 1) % misFotos.length; // Esto hace que al llegar al final, vuelva a la primera
+        document.body.style.backgroundImage = "url('" + misFotos[indice] + "')";
     }
 </script>
+
 </body>
 </html>
