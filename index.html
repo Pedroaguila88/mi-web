@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Web Profesional</title>
+    <style>
+        body {
+            transition: background-color 0.4s;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1 id="titulo">Página en Vivo</h1>
+    <p>¡Esta web es permanente!</p>
+    <button onclick="cambiar()">¡Magia!</button>
+</div>
+
+<script>
+    function cambiar() {
+        const color = '#' + Math.floor(Math.random()*16777215).toString(16);
+        document.body.style.backgroundColor = color;
+        document.getElementById('titulo').innerText = "Color: " + color;
+    }
+</script>
+</body>
+</html>
