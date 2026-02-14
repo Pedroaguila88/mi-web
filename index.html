@@ -3,79 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Web Profesional con Fotos</title>
+    <title>Nuestra Historia ❤️</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; background-color: #000; overflow: hidden; }
+
         body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end;
             font-family: 'Segoe UI', sans-serif;
-
-            /* Ajuste de imagen para que cubra toda la pantalla */
             background-image: url('foto1.jpeg');
-            background-size: cover;
+            background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-
-            transition: background-image 0.6s ease-in-out;
+            transition: background-image 0.5s ease-in-out;
+            padding-bottom: 50px;
         }
 
-        .contenedor {
-            /* Efecto de cristal transparente para que se vea la foto atrás */
-            background: rgba(255, 255, 255, 0.2);
+        .tarjeta {
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 30px;
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 105, 180, 0.4);
             color: white;
-        }
-
-        h1 {
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            min-width: 280px;
+            z-index: 100;
         }
 
         button {
-            background-color: #25d366;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
             color: white;
             border: none;
-            padding: 15px 35px;
-            font-size: 1.2rem;
+            padding: 12px 25px;
+            font-size: 1rem;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
         }
 
-        button:active {
-            transform: scale(0.95);
+        /* Estilo para los elementos que brotan */
+        .detalle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            font-size: 24px;
+            animation: brotar 1.2s ease-out forwards; /* Dura casi 1 segundo */
+        }
+
+        @keyframes brotar {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-150px) rotate(360deg) scale(1.5); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="contenedor">
-    <h1>Galería Familiar</h1>
-    <p>Presiona para cambiar el recuerdo</p>
-    <button onclick="cambiarFoto()">Siguiente Imagen</button>
+<div class="tarjeta">
+    <h1 style="font-size: 1.3rem; color: #ff69b4;">Nuestra Historia ❤️</h1>
+    <p id="contador" style="font-size: 0.9rem; margin: 10px 0;">Foto 1 de 10</p>
+    <button onclick="siguiente()">Siguiente Recuerdo</button>
 </div>
 
 <script>
-    // Asegúrate de que los nombres coincidan con tus archivos .jpeg en GitHub
-    const misFotos = ['foto1.jpeg', 'foto2.jpeg', 'foto3.jpeg'];
-    let indice = 0;
+    const misFotos = [
+        'foto1.jpeg', 'foto2.jpeg', 'foto3.jpeg', 'foto4.jpeg', 'foto5.jpeg',
+        'foto6.jpeg', 'foto7.jpeg', 'foto8.jpeg', 'foto9.jpeg', 'foto10.jpeg'
+    ];
 
-    function cambiarFoto() {
+    let indice = 0;
+    const iconos = ["❤️", "🌸", "💖", "🌹", "🌷", "✨"];
+
+    function siguiente() {
         indice = (indice + 1) % misFotos.length;
         document.body.style.backgroundImage = "url('" + misFotos[indice] + "')";
+        document.getElementById('contador').innerText = "Foto " + (indice + 1) + " de 10";
+
+        // Lanzar la explosión de detalles
+        lanzarDetalles();
+    }
+
+    function lanzarDetalles() {
+        // Creamos 20 elementos al azar
+        for (let i = 0; i < 20; i++) {
+            const elemento = document.createElement('div');
+            elemento.classList.add('detalle');
+
+            // Elegimos un icono al azar (corazón o flor)
+            elemento.innerHTML = iconos[Math.floor(Math.random() * iconos.length)];
+
+            // Aparecen cerca del botón o esparcidos
+            elemento.style.left = Math.random() * 100 + "vw";
+            elemento.style.top = (Math.random() * 20 + 70) + "vh";
+
+            document.body.appendChild(elemento);
+
+            // Se eliminan solos después de 1.2 segundos para no tapar la foto
+            setTimeout(() => {
+                elemento.remove();
+            }, 1200);
+        }
     }
 </script>
-
 </body>
 </html>
