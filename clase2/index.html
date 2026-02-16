@@ -2,16 +2,56 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gym Pro - Sistema de Entrenamiento</title>
     <style>
-        body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 350px; }
-        h1 { color: #d4ff00; text-align: center; font-size: 1.2rem; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: none; box-sizing: border-box; }
-        input, select { background: #333; color: white; }
-        button { background: #d4ff00; font-weight: bold; cursor: pointer; }
-        #pantalla { background: #000; margin-top: 15px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
-        .ejercicio { padding: 8px 0; border-bottom: 1px solid #222; font-size: 0.9rem; color: #ddd; }
+        body { 
+            background: #111; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        .card { 
+            background: #222; 
+            padding: 25px; 
+            border-radius: 15px; 
+            border-top: 5px solid #d4ff00; 
+            width: 100%;
+            max-width: 380px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; }
+        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; }
+        input, select, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            border: none; 
+            box-sizing: border-box; 
+        }
+        input, select { background: #333; color: white; outline: none; }
+        button { 
+            background: #d4ff00; 
+            color: black; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            margin-top: 10px;
+        }
+        button:hover { background: #b8de00; }
+        #pantalla { 
+            background: #000; 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 8px; 
+            display: none; 
+            border-left: 4px solid #d4ff00; 
+        }
+        .ejercicio { padding: 8px 0; border-bottom: 1px solid #222; color: #eee; font-size: 0.9rem; }
+        .especial { color: #ff0055; font-weight: bold; font-style: italic; }
     </style>
 </head>
 <body>
@@ -19,13 +59,17 @@
     <div class="card">
         <h1>PLANIFICADOR DE RUTINAS</h1>
         
-        <input type="text" id="nombreAtleta" placeholder="Nombre del Atleta">
+        <label>NOMBRE DEL ATLETA</label>
+        <input type="text" id="nombreAtleta" placeholder="Ej: Juan Pérez">
         
+        <label>NIVEL DE EXPERIENCIA</label>
         <select id="nivel">
-            <option value="principiante">Nivel: Principiante</option>
-            <option value="avanzado">Nivel: Avanzado</option>
+            <option value="principiante">Principiante</option>
+            <option value="avanzado">Avanzado</option>
+            <option value="filippo">Nivel Filippo 🏆</option>
         </select>
 
+        <label>GRUPO MUSCULAR</label>
         <select id="musculo">
             <option value="pecho">Pecho</option>
             <option value="espalda">Espalda</option>
@@ -35,14 +79,12 @@
             <option value="triceps">Tríceps</option>
         </select>
 
-        <button onclick="generarPlan()">GENERAR MI RUTINA</button>
+        <button onclick="generarPlan()">GENERAR PLAN</button>
 
-        <div id="pantalla">
-            </div>
+        <div id="pantalla"></div>
     </div>
 
     <script>
-        // LA BASE DE DATOS (Lo que faltaba en la prueba anterior)
         const rutinas = {
             pecho: { 
                 principiante: ["Press Plano 3x10", "Aperturas 3x12", "Flexiones 3x Máximo"], 
@@ -53,20 +95,20 @@
                 avanzado: ["Dominadas 4x Máximo", "Remo Barra 4x8", "Peso Muerto 3x6"] 
             },
             piernas: { 
-                principiante: ["Prensa 3x12", "Extensión 3x15"], 
+                principiante: ["Prensa 3x12", "Sentadilla Aire 3x20"], 
                 avanzado: ["Sentadilla Barra 4x8", "Estocadas 4x20", "Peso Rumano 4x10"] 
             },
             hombros: { 
-                principiante: ["Press Mancuerna 3x10", "Laterales 3x12"], 
-                avanzado: ["Press Militar 4x8", "Press Arnold 4x10", "Face Pull 4x15"] 
+                principiante: ["Press Militar 3x10", "Laterales 3x12"], 
+                avanzado: ["Press Militar Barra 4x8", "Press Arnold 4x10", "Face Pull 4x15"] 
             },
             biceps: { 
-                principiante: ["Curl Barra 3x10"], 
+                principiante: ["Curl Mancuerna 3x12"], 
                 avanzado: ["Curl Barra Z 4x8", "Martillo 4x10"] 
             },
             triceps: { 
                 principiante: ["Polea Alta 3x12"], 
-                avanzado: ["Press Francés 4x10", "Fondos Bancos 3x Máximo"] 
+                avanzado: ["Press Francés 4x10", "Fondos entre bancos 3x Máximo"] 
             }
         };
 
@@ -75,16 +117,23 @@
             const niv = document.getElementById('nivel').value;
             const mus = document.getElementById('musculo').value;
 
-            if(nombre === "") { alert("Poné el nombre del alumno"); return; }
+            if(nombre === "") { alert("Por favor, ingresa el nombre"); return; }
 
-            // LÓGICA DE BÚSQUEDA
-            const ejercicios = rutinas[mus][niv];
             const divPantalla = document.getElementById('pantalla');
-            
             divPantalla.style.display = "block";
-            divPantalla.innerHTML = `<h4 style="color:#d4ff00; margin:0 0 10px 0;">Rutina para ${nombre}:</h4>`;
 
-            // LÓGICA DE IMPRESIÓN (Bucle)
+            // LÓGICA ESPECIAL FILIPPO
+            if (niv === "filippo") {
+                divPantalla.innerHTML = `
+                    <h4 style="color:#d4ff00; margin:0 0 10px 0;">ATLETA: ${nombre.toUpperCase()}</h4>
+                    <div class="ejercicio especial">🚀 Este nivel ya supera todos mis conocimientos.</div>`;
+                return;
+            }
+
+            // LÓGICA NORMAL
+            const ejercicios = rutinas[mus][niv];
+            divPantalla.innerHTML = `<h4 style="color:#d4ff00; margin:0 0 10px 0;">Rutina de ${mus.toUpperCase()}:</h4>`;
+
             ejercicios.forEach(ej => {
                 divPantalla.innerHTML += `<div class="ejercicio">🔥 ${ej}</div>`;
             });
