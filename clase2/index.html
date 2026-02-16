@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gym Pro - Sistema de Entrenamiento</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 350px; }
+        h1 { color: #d4ff00; text-align: center; font-size: 1.2rem; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        input, select { background: #333; color: white; }
+        button { background: #d4ff00; font-weight: bold; cursor: pointer; }
+        #pantalla { background: #000; margin-top: 15px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
+        .ejercicio { padding: 8px 0; border-bottom: 1px solid #222; font-size: 0.9rem; color: #ddd; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>PLANIFICADOR DE RUTINAS</h1>
+        
+        <input type="text" id="nombreAtleta" placeholder="Nombre del Atleta">
+        
+        <select id="nivel">
+            <option value="principiante">Nivel: Principiante</option>
+            <option value="avanzado">Nivel: Avanzado</option>
+        </select>
+
+        <select id="musculo">
+            <option value="pecho">Pecho</option>
+            <option value="espalda">Espalda</option>
+            <option value="piernas">Piernas</option>
+            <option value="hombros">Hombros</option>
+            <option value="biceps">Bíceps</option>
+            <option value="triceps">Tríceps</option>
+        </select>
+
+        <button onclick="generarPlan()">GENERAR MI RUTINA</button>
+
+        <div id="pantalla">
+            </div>
+    </div>
+
+    <script>
+        // LA BASE DE DATOS (Lo que faltaba en la prueba anterior)
+        const rutinas = {
+            pecho: { 
+                principiante: ["Press Plano 3x10", "Aperturas 3x12", "Flexiones 3x Máximo"], 
+                avanzado: ["Press Inclinado 4x8", "Cruces Polea 4x15", "Fondos 3x12"] 
+            },
+            espalda: { 
+                principiante: ["Jalón Pecho 3x12", "Remo Bajo 3x10"], 
+                avanzado: ["Dominadas 4x Máximo", "Remo Barra 4x8", "Peso Muerto 3x6"] 
+            },
+            piernas: { 
+                principiante: ["Prensa 3x12", "Extensión 3x15"], 
+                avanzado: ["Sentadilla Barra 4x8", "Estocadas 4x20", "Peso Rumano 4x10"] 
+            },
+            hombros: { 
+                principiante: ["Press Mancuerna 3x10", "Laterales 3x12"], 
+                avanzado: ["Press Militar 4x8", "Press Arnold 4x10", "Face Pull 4x15"] 
+            },
+            biceps: { 
+                principiante: ["Curl Barra 3x10"], 
+                avanzado: ["Curl Barra Z 4x8", "Martillo 4x10"] 
+            },
+            triceps: { 
+                principiante: ["Polea Alta 3x12"], 
+                avanzado: ["Press Francés 4x10", "Fondos Bancos 3x Máximo"] 
+            }
+        };
+
+        function generarPlan() {
+            const nombre = document.getElementById('nombreAtleta').value;
+            const niv = document.getElementById('nivel').value;
+            const mus = document.getElementById('musculo').value;
+
+            if(nombre === "") { alert("Poné el nombre del alumno"); return; }
+
+            // LÓGICA DE BÚSQUEDA
+            const ejercicios = rutinas[mus][niv];
+            const divPantalla = document.getElementById('pantalla');
+            
+            divPantalla.style.display = "block";
+            divPantalla.innerHTML = `<h4 style="color:#d4ff00; margin:0 0 10px 0;">Rutina para ${nombre}:</h4>`;
+
+            // LÓGICA DE IMPRESIÓN (Bucle)
+            ejercicios.forEach(ej => {
+                divPantalla.innerHTML += `<div class="ejercicio">🔥 ${ej}</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
