@@ -3,113 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Sistema de Entrenamiento con Video</title>
+    <title>Gym Pro - Sistema Profesional</title>
     <style>
-        body { 
-            background: #111; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px; 
-        }
-        .card { 
-            background: #222; 
-            padding: 25px; 
-            border-radius: 15px; 
-            border-top: 5px solid #d4ff00; 
-            width: 100%;
-            max-width: 450px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; }
-        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; }
-        input, select, button { 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            border-radius: 8px; 
-            border: none; 
-            box-sizing: border-box; 
-        }
-        input, select { background: #333; color: white; outline: none; }
-        button { 
-            background: #d4ff00; 
-            color: black; 
-            font-weight: bold; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            margin-top: 10px;
-        }
+        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 20px; }
+        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; text-transform: uppercase; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; outline: none; }
+        button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
         button:hover { background: #b8de00; }
-        #pantalla { 
-            background: #000; 
-            margin-top: 20px; 
-            padding: 15px; 
-            border-radius: 8px; 
-            display: none; 
-            border-left: 4px solid #d4ff00; 
-        }
-        .ejercicio { padding: 15px 0; border-bottom: 1px solid #222; color: #eee; }
-        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; }
+        #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
+        .ejercicio { padding: 15px 0; border-bottom: 1px solid #222; }
+        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #444; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; }
+        .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
+        .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h1>PLANIFICADOR PRO + VIDEOS</h1>
+        <h1>PLANIFICADOR PROFESIONAL</h1>
         
-        <label>NOMBRE DEL ATLETA</label>
-        <input type="text" id="nombreAtleta" placeholder="Ej: Juan Pérez">
+        <label>Atleta</label>
+        <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
         
         <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label>PESO (kg)</label>
-                <input type="number" id="peso" placeholder="80">
-            </div>
-            <div style="flex: 1;">
-                <label>ALTURA (cm)</label>
-                <input type="number" id="altura" placeholder="180">
-            </div>
+            <div style="flex: 1;"><label>Peso (kg)</label><input type="number" id="peso" placeholder="70"></div>
+            <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
         </div>
         
-        <label>NIVEL DE EXPERIENCIA</label>
+        <label>Nivel de Intensidad</label>
         <select id="nivel">
-            <option value="principiante">Principiante</option>
-            <option value="avanzado">Avanzado</option>
-            <option value="filippo">Nivel Filippo 🏆</option>
+            <option value="principiante">Principiante (3 Ejercicios)</option>
+            <option value="avanzado">Avanzado (4 Ejercicios)</option>
         </select>
 
-        <label>GRUPO MUSCULAR</label>
+        <label>Grupo Muscular</label>
         <select id="musculo">
-            <option value="pecho">Pecho</option>
-            <option value="espalda">Espalda</option>
-            <option value="piernas">Piernas</option>
+            <optgroup label="TREN SUPERIOR">
+                <option value="pectoral">Pectoral</option>
+                <option value="espalda">Espalda</option>
+                <option value="hombros">Hombros</option>
+                <option value="biceps">Bíceps</option>
+                <option value="triceps">Tríceps</option>
+                <option value="trapecio">Trapecio</option>
+            </optgroup>
+            <optgroup label="TREN INFERIOR">
+                <option value="gluteos">Glúteos</option>
+                <option value="isquios">Isquiotibiales</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="pantorrilla">Pantorrilla</option>
+            </optgroup>
         </select>
 
-        <button onclick="generarPlan()">GENERAR PLAN Y VIDEOS</button>
+        <button onclick="generarPlan()">GENERAR RUTINA</button>
 
         <div id="pantalla"></div>
     </div>
 
     <script>
-        // Base de datos con IDs de videos de YouTube
         const rutinas = {
-            pecho: { 
-                principiante: [
-                    { nombre: "Press de Banca (Técnica)", videoId: "TAH8RxOS0VI" },
-                    { nombre: "Aperturas con Mancuernas", videoId: "C7Nq4DgV9Mg" },
-                    { nombre: "Flexiones de Pecho", videoId: "oZQlr-lYc5Q" }
-                ], 
-                avanzado: [
-                    { nombre: "Press Inclinado con Barra", videoId: "-zbesyTNztQ" },
-                    { nombre: "Fondos en Paralelas", videoId: "0yhABKbiIfY" }
-                ] 
+            pectoral: {
+                principiante: [{n: "Press Plano", v: "TAH8RxOS0VI"}, {n: "Aperturas", v: "C7Nq4DgV9Mg"}, {n: "Flexiones", v: "oZQlr-lYc5Q"}],
+                avanzado: [{n: "Press Inclinado", v: "-zbesyTNztQ"}, {n: "Cruces Polea", v: "vUMtItXfO8Y"}, {n: "Press Declinado", v: "TAH8RxOS0VI"}, {n: "Fondos Pecho", v: "0yhABKbiIfY"}]
             },
-            espalda: { principiante: [], avanzado: [] },
-            piernas: { principiante: [], avanzado: [] }
+            espalda: {
+                principiante: [{n: "Jalón Pecho", v: "ANH-S8T77f8"}, {n: "Remo Bajo", v: "9efgcajz7X8"}, {n: "Serrucho", v: "ANH-S8T77f8"}],
+                avanzado: [{n: "Dominadas", v: "9efgcajz7X8"}, {n: "Remo Barra", v: "9efgcajz7X8"}, {n: "Pull Over", v: "ANH-S8T77f8"}, {n: "Peso Muerto", v: "9efgcajz7X8"}]
+            },
+            hombros: {
+                principiante: [{n: "Press Mancuernas", v: "S7NrsueBHhA"}, {n: "Vuelos Laterales", v: "S7NrsueBHhA"}, {n: "Vuelos Frontales", v: "S7NrsueBHhA"}],
+                avanzado: [{n: "Press Militar", v: "vUMtItXfO8Y"}, {n: "Laterales Polea", v: "vUMtItXfO8Y"}, {n: "Press Arnold", v: "S7NrsueBHhA"}, {n: "Face Pull", v: "vUMtItXfO8Y"}]
+            },
+            biceps: {
+                principiante: [{n: "Curl Barra", v: "jlFl7WJ1TzI"}, {n: "Martillo", v: "jlFl7WJ1TzI"}, {n: "Curl Alternado", v: "jlFl7WJ1TzI"}],
+                avanzado: [{n: "Curl Z", v: "jlFl7WJ1TzI"}, {n: "Curl Inclinado", v: "jlFl7WJ1TzI"}, {n: "Concentrado", v: "jlFl7WJ1TzI"}, {n: "Spider Curl", v: "jlFl7WJ1TzI"}]
+            },
+            triceps: {
+                principiante: [{n: "Extensión Polea", v: "S7NrsueBHhA"}, {n: "Copa Mancuerna", v: "S7NrsueBHhA"}, {n: "Patada Triceps", v: "S7NrsueBHhA"}],
+                avanzado: [{n: "Press Francés", v: "S7NrsueBHhA"}, {n: "Press Cerrado", v: "S7NrsueBHhA"}, {n: "Dips", v: "0yhABKbiIfY"}, {n: "Cuerda Polea", v: "S7NrsueBHhA"}]
+            },
+            trapecio: {
+                principiante: [{n: "Encogimientos", v: "jlFl7WJ1TzI"}, {n: "Remo Mentón", v: "jlFl7WJ1TzI"}, {n: "Giros Hombros", v: "jlFl7WJ1TzI"}],
+                avanzado: [{n: "Encogimientos Barra", v: "jlFl7WJ1TzI"}, {n: "Face Pull Alto", v: "vUMtItXfO8Y"}, {n: "Paseo Granjero", v: "jlFl7WJ1TzI"}, {n: "Encogimiento Inclinado", v: "jlFl7WJ1TzI"}]
+            },
+            gluteos: {
+                principiante: [{n: "Puente Glúteo", v: "TAH8RxOS0VI"}, {n: "Abducciones", v: "TAH8RxOS0VI"}, {n: "Patada Polea", v: "TAH8RxOS0VI"}],
+                avanzado: [{n: "Hip Thrust", v: "TAH8RxOS0VI"}, {n: "Sentadilla Búlgara", v: "-zbesyTNztQ"}, {n: "Peso Muerto", v: "9efgcajz7X8"}, {n: "Step Up", v: "TAH8RxOS0VI"}]
+            },
+            isquios: {
+                principiante: [{n: "Curl Femoral", v: "TAH8RxOS0VI"}, {n: "Peso Muerto Rumano", v: "TAH8RxOS0VI"}, {n: "Buenos Días", v: "TAH8RxOS0VI"}],
+                avanzado: [{n: "Curl Femoral Tumbado", v: "TAH8RxOS0VI"}, {n: "Stiff Leg Deadlift", v: "9efgcajz7X8"}, {n: "Nordic Curl", v: "TAH8RxOS0VI"}, {n: "Hiperextensiones", v: "ANH-S8T77f8"}]
+            },
+            cuadriceps: {
+                principiante: [{n: "Sentadilla Libre", v: "TAH8RxOS0VI"}, {n: "Prensa 45", v: "TAH8RxOS0VI"}, {n: "Extensiones", v: "TAH8RxOS0VI"}],
+                avanzado: [{n: "Sentadilla Barra", v: "TAH8RxOS0VI"}, {n: "Hack Squat", v: "TAH8RxOS0VI"}, {n: "Estocadas", v: "-zbesyTNztQ"}, {n: "Sissy Squat", v: "TAH8RxOS0VI"}]
+            },
+            pantorrilla: {
+                principiante: [{n: "Elevación Parado", v: "TAH8RxOS0VI"}, {n: "Elevación Sentado", v: "TAH8RxOS0VI"}, {n: "Prensa Pantorrilla", v: "TAH8RxOS0VI"}],
+                avanzado: [{n: "Elevación Unilateral", v: "TAH8RxOS0VI"}, {n: "Burro Calves", v: "TAH8RxOS0VI"}, {n: "Saltos Soga", v: "TAH8RxOS0VI"}, {n: "Tibial Anterior", v: "TAH8RxOS0VI"}]
+            }
         };
 
         function generarPlan() {
@@ -118,38 +112,26 @@
             const mus = document.getElementById('musculo').value;
             const peso = document.getElementById('peso').value;
             const altura = document.getElementById('altura').value;
-
-            if(nombre === "") { alert("Ingresa el nombre"); return; }
-
             const divPantalla = document.getElementById('pantalla');
-            divPantalla.style.display = "block";
-            divPantalla.innerHTML = ""; // Limpiar pantalla
 
-            // 1. Calcular IMC
+            if(!nombre) { alert("Ingresa el nombre del atleta"); return; }
+            divPantalla.style.display = "block";
+            divPantalla.innerHTML = "";
+
             if (peso > 0 && altura > 0) {
                 const imc = (peso / ((altura/100)**2)).toFixed(1);
-                divPantalla.innerHTML += `<div class="imc-box">📊 IMC: ${imc} (Atleta: ${nombre.toUpperCase()})</div>`;
+                divPantalla.innerHTML += `<div class="imc-box">📊 IMC: ${imc} | Atleta: ${nombre}</div>`;
             }
 
-            // 2. Lógica Filippo
-            if (niv === "filippo") {
-                divPantalla.innerHTML += `<div class="ejercicio" style="color:#ff0055">🚀 Nivel Filippo: Supera mis conocimientos.</div>`;
-                return;
-            }
-
-            // 3. Mostrar Ejercicios con Video
             const lista = rutinas[mus][niv];
-            if (lista.length === 0) {
-                divPantalla.innerHTML += `<p>Próximamente videos para este grupo.</p>`;
-                return;
-            }
+            divPantalla.innerHTML += `<p><span class="tag">${mus}</span> <span class="tag" style="background:#fff">${niv}</span></p>`;
 
             lista.forEach(ej => {
                 divPantalla.innerHTML += `
                     <div class="ejercicio">
-                        <strong>🔥 ${ej.nombre}</strong>
+                        <strong>🔥 ${ej.n}</strong>
                         <div class="video-container">
-                            <iframe src="https://www.youtube.com/embed/${ej.videoId}" allowfullscreen></iframe>
+                            <iframe src="https://www.youtube.com/embed/${ej.v}" allowfullscreen></iframe>
                         </div>
                     </div>`;
             });
