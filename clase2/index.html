@@ -13,18 +13,46 @@
         button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
         button:hover { background: #b8de00; }
         #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
-        .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; text-align: center; }
-        .img-container { margin-top: 10px; width: 100%; border-radius: 8px; overflow: hidden; background: #444; border: 1px solid #444; }
-        .img-container img { width: 100%; height: auto; display: block; transition: transform 0.3s; }
-        .img-container img:hover { transform: scale(1.05); }
+        
+        /* Contenedor del ejercicio */
+        .ejercicio { 
+            padding: 20px 0; 
+            border-bottom: 1px solid #333; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        
+        .ejercicio strong { 
+            display: block; 
+            margin-bottom: 10px; 
+            font-size: 1.1rem; 
+            color: #d4ff00;
+        }
+
+        /* Ajuste de la Imagen */
+        .img-box { 
+            width: 100%; 
+            max-width: 400px; 
+            background: #333; 
+            border-radius: 10px; 
+            overflow: hidden;
+            border: 2px solid #444;
+        }
+
+        .img-box img { 
+            width: 100%; 
+            height: auto; 
+            display: block; 
+        }
+
         .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
-        .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h1>PLANIFICADOR VISUAL</h1>
+        <h1>PLANIFICADOR VISUAL PRO</h1>
         
         <label>Atleta</label>
         <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
@@ -42,15 +70,8 @@
 
         <label>Grupo Muscular</label>
         <select id="musculo">
-            <optgroup label="TREN SUPERIOR">
-                <option value="pectoral">Pectoral</option>
-                <option value="espalda">Espalda</option>
-                <option value="biceps">Bíceps</option>
-            </optgroup>
-            <optgroup label="TREN INFERIOR">
-                <option value="cuadriceps">Cuádriceps</option>
-                <option value="gluteos">Glúteos</option>
-            </optgroup>
+            <option value="pectoral">Pectoral</option>
+            <option value="cuadriceps">Cuádriceps</option>
         </select>
 
         <button onclick="generarPlan()">GENERAR RUTINA</button>
@@ -59,35 +80,34 @@
     </div>
 
     <script>
-        // Base de datos con enlaces a imágenes descriptivas
+        // Usamos imágenes directas y seguras (Wikipedia / Wikimedia)
         const rutinas = {
             pectoral: {
                 principiante: [
-                    {n: "Press de Banca", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/bench-press-technique.jpg"},
-                    {n: "Aperturas Mancuerna", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/dumbbell-flys.jpg"},
-                    {n: "Flexiones", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/push-up-technique.jpg"}
+                    {n: "Press de Banca", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Bench-press-1.png/640px-Bench-press-1.png"},
+                    {n: "Aperturas Mancuerna", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Dumbbell-flys-1.png/640px-Dumbbell-flys-1.png"},
+                    {n: "Flexiones", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Push-up-1.png/640px-Push-up-1.png"}
                 ],
                 avanzado: [
-                    {n: "Press Inclinado", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/incline-bench-press.jpg"},
-                    {n: "Cruces Polea", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/cable-crossover.jpg"},
-                    {n: "Fondos en Paralelas", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/dips-technique.jpg"},
-                    {n: "Press Declinado", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/decline-bench-press.jpg"}
+                    {n: "Press Inclinado", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Incline-bench-press-1.png/640px-Incline-bench-press-1.png"},
+                    {n: "Cruces Polea", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Cable-crossover-1.png/640px-Cable-crossover-1.png"},
+                    {n: "Fondos", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Dips-1.png/640px-Dips-1.png"},
+                    {n: "Press Declinado", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Decline-bench-press-1.png/640px-Decline-bench-press-1.png"}
                 ]
             },
             cuadriceps: {
                 principiante: [
-                    {n: "Sentadilla Libre", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/squat-technique.jpg"},
-                    {n: "Prensa 45", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/leg-press.jpg"},
-                    {n: "Extensiones", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/leg-extension.jpg"}
+                    {n: "Sentadilla Libre", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Squats-1.png/640px-Squats-1.png"},
+                    {n: "Prensa", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Leg-press-1.png/640px-Leg-press-1.png"},
+                    {n: "Extensiones", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Leg-extension-1.png/640px-Leg-extension-1.png"}
                 ],
                 avanzado: [
-                    {n: "Sentadilla con Barra", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/back-squat.jpg"},
-                    {n: "Estocadas Caminando", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/lunges-technique.jpg"},
-                    {n: "Hack Squat", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/hack-squat.jpg"},
-                    {n: "Sissy Squat", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/sissy-squat.jpg"}
+                    {n: "Sentadilla Barra", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Back-squat-1.png/640px-Back-squat-1.png"},
+                    {n: "Estocadas", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Lunges-1.png/640px-Lunges-1.png"},
+                    {n: "Hack Squat", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Hack-squat-1.png/640px-Hack-squat-1.png"},
+                    {n: "Sissy Squat", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Sissy-squat-1.png/640px-Sissy-squat-1.png"}
                 ]
             }
-            // Agrega el resto de los músculos siguiendo este formato
         };
 
         function generarPlan() {
@@ -108,14 +128,13 @@
             }
 
             const lista = rutinas[mus][niv];
-            divPantalla.innerHTML += `<p><span class="tag">${mus}</span> <span class="tag" style="background:#fff">${niv}</span></p>`;
 
             lista.forEach(ej => {
                 divPantalla.innerHTML += `
                     <div class="ejercicio">
                         <strong>🔥 ${ej.n}</strong>
-                        <div class="img-container">
-                            <img src="${ej.i}" alt="${ej.n}" onerror="this.src='https://via.placeholder.com/400x300?text=Imagen+en+Mantenimiento'">
+                        <div class="img-box">
+                            <img src="${ej.i}" alt="${ej.n}" onerror="this.src='https://placehold.co/400x300?text=Cargando+Imagen...'">
                         </div>
                     </div>`;
             });
