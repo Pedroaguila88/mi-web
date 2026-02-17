@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Planificador Visual</title>
+    <title>Gym Pro - Planificador FP-UNA</title>
     <style>
         body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
         .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -13,46 +13,18 @@
         button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
         button:hover { background: #b8de00; }
         #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
-        
-        /* Contenedor del ejercicio */
-        .ejercicio { 
-            padding: 20px 0; 
-            border-bottom: 1px solid #333; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        
-        .ejercicio strong { 
-            display: block; 
-            margin-bottom: 10px; 
-            font-size: 1.1rem; 
-            color: #d4ff00;
-        }
-
-        /* Ajuste de la Imagen */
-        .img-box { 
-            width: 100%; 
-            max-width: 400px; 
-            background: #333; 
-            border-radius: 10px; 
-            overflow: hidden;
-            border: 2px solid #444;
-        }
-
-        .img-box img { 
-            width: 100%; 
-            height: auto; 
-            display: block; 
-        }
-
+        .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; }
+        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
         .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
+        .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .link-respaldo { color: #d4ff00; font-size: 0.7rem; text-decoration: none; display: block; margin-top: 5px; text-align: right; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h1>PLANIFICADOR VISUAL PRO</h1>
+        <h1>SISTEMA DE ENTRENAMIENTO PRO</h1>
         
         <label>Atleta</label>
         <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
@@ -62,16 +34,28 @@
             <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
         </div>
         
-        <label>Nivel</label>
+        <label>Nivel de Intensidad</label>
         <select id="nivel">
-            <option value="principiante">Principiante</option>
-            <option value="avanzado">Avanzado</option>
+            <option value="principiante">Principiante (3 Ejercicios)</option>
+            <option value="avanzado">Avanzado (4 Ejercicios)</option>
         </select>
 
         <label>Grupo Muscular</label>
         <select id="musculo">
-            <option value="pectoral">Pectoral</option>
-            <option value="cuadriceps">Cuádriceps</option>
+            <optgroup label="TREN SUPERIOR">
+                <option value="pectoral">Pectoral</option>
+                <option value="espalda">Espalda</option>
+                <option value="hombros">Hombros</option>
+                <option value="biceps">Bíceps</option>
+                <option value="triceps">Tríceps</option>
+                <option value="trapecio">Trapecio</option>
+            </optgroup>
+            <optgroup label="TREN INFERIOR">
+                <option value="gluteos">Glúteos</option>
+                <option value="isquios">Isquiotibiales</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="pantorrilla">Pantorrilla</option>
+            </optgroup>
         </select>
 
         <button onclick="generarPlan()">GENERAR RUTINA</button>
@@ -80,34 +64,24 @@
     </div>
 
     <script>
-        // Usamos imágenes directas y seguras (Wikipedia / Wikimedia)
         const rutinas = {
             pectoral: {
-                principiante: [
-                    {n: "Press de Banca", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Bench-press-1.png/640px-Bench-press-1.png"},
-                    {n: "Aperturas Mancuerna", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Dumbbell-flys-1.png/640px-Dumbbell-flys-1.png"},
-                    {n: "Flexiones", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Push-up-1.png/640px-Push-up-1.png"}
-                ],
-                avanzado: [
-                    {n: "Press Inclinado", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Incline-bench-press-1.png/640px-Incline-bench-press-1.png"},
-                    {n: "Cruces Polea", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Cable-crossover-1.png/640px-Cable-crossover-1.png"},
-                    {n: "Fondos", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Dips-1.png/640px-Dips-1.png"},
-                    {n: "Press Declinado", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Decline-bench-press-1.png/640px-Decline-bench-press-1.png"}
-                ]
+                principiante: [{n: "Press Plano", v: "oSmc5Gg1wLY"}, {n: "Flexiones", v: "12ygQclsa9Q"}, {n: "Aperturas", v: "YB6PwKTnKnw"}],
+                avanzado: [{n: "Press Inclinado", v: "VB09kLgJDo0"}, {n: "Cruces Polea", v: "YB6PwKTnKnw"}, {n: "Press Mancuerna", v: "oSmc5Gg1wLY"}, {n: "Fondos", v: "4VuCF75s6jE"}]
+            },
+            espalda: {
+                principiante: [{n: "Jalón al Pecho", v: "LiA9S8T77f8"}, {n: "Remo Bajo", v: "RyBbL1ei_8w"}, {n: "Remo Mancuerna", v: "7ouN8tVnQcM"}],
+                avanzado: [{n: "Dominadas", v: "LiA9S8T77f8"}, {n: "Remo con Barra", v: "RyBbL1ei_8w"}, {n: "Pull Over", v: "7ouN8tVnQcM"}, {n: "Peso Muerto", v: "-f9WEiUaoyA"}]
             },
             cuadriceps: {
-                principiante: [
-                    {n: "Sentadilla Libre", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Squats-1.png/640px-Squats-1.png"},
-                    {n: "Prensa", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Leg-press-1.png/640px-Leg-press-1.png"},
-                    {n: "Extensiones", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Leg-extension-1.png/640px-Leg-extension-1.png"}
-                ],
-                avanzado: [
-                    {n: "Sentadilla Barra", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Back-squat-1.png/640px-Back-squat-1.png"},
-                    {n: "Estocadas", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Lunges-1.png/640px-Lunges-1.png"},
-                    {n: "Hack Squat", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Hack-squat-1.png/640px-Hack-squat-1.png"},
-                    {n: "Sissy Squat", i: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Sissy-squat-1.png/640px-Sissy-squat-1.png"}
-                ]
+                principiante: [{n: "Sentadilla Libre", v: "bnJ5WXSnW98"}, {n: "Prensa", v: "Z2X5w4_eiH8"}, {n: "Extensiones", v: "f0SMNtfjUFs"}],
+                avanzado: [{n: "Sentadilla Barra", v: "bnJ5WXSnW98"}, {n: "Hack Squat", v: "F0-vWlLaVPM"}, {n: "Estocadas", v: "z6AbAusrcGk"}, {n: "Sissy Squat", v: "Z2X5w4_eiH8"}]
+            },
+            hombros: {
+                principiante: [{n: "Press Militar", v: "0lFdDyLLE3k"}, {n: "Laterales", v: "2yavFdPCqPE"}, {n: "Frontales", v: "k--2nDZMxPU"}],
+                avanzado: [{n: "Press Arnold", v: "FfvaIzSnogs"}, {n: "Face Pull", v: "5qwWEwRiTrk"}, {n: "Pájaros", v: "0lFdDyLLE3k"}, {n: "Press Barra", v: "2yavFdPCqPE"}]
             }
+            // Puedes completar Bíceps, Tríceps, etc. con el mismo formato.
         };
 
         function generarPlan() {
@@ -118,7 +92,7 @@
             const altura = document.getElementById('altura').value;
             const divPantalla = document.getElementById('pantalla');
 
-            if(!nombre) { alert("Ingresa el nombre"); return; }
+            if(!nombre) { alert("Nombre del atleta requerido"); return; }
             divPantalla.style.display = "block";
             divPantalla.innerHTML = "";
 
@@ -128,14 +102,16 @@
             }
 
             const lista = rutinas[mus][niv];
+            divPantalla.innerHTML += `<p><span class="tag">${mus}</span> <span class="tag" style="background:#fff">${niv}</span></p>`;
 
             lista.forEach(ej => {
                 divPantalla.innerHTML += `
                     <div class="ejercicio">
                         <strong>🔥 ${ej.n}</strong>
-                        <div class="img-box">
-                            <img src="${ej.i}" alt="${ej.n}" onerror="this.src='https://placehold.co/400x300?text=Cargando+Imagen...'">
+                        <div class="video-container">
+                            <iframe src="https://www.youtube.com/embed/${ej.v}" allowfullscreen></iframe>
                         </div>
+                        <a href="https://www.youtube.com/watch?v=${ej.v}" target="_blank" class="link-respaldo">🔗 Ver en YouTube</a>
                     </div>`;
             });
         }
