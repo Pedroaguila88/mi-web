@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Sistema de Entrenamiento</title>
+    <title>Gym Pro - Sistema de Entrenamiento con Video</title>
     <style>
         body { 
             background: #111; 
@@ -19,7 +19,7 @@
             border-radius: 15px; 
             border-top: 5px solid #d4ff00; 
             width: 100%;
-            max-width: 380px; 
+            max-width: 450px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; }
@@ -50,17 +50,30 @@
             display: none; 
             border-left: 4px solid #d4ff00; 
         }
-        .ejercicio { padding: 8px 0; border-bottom: 1px solid #222; color: #eee; font-size: 0.9rem; }
-        .especial { color: #ff0055; font-weight: bold; font-style: italic; }
+        .ejercicio { padding: 15px 0; border-bottom: 1px solid #222; color: #eee; }
+        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h1>PLANIFICADOR DE RUTINAS</h1>
+        <h1>PLANIFICADOR PRO + VIDEOS</h1>
         
         <label>NOMBRE DEL ATLETA</label>
         <input type="text" id="nombreAtleta" placeholder="Ej: Juan Pérez">
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>PESO (kg)</label>
+                <input type="number" id="peso" placeholder="80">
+            </div>
+            <div style="flex: 1;">
+                <label>ALTURA (cm)</label>
+                <input type="number" id="altura" placeholder="180">
+            </div>
+        </div>
         
         <label>NIVEL DE EXPERIENCIA</label>
         <select id="nivel">
@@ -74,68 +87,71 @@
             <option value="pecho">Pecho</option>
             <option value="espalda">Espalda</option>
             <option value="piernas">Piernas</option>
-            <option value="hombros">Hombros</option>
-            <option value="biceps">Bíceps</option>
-            <option value="triceps">Tríceps</option>
         </select>
 
-        <button onclick="generarPlan()">GENERAR PLAN</button>
+        <button onclick="generarPlan()">GENERAR PLAN Y VIDEOS</button>
 
         <div id="pantalla"></div>
     </div>
 
     <script>
+        // Base de datos con IDs de videos de YouTube
         const rutinas = {
             pecho: { 
-                principiante: ["Press Plano 3x10", "Aperturas 3x12", "Flexiones 3x Máximo"], 
-                avanzado: ["Press Inclinado 4x8", "Cruces Polea 4x15", "Fondos 3x12"] 
+                principiante: [
+                    { nombre: "Press de Banca (Técnica)", videoId: "TAH8RxOS0VI" },
+                    { nombre: "Aperturas con Mancuernas", videoId: "C7Nq4DgV9Mg" },
+                    { nombre: "Flexiones de Pecho", videoId: "oZQlr-lYc5Q" }
+                ], 
+                avanzado: [
+                    { nombre: "Press Inclinado con Barra", videoId: "-zbesyTNztQ" },
+                    { nombre: "Fondos en Paralelas", videoId: "0yhABKbiIfY" }
+                ] 
             },
-            espalda: { 
-                principiante: ["Jalón Pecho 3x12", "Remo Bajo 3x10"], 
-                avanzado: ["Dominadas 4x Máximo", "Remo Barra 4x8", "Peso Muerto 3x6"] 
-            },
-            piernas: { 
-                principiante: ["Prensa 3x12", "Sentadilla Aire 3x20"], 
-                avanzado: ["Sentadilla Barra 4x8", "Estocadas 4x20", "Peso Rumano 4x10"] 
-            },
-            hombros: { 
-                principiante: ["Press Militar 3x10", "Laterales 3x12"], 
-                avanzado: ["Press Militar Barra 4x8", "Press Arnold 4x10", "Face Pull 4x15"] 
-            },
-            biceps: { 
-                principiante: ["Curl Mancuerna 3x12"], 
-                avanzado: ["Curl Barra Z 4x8", "Martillo 4x10"] 
-            },
-            triceps: { 
-                principiante: ["Polea Alta 3x12"], 
-                avanzado: ["Press Francés 4x10", "Fondos entre bancos 3x Máximo"] 
-            }
+            espalda: { principiante: [], avanzado: [] },
+            piernas: { principiante: [], avanzado: [] }
         };
 
         function generarPlan() {
             const nombre = document.getElementById('nombreAtleta').value;
             const niv = document.getElementById('nivel').value;
             const mus = document.getElementById('musculo').value;
+            const peso = document.getElementById('peso').value;
+            const altura = document.getElementById('altura').value;
 
-            if(nombre === "") { alert("Por favor, ingresa el nombre"); return; }
+            if(nombre === "") { alert("Ingresa el nombre"); return; }
 
             const divPantalla = document.getElementById('pantalla');
             divPantalla.style.display = "block";
+            divPantalla.innerHTML = ""; // Limpiar pantalla
 
-            // LÓGICA ESPECIAL FILIPPO
+            // 1. Calcular IMC
+            if (peso > 0 && altura > 0) {
+                const imc = (peso / ((altura/100)**2)).toFixed(1);
+                divPantalla.innerHTML += `<div class="imc-box">📊 IMC: ${imc} (Atleta: ${nombre.toUpperCase()})</div>`;
+            }
+
+            // 2. Lógica Filippo
             if (niv === "filippo") {
-                divPantalla.innerHTML = `
-                    <h4 style="color:#d4ff00; margin:0 0 10px 0;">ATLETA: ${nombre.toUpperCase()}</h4>
-                    <div class="ejercicio especial">🚀 Este nivel ya supera todos mis conocimientos.</div>`;
+                divPantalla.innerHTML += `<div class="ejercicio" style="color:#ff0055">🚀 Nivel Filippo: Supera mis conocimientos.</div>`;
                 return;
             }
 
-            // LÓGICA NORMAL
-            const ejercicios = rutinas[mus][niv];
-            divPantalla.innerHTML = `<h4 style="color:#d4ff00; margin:0 0 10px 0;">Rutina de ${mus.toUpperCase()}:</h4>`;
+            // 3. Mostrar Ejercicios con Video
+            const lista = rutinas[mus][niv];
+            if (lista.length === 0) {
+                divPantalla.innerHTML += `<p>Próximamente videos para este grupo.</p>`;
+                return;
+            }
 
-            ejercicios.forEach(ej => {
-                divPantalla.innerHTML += `<div class="ejercicio">🔥 ${ej}</div>`;
+            lista.forEach(ej => {
+                divPantalla.innerHTML += `
+                    <div class="ejercicio">
+                        <strong>🔥 ${ej.nombre}</strong>
+                        <div class="video-container">
+                            <iframe src="https://www.youtube.com/embed/${ej.videoId}" allowfullscreen></iframe>
+                        </div>
+                    </div>`;
             });
         }
     </script>
