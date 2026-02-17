@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Planificador FP-UNA</title>
+    <title>Gym Pro - Planificador Integral</title>
     <style>
         body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
         .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 20px; }
-        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; text-transform: uppercase; }
+        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
+        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; text-transform: uppercase; font-weight: bold; }
         input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; outline: none; }
-        button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
-        button:hover { background: #b8de00; }
+        button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #b8de00; transform: scale(1.02); }
         #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
         .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; }
         .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
         .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
         .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .link-respaldo { color: #d4ff00; font-size: 0.7rem; text-decoration: none; display: block; margin-top: 5px; text-align: right; }
+        optgroup { background: #222; color: #d4ff00; }
     </style>
 </head>
 <body>
@@ -59,12 +59,12 @@
         </select>
 
         <button onclick="generarPlan()">GENERAR RUTINA</button>
-
         <div id="pantalla"></div>
     </div>
 
     <script>
         const rutinas = {
+            // TREN SUPERIOR
             pectoral: {
                 principiante: [{n: "Press Plano", v: "oSmc5Gg1wLY"}, {n: "Flexiones", v: "12ygQclsa9Q"}, {n: "Aperturas", v: "YB6PwKTnKnw"}],
                 avanzado: [{n: "Press Inclinado", v: "VB09kLgJDo0"}, {n: "Cruces Polea", v: "YB6PwKTnKnw"}, {n: "Press Mancuerna", v: "oSmc5Gg1wLY"}, {n: "Fondos", v: "4VuCF75s6jE"}]
@@ -73,15 +73,39 @@
                 principiante: [{n: "Jalón al Pecho", v: "LiA9S8T77f8"}, {n: "Remo Bajo", v: "RyBbL1ei_8w"}, {n: "Remo Mancuerna", v: "7ouN8tVnQcM"}],
                 avanzado: [{n: "Dominadas", v: "LiA9S8T77f8"}, {n: "Remo con Barra", v: "RyBbL1ei_8w"}, {n: "Pull Over", v: "7ouN8tVnQcM"}, {n: "Peso Muerto", v: "-f9WEiUaoyA"}]
             },
+            hombros: {
+                principiante: [{n: "Press Mancuernas", v: "0lFdDyLLE3k"}, {n: "Vuelos Laterales", v: "2yavFdPCqPE"}, {n: "Vuelos Frontales", v: "k--2nDZMxPU"}],
+                avanzado: [{n: "Press Militar", v: "0lFdDyLLE3k"}, {n: "Laterales Polea", v: "2yavFdPCqPE"}, {n: "Press Arnold", v: "FfvaIzSnogs"}, {n: "Face Pull", v: "5qwWEwRiTrk"}]
+            },
+            biceps: {
+                principiante: [{n: "Curl Barra", v: "jlFl7WJ1TzI"}, {n: "Curl Martillo", v: "jlFl7WJ1TzI"}, {n: "Curl Polea", v: "jlFl7WJ1TzI"}],
+                avanzado: [{n: "Curl Z", v: "jlFl7WJ1TzI"}, {n: "Curl Inclinado", v: "jlFl7WJ1TzI"}, {n: "Concentrado", v: "jlFl7WJ1TzI"}, {n: "Curl Araña", v: "jlFl7WJ1TzI"}]
+            },
+            triceps: {
+                principiante: [{n: "Polea Alta", v: "S7NrsueBHhA"}, {n: "Copa Mancuerna", v: "S7NrsueBHhA"}, {n: "Patada Triceps", v: "S7NrsueBHhA"}],
+                avanzado: [{n: "Press Francés", v: "S7NrsueBHhA"}, {n: "Fondos", v: "4VuCF75s6jE"}, {n: "Polea Cuerda", v: "S7NrsueBHhA"}, {n: "Press Cerrado", v: "VB09kLgJDo0"}]
+            },
+            trapecio: {
+                principiante: [{n: "Encogimientos", v: "jlFl7WJ1TzI"}, {n: "Remo al Mentón", v: "jlFl7WJ1TzI"}, {n: "Giros Hombros", v: "jlFl7WJ1TzI"}],
+                avanzado: [{n: "Encogimientos Barra", v: "jlFl7WJ1TzI"}, {n: "Remo Mentón Polea", v: "jlFl7WJ1TzI"}, {n: "Paseo Granjero", v: "jlFl7WJ1TzI"}, {n: "Face Pull Alto", v: "5qwWEwRiTrk"}]
+            },
+            // TREN INFERIOR
+            gluteos: {
+                principiante: [{n: "Puente Glúteo", v: "bnJ5WXSnW98"}, {n: "Abducciones", v: "Z2X5w4_eiH8"}, {n: "Patada Polea", v: "f0SMNtfjUFs"}],
+                avanzado: [{n: "Hip Thrust", v: "bnJ5WXSnW98"}, {n: "Búlgara", v: "Z2X5w4_eiH8"}, {n: "Peso Muerto Rumano", v: "-f9WEiUaoyA"}, {n: "Step Up", v: "f0SMNtfjUFs"}]
+            },
+            isquios: {
+                principiante: [{n: "Curl Femoral", v: "Z2X5w4_eiH8"}, {n: "Peso Muerto Rumano", v: "-f9WEiUaoyA"}, {n: "Buenos Días", v: "Z2X5w4_eiH8"}],
+                avanzado: [{n: "Curl Tumbado", v: "Z2X5w4_eiH8"}, {n: "Stiff Leg Deadlift", v: "-f9WEiUaoyA"}, {n: "Curl Unilateral", v: "Z2X5w4_eiH8"}, {n: "Hiperextensiones", v: "7ouN8tVnQcM"}]
+            },
             cuadriceps: {
                 principiante: [{n: "Sentadilla Libre", v: "bnJ5WXSnW98"}, {n: "Prensa", v: "Z2X5w4_eiH8"}, {n: "Extensiones", v: "f0SMNtfjUFs"}],
                 avanzado: [{n: "Sentadilla Barra", v: "bnJ5WXSnW98"}, {n: "Hack Squat", v: "F0-vWlLaVPM"}, {n: "Estocadas", v: "z6AbAusrcGk"}, {n: "Sissy Squat", v: "Z2X5w4_eiH8"}]
             },
-            hombros: {
-                principiante: [{n: "Press Militar", v: "0lFdDyLLE3k"}, {n: "Laterales", v: "2yavFdPCqPE"}, {n: "Frontales", v: "k--2nDZMxPU"}],
-                avanzado: [{n: "Press Arnold", v: "FfvaIzSnogs"}, {n: "Face Pull", v: "5qwWEwRiTrk"}, {n: "Pájaros", v: "0lFdDyLLE3k"}, {n: "Press Barra", v: "2yavFdPCqPE"}]
+            pantorrilla: {
+                principiante: [{n: "Elevación Talones", v: "Z2X5w4_eiH8"}, {n: "Elevación Sentado", v: "Z2X5w4_eiH8"}, {n: "Prensa Pantorrilla", v: "Z2X5w4_eiH8"}],
+                avanzado: [{n: "Unilateral Mancuerna", v: "Z2X5w4_eiH8"}, {n: "Elevación en Máquina", v: "Z2X5w4_eiH8"}, {n: "Saltos Soga", v: "Z2X5w4_eiH8"}, {n: "Tibial Anterior", v: "Z2X5w4_eiH8"}]
             }
-            // Puedes completar Bíceps, Tríceps, etc. con el mismo formato.
         };
 
         function generarPlan() {
@@ -92,7 +116,8 @@
             const altura = document.getElementById('altura').value;
             const divPantalla = document.getElementById('pantalla');
 
-            if(!nombre) { alert("Nombre del atleta requerido"); return; }
+            if(!nombre) { alert("Por favor, ingresa el nombre del atleta"); return; }
+            
             divPantalla.style.display = "block";
             divPantalla.innerHTML = "";
 
@@ -102,7 +127,7 @@
             }
 
             const lista = rutinas[mus][niv];
-            divPantalla.innerHTML += `<p><span class="tag">${mus}</span> <span class="tag" style="background:#fff">${niv}</span></p>`;
+            divPantalla.innerHTML += `<p><span class="tag">${mus.toUpperCase()}</span> <span class="tag" style="background:#fff">${niv.toUpperCase()}</span></p>`;
 
             lista.forEach(ej => {
                 divPantalla.innerHTML += `
@@ -111,9 +136,11 @@
                         <div class="video-container">
                             <iframe src="https://www.youtube.com/embed/${ej.v}" allowfullscreen></iframe>
                         </div>
-                        <a href="https://www.youtube.com/watch?v=${ej.v}" target="_blank" class="link-respaldo">🔗 Ver en YouTube</a>
                     </div>`;
             });
+            
+            // Auto-scroll al resultado
+            divPantalla.scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
