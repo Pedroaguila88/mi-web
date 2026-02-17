@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Sistema Profesional</title>
+    <title>Gym Pro - Planificador Visual</title>
     <style>
         body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
         .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -13,9 +13,10 @@
         button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
         button:hover { background: #b8de00; }
         #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
-        .ejercicio { padding: 15px 0; border-bottom: 1px solid #222; }
-        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #444; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; text-align: center; }
+        .img-container { margin-top: 10px; width: 100%; border-radius: 8px; overflow: hidden; background: #444; border: 1px solid #444; }
+        .img-container img { width: 100%; height: auto; display: block; transition: transform 0.3s; }
+        .img-container img:hover { transform: scale(1.05); }
         .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
         .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     </style>
@@ -23,7 +24,7 @@
 <body>
 
     <div class="card">
-        <h1>PLANIFICADOR PROFESIONAL</h1>
+        <h1>PLANIFICADOR VISUAL</h1>
         
         <label>Atleta</label>
         <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
@@ -33,10 +34,10 @@
             <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
         </div>
         
-        <label>Nivel de Intensidad</label>
+        <label>Nivel</label>
         <select id="nivel">
-            <option value="principiante">Principiante (3 Ejercicios)</option>
-            <option value="avanzado">Avanzado (4 Ejercicios)</option>
+            <option value="principiante">Principiante</option>
+            <option value="avanzado">Avanzado</option>
         </select>
 
         <label>Grupo Muscular</label>
@@ -44,16 +45,11 @@
             <optgroup label="TREN SUPERIOR">
                 <option value="pectoral">Pectoral</option>
                 <option value="espalda">Espalda</option>
-                <option value="hombros">Hombros</option>
                 <option value="biceps">Bíceps</option>
-                <option value="triceps">Tríceps</option>
-                <option value="trapecio">Trapecio</option>
             </optgroup>
             <optgroup label="TREN INFERIOR">
-                <option value="gluteos">Glúteos</option>
-                <option value="isquios">Isquiotibiales</option>
                 <option value="cuadriceps">Cuádriceps</option>
-                <option value="pantorrilla">Pantorrilla</option>
+                <option value="gluteos">Glúteos</option>
             </optgroup>
         </select>
 
@@ -63,47 +59,35 @@
     </div>
 
     <script>
+        // Base de datos con enlaces a imágenes descriptivas
         const rutinas = {
             pectoral: {
-                principiante: [{n: "Press Plano", v: "TAH8RxOS0VI"}, {n: "Aperturas", v: "C7Nq4DgV9Mg"}, {n: "Flexiones", v: "oZQlr-lYc5Q"}],
-                avanzado: [{n: "Press Inclinado", v: "-zbesyTNztQ"}, {n: "Cruces Polea", v: "vUMtItXfO8Y"}, {n: "Press Declinado", v: "TAH8RxOS0VI"}, {n: "Fondos Pecho", v: "0yhABKbiIfY"}]
-            },
-            espalda: {
-                principiante: [{n: "Jalón Pecho", v: "ANH-S8T77f8"}, {n: "Remo Bajo", v: "9efgcajz7X8"}, {n: "Serrucho", v: "ANH-S8T77f8"}],
-                avanzado: [{n: "Dominadas", v: "9efgcajz7X8"}, {n: "Remo Barra", v: "9efgcajz7X8"}, {n: "Pull Over", v: "ANH-S8T77f8"}, {n: "Peso Muerto", v: "9efgcajz7X8"}]
-            },
-            hombros: {
-                principiante: [{n: "Press Mancuernas", v: "S7NrsueBHhA"}, {n: "Vuelos Laterales", v: "S7NrsueBHhA"}, {n: "Vuelos Frontales", v: "S7NrsueBHhA"}],
-                avanzado: [{n: "Press Militar", v: "vUMtItXfO8Y"}, {n: "Laterales Polea", v: "vUMtItXfO8Y"}, {n: "Press Arnold", v: "S7NrsueBHhA"}, {n: "Face Pull", v: "vUMtItXfO8Y"}]
-            },
-            biceps: {
-                principiante: [{n: "Curl Barra", v: "jlFl7WJ1TzI"}, {n: "Martillo", v: "jlFl7WJ1TzI"}, {n: "Curl Alternado", v: "jlFl7WJ1TzI"}],
-                avanzado: [{n: "Curl Z", v: "jlFl7WJ1TzI"}, {n: "Curl Inclinado", v: "jlFl7WJ1TzI"}, {n: "Concentrado", v: "jlFl7WJ1TzI"}, {n: "Spider Curl", v: "jlFl7WJ1TzI"}]
-            },
-            triceps: {
-                principiante: [{n: "Extensión Polea", v: "S7NrsueBHhA"}, {n: "Copa Mancuerna", v: "S7NrsueBHhA"}, {n: "Patada Triceps", v: "S7NrsueBHhA"}],
-                avanzado: [{n: "Press Francés", v: "S7NrsueBHhA"}, {n: "Press Cerrado", v: "S7NrsueBHhA"}, {n: "Dips", v: "0yhABKbiIfY"}, {n: "Cuerda Polea", v: "S7NrsueBHhA"}]
-            },
-            trapecio: {
-                principiante: [{n: "Encogimientos", v: "jlFl7WJ1TzI"}, {n: "Remo Mentón", v: "jlFl7WJ1TzI"}, {n: "Giros Hombros", v: "jlFl7WJ1TzI"}],
-                avanzado: [{n: "Encogimientos Barra", v: "jlFl7WJ1TzI"}, {n: "Face Pull Alto", v: "vUMtItXfO8Y"}, {n: "Paseo Granjero", v: "jlFl7WJ1TzI"}, {n: "Encogimiento Inclinado", v: "jlFl7WJ1TzI"}]
-            },
-            gluteos: {
-                principiante: [{n: "Puente Glúteo", v: "TAH8RxOS0VI"}, {n: "Abducciones", v: "TAH8RxOS0VI"}, {n: "Patada Polea", v: "TAH8RxOS0VI"}],
-                avanzado: [{n: "Hip Thrust", v: "TAH8RxOS0VI"}, {n: "Sentadilla Búlgara", v: "-zbesyTNztQ"}, {n: "Peso Muerto", v: "9efgcajz7X8"}, {n: "Step Up", v: "TAH8RxOS0VI"}]
-            },
-            isquios: {
-                principiante: [{n: "Curl Femoral", v: "TAH8RxOS0VI"}, {n: "Peso Muerto Rumano", v: "TAH8RxOS0VI"}, {n: "Buenos Días", v: "TAH8RxOS0VI"}],
-                avanzado: [{n: "Curl Femoral Tumbado", v: "TAH8RxOS0VI"}, {n: "Stiff Leg Deadlift", v: "9efgcajz7X8"}, {n: "Nordic Curl", v: "TAH8RxOS0VI"}, {n: "Hiperextensiones", v: "ANH-S8T77f8"}]
+                principiante: [
+                    {n: "Press de Banca", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/bench-press-technique.jpg"},
+                    {n: "Aperturas Mancuerna", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/dumbbell-flys.jpg"},
+                    {n: "Flexiones", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/push-up-technique.jpg"}
+                ],
+                avanzado: [
+                    {n: "Press Inclinado", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/incline-bench-press.jpg"},
+                    {n: "Cruces Polea", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/cable-crossover.jpg"},
+                    {n: "Fondos en Paralelas", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/dips-technique.jpg"},
+                    {n: "Press Declinado", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/decline-bench-press.jpg"}
+                ]
             },
             cuadriceps: {
-                principiante: [{n: "Sentadilla Libre", v: "TAH8RxOS0VI"}, {n: "Prensa 45", v: "TAH8RxOS0VI"}, {n: "Extensiones", v: "TAH8RxOS0VI"}],
-                avanzado: [{n: "Sentadilla Barra", v: "TAH8RxOS0VI"}, {n: "Hack Squat", v: "TAH8RxOS0VI"}, {n: "Estocadas", v: "-zbesyTNztQ"}, {n: "Sissy Squat", v: "TAH8RxOS0VI"}]
-            },
-            pantorrilla: {
-                principiante: [{n: "Elevación Parado", v: "TAH8RxOS0VI"}, {n: "Elevación Sentado", v: "TAH8RxOS0VI"}, {n: "Prensa Pantorrilla", v: "TAH8RxOS0VI"}],
-                avanzado: [{n: "Elevación Unilateral", v: "TAH8RxOS0VI"}, {n: "Burro Calves", v: "TAH8RxOS0VI"}, {n: "Saltos Soga", v: "TAH8RxOS0VI"}, {n: "Tibial Anterior", v: "TAH8RxOS0VI"}]
+                principiante: [
+                    {n: "Sentadilla Libre", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/squat-technique.jpg"},
+                    {n: "Prensa 45", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/leg-press.jpg"},
+                    {n: "Extensiones", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/leg-extension.jpg"}
+                ],
+                avanzado: [
+                    {n: "Sentadilla con Barra", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/back-squat.jpg"},
+                    {n: "Estocadas Caminando", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/lunges-technique.jpg"},
+                    {n: "Hack Squat", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/hack-squat.jpg"},
+                    {n: "Sissy Squat", i: "https://www.fitnesstrainingstar.com/wp-content/uploads/2012/11/sissy-squat.jpg"}
+                ]
             }
+            // Agrega el resto de los músculos siguiendo este formato
         };
 
         function generarPlan() {
@@ -114,7 +98,7 @@
             const altura = document.getElementById('altura').value;
             const divPantalla = document.getElementById('pantalla');
 
-            if(!nombre) { alert("Ingresa el nombre del atleta"); return; }
+            if(!nombre) { alert("Ingresa el nombre"); return; }
             divPantalla.style.display = "block";
             divPantalla.innerHTML = "";
 
@@ -130,8 +114,8 @@
                 divPantalla.innerHTML += `
                     <div class="ejercicio">
                         <strong>🔥 ${ej.n}</strong>
-                        <div class="video-container">
-                            <iframe src="https://www.youtube.com/embed/${ej.v}" allowfullscreen></iframe>
+                        <div class="img-container">
+                            <img src="${ej.i}" alt="${ej.n}" onerror="this.src='https://via.placeholder.com/400x300?text=Imagen+en+Mantenimiento'">
                         </div>
                     </div>`;
             });
