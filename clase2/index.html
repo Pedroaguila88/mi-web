@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Planificador Integral</title>
+    <title>Gym Pro v1.1 - Acceso Seguro</title>
     <style>
-        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        /* ESTILOS DEL LOGIN */
+        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; min-height: 100vh; align-items: center; margin: 0; }
         .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
         label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; text-transform: uppercase; font-weight: bold; }
         input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; outline: none; }
         button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; }
         button:hover { background: #b8de00; transform: scale(1.02); }
+        
+        /* ESTILOS DEL CONTENIDO (TU CÓDIGO DE AYER) */
         #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
         .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; }
         .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; }
@@ -19,52 +22,94 @@
         .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
         .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         optgroup { background: #222; color: #d4ff00; }
+        
+        #app-content { display: none; width: 100%; max-width: 500px; }
+        .btn-logout { background: #ff4444; color: white; margin-top: 30px; font-size: 0.7rem; padding: 8px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>SISTEMA DE ENTRENAMIENTO PRO</h1>
-        
-        <label>Atleta</label>
-        <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
-        
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;"><label>Peso (kg)</label><input type="number" id="peso" placeholder="70"></div>
-            <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
+    <div id="login-section" class="card">
+        <h1>🔐 ACCESO GYM PRO</h1>
+        <label>Usuario</label>
+        <input type="text" id="user" placeholder="Tu nombre">
+        <label>Contraseña</label>
+        <input type="password" id="pass" placeholder="Tu clave">
+        <button onclick="login()">Entrar</button>
+        <button onclick="register()" style="background: #444; color: white;">Registrar Nuevo</button>
+        <p id="login-msg" style="text-align: center; font-size: 0.8rem; margin-top: 10px;"></p>
+    </div>
+
+    <div id="app-content">
+        <div class="card">
+            <h1>SISTEMA DE ENTRENAMIENTO PRO</h1>
+            
+            <label>Atleta</label>
+            <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;"><label>Peso (kg)</label><input type="number" id="peso" placeholder="70"></div>
+                <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
+            </div>
+            
+            <label>Nivel de Intensidad</label>
+            <select id="nivel">
+                <option value="principiante">Principiante (3 Ejercicios)</option>
+                <option value="avanzado">Avanzado (4 Ejercicios)</option>
+            </select>
+
+            <label>Grupo Muscular</label>
+            <select id="musculo">
+                <optgroup label="TREN SUPERIOR">
+                    <option value="pectoral">Pectoral</option>
+                    <option value="espalda">Espalda</option>
+                    <option value="hombros">Hombros</option>
+                    <option value="biceps">Bíceps</option>
+                    <option value="triceps">Tríceps</option>
+                    <option value="trapecio">Trapecio</option>
+                </optgroup>
+                <optgroup label="TREN INFERIOR">
+                    <option value="gluteos">Glúteos</option>
+                    <option value="isquios">Isquiotibiales</option>
+                    <option value="cuadriceps">Cuádriceps</option>
+                    <option value="pantorrilla">Pantorrilla</option>
+                </optgroup>
+            </select>
+
+            <button onclick="generarPlan()">GENERAR RUTINA</button>
+            <div id="pantalla"></div>
+            
+            <button onclick="location.reload()" class="btn-logout">CERRAR SESIÓN</button>
         </div>
-        
-        <label>Nivel de Intensidad</label>
-        <select id="nivel">
-            <option value="principiante">Principiante (3 Ejercicios)</option>
-            <option value="avanzado">Avanzado (4 Ejercicios)</option>
-        </select>
-
-        <label>Grupo Muscular</label>
-        <select id="musculo">
-            <optgroup label="TREN SUPERIOR">
-                <option value="pectoral">Pectoral</option>
-                <option value="espalda">Espalda</option>
-                <option value="hombros">Hombros</option>
-                <option value="biceps">Bíceps</option>
-                <option value="triceps">Tríceps</option>
-                <option value="trapecio">Trapecio</option>
-            </optgroup>
-            <optgroup label="TREN INFERIOR">
-                <option value="gluteos">Glúteos</option>
-                <option value="isquios">Isquiotibiales</option>
-                <option value="cuadriceps">Cuádriceps</option>
-                <option value="pantorrilla">Pantorrilla</option>
-            </optgroup>
-        </select>
-
-        <button onclick="generarPlan()">GENERAR RUTINA</button>
-        <div id="pantalla"></div>
     </div>
 
     <script>
+        // --- LÓGICA DE SEGURIDAD v1.1 ---
+        function register() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if (u && p) {
+                localStorage.setItem(u, p);
+                alert("Usuario registrado con éxito");
+            } else { alert("Llena los campos de arriba"); }
+        }
+
+        function login() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if (localStorage.getItem(u) === p && u !== "") {
+                document.getElementById('login-section').style.display = "none";
+                document.getElementById('app-content').style.display = "block";
+                document.body.style.alignItems = "flex-start"; // Ajuste para el scroll
+                document.getElementById('nombreAtleta').value = u; // Auto-llenar nombre
+            } else {
+                document.getElementById('login-msg').innerText = "❌ Datos incorrectos";
+                document.getElementById('login-msg').style.color = "red";
+            }
+        }
+
+        // --- TU CÓDIGO DE AYER SIN CAMBIOS ---
         const rutinas = {
-            // TREN SUPERIOR
             pectoral: {
                 principiante: [{n: "Press Plano", v: "oSmc5Gg1wLY"}, {n: "Flexiones", v: "12ygQclsa9Q"}, {n: "Aperturas", v: "YB6PwKTnKnw"}],
                 avanzado: [{n: "Press Inclinado", v: "VB09kLgJDo0"}, {n: "Cruces Polea", v: "YB6PwKTnKnw"}, {n: "Press Mancuerna", v: "oSmc5Gg1wLY"}, {n: "Fondos", v: "4VuCF75s6jE"}]
@@ -89,7 +134,6 @@
                 principiante: [{n: "Encogimientos", v: "jlFl7WJ1TzI"}, {n: "Remo al Mentón", v: "jlFl7WJ1TzI"}, {n: "Giros Hombros", v: "jlFl7WJ1TzI"}],
                 avanzado: [{n: "Encogimientos Barra", v: "jlFl7WJ1TzI"}, {n: "Remo Mentón Polea", v: "jlFl7WJ1TzI"}, {n: "Paseo Granjero", v: "jlFl7WJ1TzI"}, {n: "Face Pull Alto", v: "5qwWEwRiTrk"}]
             },
-            // TREN INFERIOR
             gluteos: {
                 principiante: [{n: "Puente Glúteo", v: "bnJ5WXSnW98"}, {n: "Abducciones", v: "Z2X5w4_eiH8"}, {n: "Patada Polea", v: "f0SMNtfjUFs"}],
                 avanzado: [{n: "Hip Thrust", v: "bnJ5WXSnW98"}, {n: "Búlgara", v: "Z2X5w4_eiH8"}, {n: "Peso Muerto Rumano", v: "-f9WEiUaoyA"}, {n: "Step Up", v: "f0SMNtfjUFs"}]
@@ -139,7 +183,6 @@
                     </div>`;
             });
             
-            // Auto-scroll al resultado
             divPantalla.scrollIntoView({ behavior: 'smooth' });
         }
     </script>
