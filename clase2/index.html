@@ -3,87 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Web Pro v1.1 - Personalizada</title>
+    <title>Mi Web de Entrenamiento v1.1</title>
     <style>
-        body { background-color: #121212; color: #ffffff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background-color: #1e1e1e; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #4CAF50; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #2b2b2b; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 2rem; border-radius: 15px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1, h2 { color: #4CAF50; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #2b2b2b; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         .btn-login { background-color: #4CAF50; color: white; }
         .btn-register { background-color: #2196F3; color: white; }
+        .btn-calc { background-color: #ff9800; color: white; }
         .btn-logout { background-color: #f44336; color: white; margin-top: 20px; }
-        #main-app { display: none; }
-        .workout-card { background: #2b2b2b; padding: 15px; margin-top: 15px; border-radius: 10px; border-left: 5px solid #4CAF50; text-align: left; }
+        
+        #main-app { display: none; text-align: left; }
+        .result-card { background: #2b2b2b; padding: 15px; margin-top: 15px; border-radius: 10px; border-left: 5px solid #4CAF50; }
+        .exercise-list { margin-top: 10px; padding-left: 20px; }
     </style>
 </head>
 <body>
 
     <div id="login-container" class="container">
-        <h1>Entrenamiento Pro</h1>
-        <input type="text" id="username" placeholder="Usuario">
-        <input type="password" id="password" placeholder="Contraseña">
+        <h1>🔐 Acceso Seguro</h1>
+        <input type="text" id="username" placeholder="Tu Usuario">
+        <input type="password" id="password" placeholder="Tu Contraseña">
         <button onclick="login()" class="btn btn-login">Entrar</button>
-        <button onclick="register()" class="btn btn-register">Registrar Nuevo Usuario</button>
-        <p id="msg"></p>
+        <button onclick="register()" class="btn btn-register">Registrar Usuario</button>
+        <p id="msg" style="margin-top:10px;"></p>
     </div>
 
     <div id="main-app" class="container">
-        <h1>Bienvenido, <span id="user-display"></span></h1>
-        <div class="workout-card">
-            <h3>Tu Rutina Personal:</h3>
-            <div id="rutina-personalizada"></div>
+        <h2>Hola, <span id="user-display"></span></h2>
+        <p>Completa tus datos para ver tu rutina:</p>
+        
+        <input type="number" id="peso" placeholder="Peso actual (kg)">
+        <input type="number" id="altura" placeholder="Altura (m) ej: 1.75">
+        <select id="nivel">
+            <option value="principiante">Principiante</option>
+            <option value="avanzado">Avanzado</option>
+        </select>
+        
+        <button onclick="generarRutina()" class="btn btn-calc">Calcular y Ver Rutina</button>
+
+        <div id="resultado" style="display:none;">
+            <div class="result-card">
+                <p id="imc-resultado"></p>
+                <p><strong>Tu rutina recomendada:</strong></p>
+                <ul id="lista-ejercicios" class="exercise-list"></ul>
+            </div>
         </div>
+
         <button onclick="location.reload()" class="btn btn-logout">Cerrar Sesión</button>
     </div>
 
     <script>
-        // Función para REGISTRAR (Guardamos un objeto con pass y rutina)
+        // --- LÓGICA DE USUARIOS ---
         function register() {
             const u = document.getElementById("username").value;
             const p = document.getElementById("password").value;
-            
             if(u && p) {
-                const userData = {
-                    password: p,
-                    rutina: ["Press con Mancuernas - 4x12", "Sentadilla Goblet - 3x15", "Plancha Abdominal - 3x45s"]
-                };
-                localStorage.setItem(u, JSON.stringify(userData));
-                document.getElementById("msg").innerText = "Usuario registrado correctamente.";
-                document.getElementById("msg").style.color = "#4CAF50";
+                localStorage.setItem(u, p);
+                alert("Usuario registrado. ¡Ya puedes entrar!");
             }
         }
 
-        // Función para ENTRAR
         function login() {
             const u = document.getElementById("username").value;
             const p = document.getElementById("password").value;
-            const dataRaw = localStorage.getItem(u);
-
-            if (dataRaw) {
-                const data = JSON.parse(dataRaw);
-                if (data.password === p) {
-                    document.getElementById("login-container").style.display = "none";
-                    document.getElementById("main-app").style.display = "block";
-                    document.getElementById("user-display").innerText = u;
-                    
-                    // Cargar la rutina específica de ese usuario
-                    const lista = document.getElementById("rutina-personalizada");
-                    lista.innerHTML = ""; // Limpiar antes de cargar
-                    data.rutina.forEach(ej => {
-                        lista.innerHTML += `<p>✅ ${ej}</p>`;
-                    });
-                } else {
-                    showError("Contraseña incorrecta");
-                }
+            if(localStorage.getItem(u) === p && u !== "") {
+                document.getElementById("login-container").style.display = "none";
+                document.getElementById("main-app").style.display = "block";
+                document.getElementById("user-display").innerText = u;
             } else {
-                showError("El usuario no existe");
+                document.getElementById("msg").innerText = "Error: Datos incorrectos";
+                document.getElementById("msg").style.color = "#f44336";
             }
         }
 
-        function showError(t) {
-            document.getElementById("msg").innerText = t;
-            document.getElementById("msg").style.color = "#f44336";
+        // --- LÓGICA DE LA CLASE 2 (LO QUE FUNCIONABA AYER) ---
+        function generarRutina() {
+            const peso = parseFloat(document.getElementById("peso").value);
+            const altura = parseFloat(document.getElementById("altura").value);
+            const nivel = document.getElementById("nivel").value;
+
+            if (!peso || !altura) {
+                alert("Por favor, completa peso y altura.");
+                return;
+            }
+
+            // Cálculo de IMC
+            const imc = (peso / (altura * altura)).toFixed(2);
+            document.getElementById("imc-resultado").innerHTML = `Tu IMC es: <strong>${imc}</strong>`;
+
+            // Listas de ejercicios de ayer
+            const ejercicios = {
+                principiante: ["Sentadillas Libres", "Flexiones de brazos", "Plancha abdominal"],
+                avanzado: ["Press Mancuernas en Banco", "Peso Muerto", "Dominadas", "Press Militar"]
+            };
+
+            const listaUI = document.getElementById("lista-ejercicios");
+            listaUI.innerHTML = ""; // Limpiar
+            
+            ejercicios[nivel].forEach(ej => {
+                const li = document.createElement("li");
+                li.innerText = ej;
+                listaUI.appendChild(li);
+            });
+
+            document.getElementById("resultado").style.display = "block";
         }
     </script>
 </body>
