@@ -3,115 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Planificador Pro v1.1</title>
+    <title>Mi Web Pro v1.1 - Personalizada</title>
     <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #1e1e1e;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
-        h1 { color: #4CAF50; font-size: 1.8rem; }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #2b2b2b;
-            color: white;
-            box-sizing: border-box;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
+        body { background-color: #121212; color: #ffffff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #4CAF50; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #2b2b2b; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-login { background-color: #4CAF50; color: white; }
         .btn-register { background-color: #2196F3; color: white; }
         .btn-logout { background-color: #f44336; color: white; margin-top: 20px; }
-        
-        /* TARJETAS DE EJERCICIOS */
         #main-app { display: none; }
-        .workout-card {
-            background: #2b2b2b;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 10px;
-            border-left: 5px solid #4CAF50;
-            text-align: left;
-        }
-        .exercise-item {
-            border-bottom: 1px solid #444;
-            padding: 8px 0;
-            display: flex;
-            justify-content: space-between;
-        }
+        .workout-card { background: #2b2b2b; padding: 15px; margin-top: 15px; border-radius: 10px; border-left: 5px solid #4CAF50; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="login-container" class="container">
-        <h1>Mi Planificador Pro</h1>
+        <h1>Entrenamiento Pro</h1>
         <input type="text" id="username" placeholder="Usuario">
         <input type="password" id="password" placeholder="Contraseña">
         <button onclick="login()" class="btn btn-login">Entrar</button>
-        <button onclick="register()" class="btn btn-register">Registrar</button>
-        <p id="msg" style="font-size: 0.8rem; margin-top: 10px;"></p>
+        <button onclick="register()" class="btn btn-register">Registrar Nuevo Usuario</button>
+        <p id="msg"></p>
     </div>
 
     <div id="main-app" class="container">
-        <h1>Hola, <span id="user-display"></span></h1>
+        <h1>Bienvenido, <span id="user-display"></span></h1>
         <div class="workout-card">
-            <p><strong>Estado:</strong> Sesión Activa</p>
-            <div id="rutina">
-                <div class="exercise-item"><span>💪 Press Mancuernas</span> <span>4 x 12</span></div>
-                <div class="exercise-item"><span>🏋️‍♂️ Sentadillas</span> <span>3 x 15</span></div>
-                <div class="exercise-item"><span>🏃‍♂️ Cardio</span> <span>15 min</span></div>
-            </div>
+            <h3>Tu Rutina Personal:</h3>
+            <div id="rutina-personalizada"></div>
         </div>
-        <button onclick="location.reload()" class="btn btn-logout">Cerrar Sesión Segura</button>
+        <button onclick="location.reload()" class="btn btn-logout">Cerrar Sesión</button>
     </div>
 
     <script>
+        // Función para REGISTRAR (Guardamos un objeto con pass y rutina)
         function register() {
             const u = document.getElementById("username").value;
             const p = document.getElementById("password").value;
+            
             if(u && p) {
-                localStorage.setItem(u, p);
-                document.getElementById("msg").innerText = "Registrado. ¡Ya puedes entrar!";
+                const userData = {
+                    password: p,
+                    rutina: ["Press con Mancuernas - 4x12", "Sentadilla Goblet - 3x15", "Plancha Abdominal - 3x45s"]
+                };
+                localStorage.setItem(u, JSON.stringify(userData));
+                document.getElementById("msg").innerText = "Usuario registrado correctamente.";
                 document.getElementById("msg").style.color = "#4CAF50";
             }
         }
 
+        // Función para ENTRAR
         function login() {
             const u = document.getElementById("username").value;
             const p = document.getElementById("password").value;
-            if(localStorage.getItem(u) === p && u !== "") {
-                document.getElementById("login-container").style.display = "none";
-                document.getElementById("main-app").style.display = "block";
-                document.getElementById("user-display").innerText = u;
+            const dataRaw = localStorage.getItem(u);
+
+            if (dataRaw) {
+                const data = JSON.parse(dataRaw);
+                if (data.password === p) {
+                    document.getElementById("login-container").style.display = "none";
+                    document.getElementById("main-app").style.display = "block";
+                    document.getElementById("user-display").innerText = u;
+                    
+                    // Cargar la rutina específica de ese usuario
+                    const lista = document.getElementById("rutina-personalizada");
+                    lista.innerHTML = ""; // Limpiar antes de cargar
+                    data.rutina.forEach(ej => {
+                        lista.innerHTML += `<p>✅ ${ej}</p>`;
+                    });
+                } else {
+                    showError("Contraseña incorrecta");
+                }
             } else {
-                document.getElementById("msg").innerText = "Error de usuario o clave";
-                document.getElementById("msg").style.color = "#f44336";
+                showError("El usuario no existe");
             }
+        }
+
+        function showError(t) {
+            document.getElementById("msg").innerText = t;
+            document.getElementById("msg").style.color = "#f44336";
         }
     </script>
 </body>
