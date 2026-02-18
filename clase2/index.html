@@ -3,144 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Pro - Planificador Integral</title>
+    <title>Mi Web de Entrenamiento v1.1</title>
     <style>
-        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .card { background: #222; padding: 25px; border-radius: 15px; border-top: 5px solid #d4ff00; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #d4ff00; text-align: center; font-size: 1.3rem; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
-        label { display: block; font-size: 0.75rem; color: #888; margin: 10px 0 5px; text-transform: uppercase; font-weight: bold; }
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; outline: none; }
-        button { background: #d4ff00; color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; }
-        button:hover { background: #b8de00; transform: scale(1.02); }
-        #pantalla { background: #000; margin-top: 20px; padding: 15px; border-radius: 8px; display: none; border-left: 4px solid #d4ff00; }
-        .ejercicio { padding: 15px 0; border-bottom: 1px solid #333; }
-        .video-container { margin-top: 10px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .imc-box { background: #333; padding: 10px; border-radius: 8px; color: #00d4ff; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid #00d4ff; }
-        .tag { background: #d4ff00; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        optgroup { background: #222; color: #d4ff00; }
+        /* CSS: ESTILO DARK MODE PROFESIONAL */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2, h1 { color: #4CAF50; }
+
+        .form-group { margin-bottom: 1.5rem; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #2b2b2b;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-login { background-color: #4CAF50; color: white; }
+        .btn-login:hover { background-color: #45a049; }
+
+        .btn-register { background-color: #2196F3; color: white; }
+        .btn-register:hover { background-color: #1e88e5; }
+
+        .btn-logout { 
+            background-color: #f44336; 
+            color: white; 
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        #login-message { 
+            margin-top: 1rem; 
+            font-size: 0.9rem; 
+            font-weight: bold;
+        }
+
+        /* Estilo para la aplicación una vez logueado */
+        #main-app {
+            display: none;
+            max-width: 600px;
+        }
+
+        .workout-card {
+            background: #2b2b2b;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>SISTEMA DE ENTRENAMIENTO PRO</h1>
-        
-        <label>Atleta</label>
-        <input type="text" id="nombreAtleta" placeholder="Nombre del alumno">
-        
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;"><label>Peso (kg)</label><input type="number" id="peso" placeholder="70"></div>
-            <div style="flex: 1;"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175"></div>
+    <div id="login-container" class="container">
+        <h2>🏋️‍♂️ Acceso Pedro v1.1</h2>
+        <p>Registra tu usuario o inicia sesión</p>
+        <div class="form-group">
+            <input type="text" id="username" placeholder="Nombre de usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <div class="button-group">
+                <button onclick="login()" class="btn-login">Entrar</button>
+                <button onclick="register()" class="btn-register">Registrar</button>
+            </div>
+        </div>
+        <div id="login-message"></div>
+    </div>
+
+    <div id="main-app" class="container">
+        <h1>Mi Planificador Pro</h1>
+        <div class="workout-card">
+            <p><strong>Estado:</strong> Sesión Iniciada correctamente.</p>
+            <p>Bienvenido de nuevo a tu plataforma de entrenamiento profesional.</p>
         </div>
         
-        <label>Nivel de Intensidad</label>
-        <select id="nivel">
-            <option value="principiante">Principiante (3 Ejercicios)</option>
-            <option value="avanzado">Avanzado (4 Ejercicios)</option>
-        </select>
+        <div id="ejercicios-container">
+             </div>
 
-        <label>Grupo Muscular</label>
-        <select id="musculo">
-            <optgroup label="TREN SUPERIOR">
-                <option value="pectoral">Pectoral</option>
-                <option value="espalda">Espalda</option>
-                <option value="hombros">Hombros</option>
-                <option value="biceps">Bíceps</option>
-                <option value="triceps">Tríceps</option>
-                <option value="trapecio">Trapecio</option>
-            </optgroup>
-            <optgroup label="TREN INFERIOR">
-                <option value="gluteos">Glúteos</option>
-                <option value="isquios">Isquiotibiales</option>
-                <option value="cuadriceps">Cuádriceps</option>
-                <option value="pantorrilla">Pantorrilla</option>
-            </optgroup>
-        </select>
-
-        <button onclick="generarPlan()">GENERAR RUTINA</button>
-        <div id="pantalla"></div>
+        <button onclick="logout()" class="btn-logout">Cerrar Sesión Segura</button>
     </div>
 
     <script>
-        const rutinas = {
-            // TREN SUPERIOR
-            pectoral: {
-                principiante: [{n: "Press Plano", v: "oSmc5Gg1wLY"}, {n: "Flexiones", v: "12ygQclsa9Q"}, {n: "Aperturas", v: "YB6PwKTnKnw"}],
-                avanzado: [{n: "Press Inclinado", v: "VB09kLgJDo0"}, {n: "Cruces Polea", v: "YB6PwKTnKnw"}, {n: "Press Mancuerna", v: "oSmc5Gg1wLY"}, {n: "Fondos", v: "4VuCF75s6jE"}]
-            },
-            espalda: {
-                principiante: [{n: "Jalón al Pecho", v: "LiA9S8T77f8"}, {n: "Remo Bajo", v: "RyBbL1ei_8w"}, {n: "Remo Mancuerna", v: "7ouN8tVnQcM"}],
-                avanzado: [{n: "Dominadas", v: "LiA9S8T77f8"}, {n: "Remo con Barra", v: "RyBbL1ei_8w"}, {n: "Pull Over", v: "7ouN8tVnQcM"}, {n: "Peso Muerto", v: "-f9WEiUaoyA"}]
-            },
-            hombros: {
-                principiante: [{n: "Press Mancuernas", v: "0lFdDyLLE3k"}, {n: "Vuelos Laterales", v: "2yavFdPCqPE"}, {n: "Vuelos Frontales", v: "k--2nDZMxPU"}],
-                avanzado: [{n: "Press Militar", v: "0lFdDyLLE3k"}, {n: "Laterales Polea", v: "2yavFdPCqPE"}, {n: "Press Arnold", v: "FfvaIzSnogs"}, {n: "Face Pull", v: "5qwWEwRiTrk"}]
-            },
-            biceps: {
-                principiante: [{n: "Curl Barra", v: "jlFl7WJ1TzI"}, {n: "Curl Martillo", v: "jlFl7WJ1TzI"}, {n: "Curl Polea", v: "jlFl7WJ1TzI"}],
-                avanzado: [{n: "Curl Z", v: "jlFl7WJ1TzI"}, {n: "Curl Inclinado", v: "jlFl7WJ1TzI"}, {n: "Concentrado", v: "jlFl7WJ1TzI"}, {n: "Curl Araña", v: "jlFl7WJ1TzI"}]
-            },
-            triceps: {
-                principiante: [{n: "Polea Alta", v: "S7NrsueBHhA"}, {n: "Copa Mancuerna", v: "S7NrsueBHhA"}, {n: "Patada Triceps", v: "S7NrsueBHhA"}],
-                avanzado: [{n: "Press Francés", v: "S7NrsueBHhA"}, {n: "Fondos", v: "4VuCF75s6jE"}, {n: "Polea Cuerda", v: "S7NrsueBHhA"}, {n: "Press Cerrado", v: "VB09kLgJDo0"}]
-            },
-            trapecio: {
-                principiante: [{n: "Encogimientos", v: "jlFl7WJ1TzI"}, {n: "Remo al Mentón", v: "jlFl7WJ1TzI"}, {n: "Giros Hombros", v: "jlFl7WJ1TzI"}],
-                avanzado: [{n: "Encogimientos Barra", v: "jlFl7WJ1TzI"}, {n: "Remo Mentón Polea", v: "jlFl7WJ1TzI"}, {n: "Paseo Granjero", v: "jlFl7WJ1TzI"}, {n: "Face Pull Alto", v: "5qwWEwRiTrk"}]
-            },
-            // TREN INFERIOR
-            gluteos: {
-                principiante: [{n: "Puente Glúteo", v: "bnJ5WXSnW98"}, {n: "Abducciones", v: "Z2X5w4_eiH8"}, {n: "Patada Polea", v: "f0SMNtfjUFs"}],
-                avanzado: [{n: "Hip Thrust", v: "bnJ5WXSnW98"}, {n: "Búlgara", v: "Z2X5w4_eiH8"}, {n: "Peso Muerto Rumano", v: "-f9WEiUaoyA"}, {n: "Step Up", v: "f0SMNtfjUFs"}]
-            },
-            isquios: {
-                principiante: [{n: "Curl Femoral", v: "Z2X5w4_eiH8"}, {n: "Peso Muerto Rumano", v: "-f9WEiUaoyA"}, {n: "Buenos Días", v: "Z2X5w4_eiH8"}],
-                avanzado: [{n: "Curl Tumbado", v: "Z2X5w4_eiH8"}, {n: "Stiff Leg Deadlift", v: "-f9WEiUaoyA"}, {n: "Curl Unilateral", v: "Z2X5w4_eiH8"}, {n: "Hiperextensiones", v: "7ouN8tVnQcM"}]
-            },
-            cuadriceps: {
-                principiante: [{n: "Sentadilla Libre", v: "bnJ5WXSnW98"}, {n: "Prensa", v: "Z2X5w4_eiH8"}, {n: "Extensiones", v: "f0SMNtfjUFs"}],
-                avanzado: [{n: "Sentadilla Barra", v: "bnJ5WXSnW98"}, {n: "Hack Squat", v: "F0-vWlLaVPM"}, {n: "Estocadas", v: "z6AbAusrcGk"}, {n: "Sissy Squat", v: "Z2X5w4_eiH8"}]
-            },
-            pantorrilla: {
-                principiante: [{n: "Elevación Talones", v: "Z2X5w4_eiH8"}, {n: "Elevación Sentado", v: "Z2X5w4_eiH8"}, {n: "Prensa Pantorrilla", v: "Z2X5w4_eiH8"}],
-                avanzado: [{n: "Unilateral Mancuerna", v: "Z2X5w4_eiH8"}, {n: "Elevación en Máquina", v: "Z2X5w4_eiH8"}, {n: "Saltos Soga", v: "Z2X5w4_eiH8"}, {n: "Tibial Anterior", v: "Z2X5w4_eiH8"}]
-            }
-        };
+        /* JAVASCRIPT: LÓGICA DE BASE DE DATOS LOCAL */
 
-        function generarPlan() {
-            const nombre = document.getElementById('nombreAtleta').value;
-            const niv = document.getElementById('nivel').value;
-            const mus = document.getElementById('musculo').value;
-            const peso = document.getElementById('peso').value;
-            const altura = document.getElementById('altura').value;
-            const divPantalla = document.getElementById('pantalla');
+        const loginContainer = document.getElementById("login-container");
+        const mainApp = document.getElementById("main-app");
+        const message = document.getElementById("login-message");
 
-            if(!nombre) { alert("Por favor, ingresa el nombre del atleta"); return; }
-            
-            divPantalla.style.display = "block";
-            divPantalla.innerHTML = "";
+        // Función para REGISTRAR nuevos usuarios
+        function register() {
+            const user = document.getElementById("username").value;
+            const pass = document.getElementById("password").value;
 
-            if (peso > 0 && altura > 0) {
-                const imc = (peso / ((altura/100)**2)).toFixed(1);
-                divPantalla.innerHTML += `<div class="imc-box">📊 IMC: ${imc} | Atleta: ${nombre}</div>`;
+            if (user === "" || pass === "") {
+                showMessage("Por favor, llena ambos campos", "orange");
+                return;
             }
 
-            const lista = rutinas[mus][niv];
-            divPantalla.innerHTML += `<p><span class="tag">${mus.toUpperCase()}</span> <span class="tag" style="background:#fff">${niv.toUpperCase()}</span></p>`;
+            // Guardamos en LocalStorage (Base de datos del navegador)
+            localStorage.setItem(user, pass); 
+            showMessage("¡Usuario registrado! Ahora puedes entrar.", "#4CAF50");
+        }
 
-            lista.forEach(ej => {
-                divPantalla.innerHTML += `
-                    <div class="ejercicio">
-                        <strong>🔥 ${ej.n}</strong>
-                        <div class="video-container">
-                            <iframe src="https://www.youtube.com/embed/${ej.v}" allowfullscreen></iframe>
-                        </div>
-                    </div>`;
-            });
-            
-            // Auto-scroll al resultado
-            divPantalla.scrollIntoView({ behavior: 'smooth' });
+        // Función para INICIAR SESIÓN
+        function login() {
+            const user = document.getElementById("username").value;
+            const pass = document.getElementById("password").value;
+            const savedPass = localStorage.getItem(user);
+
+            if (savedPass && savedPass === pass) {
+                // Si la clave coincide, mostramos la web
+                loginContainer.style.display = "none";
+                mainApp.style.display = "block";
+                console.log("Acceso concedido para: " + user);
+            } else {
+                showMessage("Usuario o contraseña incorrectos", "#f44336");
+            }
+        }
+
+        // Función para CERRAR SESIÓN
+        function logout() {
+            location.reload(); // Recarga la página y vuelve al login
+        }
+
+        // Función auxiliar para mostrar mensajes en pantalla
+        function showMessage(text, color) {
+            message.innerText = text;
+            message.style.color = color;
         }
     </script>
 </body>
