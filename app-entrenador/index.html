@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.0</title>
+    <title>Pedro Alfonso - Coach System v1.2</title>
     <style>
-        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; }
+        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
-        h1, h2 { color: var(--primary); text-align: center; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        input, select { background: #333; color: white; }
+        .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
+        h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
+        label { display: block; font-size: 0.75rem; color: #888; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
+        input, select { background: #333; color: white; outline: none; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        button.secondary { background: #444; color: white; }
+        button:hover { background: #b8de00; transform: translateY(-2px); }
+        button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 3px solid var(--primary); }
-        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
+        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
+        .atleta-nombre { color: var(--primary); font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -24,76 +28,100 @@
 <div class="container">
     <div id="section-auth" class="card">
         <h1>🏋️‍♂️ COACH SYSTEM PRO</h1>
-        <div id="auth-form">
-            <input type="text" id="auth-user" placeholder="Usuario">
-            <input type="password" id="auth-pass" placeholder="Contraseña">
-            <select id="auth-role">
-                <option value="alumno">Soy Alumno</option>
-                <option value="profe">Soy el Profe Pedro</option>
-            </select>
-            <button onclick="login()">Entrar</button>
-            <button class="secondary" onclick="register()">Registrar Nuevo</button>
-        </div>
+        <p style="text-align: center; font-size: 0.8rem; color: #888;">Ingresa tus datos de acceso</p>
+        <input type="text" id="auth-user" placeholder="Usuario (ej: juan)">
+        <input type="password" id="auth-pass" placeholder="Contraseña (ej: 123)">
+        <select id="auth-role">
+            <option value="alumno">Soy Alumno</option>
+            <option value="profe">Soy el Profe Pedro</option>
+        </select>
+        <button onclick="login()">Entrar al Sistema</button>
+        <button class="secondary" onclick="register()">Registrar Nuevo Usuario</button>
+        <p style="text-align: center; font-size: 0.7rem; margin-top: 15px; color: #555;">Alumno de prueba: <b>juan</b> / Clave: <b>123</b></p>
     </div>
 
     <div id="section-profe" class="card hidden">
         <h2>Panel del Entrenador</h2>
-        <p>Bienvenido, Profe Pedro.</p>
-        <hr>
-        <h3>Asignar Rutina a Alumno</h3>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre exacto del alumno">
-        <input type="text" id="p-ejercicio" placeholder="Nombre del Ejercicio (ej: Press Banca)">
-        <input type="text" id="p-series" placeholder="Series y Repes (ej: 4x12)">
-        <button onclick="asignarRutina()">Asignar Ejercicio</button>
-        <button class="secondary" onclick="logout()">Cerrar Sesión</button>
+        <p style="text-align: center;">Bienvenido, Profe Pedro.</p>
+        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
+        
+        <h3>Asignar Ejercicios</h3>
+        <label>Nombre del Alumno</label>
+        <input type="text" id="p-nombre-alumno" placeholder="ej: juan">
+        <label>Ejercicio</label>
+        <input type="text" id="p-ejercicio" placeholder="ej: Press Militar">
+        <label>Series y Repeticiones</label>
+        <input type="text" id="p-series" placeholder="ej: 4x12">
+        <button onclick="asignarRutina()">Guardar en la Rutina</button>
+
+        <hr style="border:0; border-top:1px solid #333; margin: 25px 0;">
+        
+        <h3>Control de Pesos</h3>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver lo que anotó el alumno</button>
+        <div id="visor-progreso" class="visor-alumno hidden"></div>
+        
+        <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
-        <h2>Mi Entrenamiento</h2>
-        <p>Hola, <span id="display-alumno-name"></span></p>
-        <div id="lista-rutina">
-            </div>
+        <h2>Mi Plan de Entrenamiento</h2>
+        <p style="text-align: center;">Atleta: <span id="display-alumno-name" class="atleta-nombre"></span></p>
+        <div id="lista-rutina"></div>
         <button class="secondary" onclick="logout()" style="margin-top:20px">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
-    // --- LÓGICA DE DATOS ---
-    // Estructura en LocalStorage: 
-    // users: { "nombre": {pass: "123", role: "profe"} }
-    // rutinas: { "alumnoNombre": [{ejercicio: "Press", series: "4x12", peso: "0"}] }
-
-    function register() {
-        const u = document.getElementById('auth-user').value;
-        const p = document.getElementById('auth-pass').value;
-        const r = document.getElementById('auth-role').value;
-        if(!u || !p) return alert("Completa los datos");
-
+    // --- INICIALIZACIÓN AUTOMÁTICA DE JUAN ---
+    function inicializarSistema() {
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        if(users[u]) return alert("El usuario ya existe");
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
 
-        users[u] = { pass: p, role: r };
-        localStorage.setItem('gym_users', JSON.stringify(users));
-        alert("Registro exitoso como " + r);
+        // Creamos a Juan si el sistema está nuevo
+        if (!users["juan"]) {
+            users["juan"] = { pass: "123", role: "alumno" };
+            rutinas["juan"] = [
+                { nombre: "Press de Banca", series: "4x10", peso: "60kg" },
+                { nombre: "Sentadilla Libre", series: "4x12", peso: "100kg" }
+            ];
+            localStorage.setItem('gym_users', JSON.stringify(users));
+            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+            console.log("Datos de prueba (Juan) cargados correctamente.");
+        }
     }
 
+    // Ejecutar al abrir la página
+    inicializarSistema();
+
+    // --- LÓGICA DE ACCESO (LOGIN/REGISTRO) ---
     function login() {
-        const u = document.getElementById('auth-user').value;
+        const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
 
-        if(users[u] && users[u].pass === p) {
+        if (users[u] && users[u].pass === p) {
             sessionStorage.setItem('active_user', u);
-            sessionStorage.setItem('active_role', users[u].role);
             showPanel(users[u].role, u);
         } else {
-            alert("Datos incorrectos");
+            alert("Acceso denegado. Verifica usuario y clave.");
         }
+    }
+
+    function register() {
+        const u = document.getElementById('auth-user').value.toLowerCase().trim();
+        const p = document.getElementById('auth-pass').value;
+        const r = document.getElementById('auth-role').value;
+        if (!u || !p) return alert("Completa todos los campos.");
+
+        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        users[u] = { pass: p, role: r };
+        localStorage.setItem('gym_users', JSON.stringify(users));
+        alert("Usuario '" + u + "' registrado con éxito.");
     }
 
     function showPanel(role, username) {
         document.getElementById('section-auth').classList.add('hidden');
-        if(role === 'profe') {
+        if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
@@ -102,46 +130,71 @@
         }
     }
 
-    // --- FUNCIONES DEL PROFE ---
+    // --- FUNCIONES DEL ENTRENADOR ---
     function asignarRutina() {
-        const alumno = document.getElementById('p-nombre-alumno').value;
+        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const ej = document.getElementById('p-ejercicio').value;
-        const ser = document.getElementById('p-series').value;
-
-        if(!alumno || !ej) return alert("Escribe el nombre del alumno y el ejercicio");
+        const se = document.getElementById('p-series').value;
+        
+        if (!al || !ej) return alert("Escribe el nombre del alumno y el ejercicio.");
 
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        if(!rutinas[alumno]) rutinas[alumno] = [];
+        if (!rutinas[al]) rutinas[al] = [];
 
-        rutinas[alumno].push({ nombre: ej, series: ser, peso: "" });
+        rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Ejercicio asignado a " + alumno);
+        alert("Ejercicio añadido a la lista de " + al);
+        document.getElementById('p-ejercicio').value = "";
+    }
+
+    function verProgreso() {
+        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
+        const visor = document.getElementById('visor-progreso');
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+
+        if (!al || !rutinas[al]) return alert("Ese alumno no tiene rutinas registradas.");
+
+        visor.classList.remove('hidden');
+        visor.innerHTML = `<h4>Historial de ${al.toUpperCase()}:</h4>`;
+        rutinas[al].forEach(item => {
+            visor.innerHTML += `
+                <div style="font-size:0.85rem; padding:8px 0; border-bottom:1px solid #333;">
+                    <b>${item.nombre}</b>: <span style="color:var(--accent)">${item.peso || 'No anotó peso aún'}</span>
+                </div>`;
+        });
     }
 
     // --- FUNCIONES DEL ALUMNO ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        const miRutina = rutinas[u] || [];
+        const miRutina = rutinas[u.toLowerCase().trim()] || [];
 
-        container.innerHTML = miRutina.length ? "" : "<p>No tienes ejercicios asignados aún.</p>";
+        if (miRutina.length === 0) {
+            container.innerHTML = "<p style='color:#666; text-align:center;'>Pide a Pedro que te asigne una rutina para empezar.</p>";
+            return;
+        }
 
+        container.innerHTML = "";
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" placeholder="Peso levantado (ej: 60kg)" 
-                           value="${item.peso}" 
+                    <label>Anotar peso levantado:</label>
+                    <input type="text" placeholder="Ej: 80kg" value="${item.peso || ''}" 
                            onchange="actualizarPeso('${u}', ${index}, this.value)">
-                </div>
-            `;
+                </div>`;
         });
     }
 
     function actualizarPeso(alumno, index, valor) {
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        rutinas[alumno][index].peso = valor;
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+        const key = alumno.toLowerCase().trim();
+        if (rutinas[key]) {
+            rutinas[key][index].peso = valor;
+            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+            console.log("Peso guardado.");
+        }
     }
 
     function logout() {
@@ -149,6 +202,5 @@
         location.reload();
     }
 </script>
-
 </body>
 </html>
