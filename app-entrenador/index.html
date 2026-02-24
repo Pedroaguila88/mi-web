@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.5</title>
+    <title>Pedro Alfonso - Coach System v1.6</title>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
@@ -21,9 +21,12 @@
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
+        
+        /* ESTILOS PARA EL VISOR DEL PROFE */
+        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
         .item-progreso { border-bottom: 1px solid #333; padding: 12px 0; }
-        .fecha-update { display: block; font-size: 0.7rem; color: var(--accent); margin-top: 4px; }
+        .txt-peso { color: var(--primary); font-size: 1.1rem; font-weight: bold; display: block; margin-top: 5px; }
+        .txt-fecha { color: var(--accent); font-size: 0.8rem; font-weight: bold; display: block; margin-top: 5px; background: rgba(0, 212, 255, 0.1); padding: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -49,8 +52,8 @@
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">Agregar a la Rutina</button>
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <h3>Gestión y Seguimiento</h3>
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina y Tiempos</button>
+        <h3>Seguimiento de Pesos</h3>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina y Fecha</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
         <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
@@ -70,7 +73,7 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!users["juan"]) {
             users["juan"] = { pass: "123", role: "alumno" };
-            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg", fecha: "2026-02-23 10:00" }];
+            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg", fecha: "23/2/2026 23:55" }];
             localStorage.setItem('gym_users', JSON.stringify(users));
             localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         }
@@ -108,7 +111,6 @@
         }
     }
 
-    // --- FUNCIONES PROFE ---
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const ej = document.getElementById('p-ejercicio').value;
@@ -116,7 +118,7 @@
         if (!al || !ej) return alert("Faltan datos");
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = [];
-        rutinas[al].push({ nombre: ej, series: se, peso: "", fecha: "Nunca" });
+        rutinas[al].push({ nombre: ej, series: se, peso: "", fecha: "Sin registros" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         alert("Ejercicio agregado");
         document.getElementById('p-ejercicio').value = "";
@@ -126,22 +128,25 @@
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const visor = document.getElementById('visor-progreso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+        
         if (!rutinas[al] || rutinas[al].length === 0) {
             visor.classList.remove('hidden');
-            visor.innerHTML = "<p>Sin rutina cargada.</p>";
+            visor.innerHTML = "<p>No se encontró rutina para este alumno.</p>";
             return;
         }
+
         visor.classList.remove('hidden');
-        visor.innerHTML = `<h4>Seguimiento: ${al.toUpperCase()}</h4>`;
+        visor.innerHTML = `<h3 style="color:var(--accent)">ALUMNO: ${al.toUpperCase()}</h3>`;
+        
         rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
                 <div class="item-progreso">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>${item.nombre}</strong>
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${item.nombre} (${item.series})</strong>
                         <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Borrar</button>
                     </div>
-                    <span style="color:var(--primary)">Peso: ${item.peso || 'S/D'}</span>
-                    <span class="fecha-update">📅 Modificado: ${item.fecha || 'Sin registro'}</span>
+                    <span class="txt-peso">Peso registrado: ${item.peso || 'S/D'}</span>
+                    <span class="txt-fecha">📅 ÚLTIMO CAMBIO: ${item.fecha || 'No hay fecha'}</span>
                 </div>`;
         });
     }
@@ -153,13 +158,12 @@
         verProgreso();
     }
 
-    // --- FUNCIONES ALUMNO ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         const miRutina = rutinas[u.toLowerCase()] || [];
         if(miRutina.length === 0) {
-            container.innerHTML = "<p>Sin rutina asignada.</p>";
+            container.innerHTML = "<p>Pide al Profe Pedro tu rutina.</p>";
             document.getElementById('btn-save-rutina').classList.add('hidden');
             return;
         }
@@ -169,7 +173,7 @@
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <label>Peso de hoy:</label>
+                    <label>Anotar Peso:</label>
                     <input type="text" class="input-peso" data-index="${index}" placeholder="Ej: 80kg" value="${item.peso || ''}">
                 </div>`;
         });
@@ -180,15 +184,13 @@
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         
-        // Obtener fecha y hora actual
         const ahora = new Date();
         const fechaFormateada = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
         inputs.forEach(input => {
             const index = input.getAttribute('data-index');
             const nuevoPeso = input.value;
-            
-            // Solo actualiza la fecha si el peso cambió o si es la primera vez que guarda
+            // Solo actualiza la fecha si el valor escrito es distinto al que ya estaba
             if(rutinas[user][index].peso !== nuevoPeso) {
                 rutinas[user][index].peso = nuevoPeso;
                 rutinas[user][index].fecha = fechaFormateada;
@@ -196,7 +198,7 @@
         });
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("💪 ¡Progreso y tiempo guardados!");
+        alert("💪 ¡Datos guardados! El Profe ya puede ver tu progreso.");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
