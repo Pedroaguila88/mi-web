@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.9 (Gráficos)</title>
+    <title>Pedro Alfonso - Coach System v2.0 (Colores)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
@@ -23,16 +23,14 @@
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
         .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 10px; border-radius: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; }
         .registro-historial { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        
-        /* ESTILO PARA EL CONTENEDOR DEL GRÁFICO */
-        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 300px; }
+        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 350px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM PRO</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM PRO v2.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -49,22 +47,17 @@
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series">
         <button onclick="asignarRutina()">Agregar Ejercicio</button>
-        
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
         <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Alumno & Gráfico</button>
-        
         <div id="visor-progreso" class="visor-alumno hidden"></div>
-
         <div id="section-chart" class="chart-container hidden">
-            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Curva de Cargas</h4>
+            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Análisis Multivariable de Cargas</h4>
             <canvas id="progresoChart"></canvas>
         </div>
-
         <div id="sub-ventana-historial" class="hidden">
-            <h4 style="color:var(--accent); text-align:center;">📜 Bitácora</h4>
+            <h4 style="color:var(--accent); text-align:center;">📜 Historial</h4>
             <div id="lista-historial" class="sub-ventana-historial"></div>
         </div>
-
         <button class="secondary" onclick="logout()" style="margin-top: 30px;">Cerrar Sesión</button>
     </div>
 
@@ -78,7 +71,8 @@
 </div>
 
 <script>
-    let miGrafico = null; // Variable global para el gráfico
+    let miGrafico = null;
+    const coloresPalette = ['#d4ff00', '#00d4ff', '#ff4444', '#ff8800', '#aa00ff', '#00ff88', '#ffffff'];
 
     function init() {
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
@@ -140,7 +134,6 @@
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const visor = document.getElementById('visor-progreso');
         const sectionChart = document.getElementById('section-chart');
-        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
 
@@ -156,13 +149,11 @@
                 </div>`;
         });
 
-        // Lógica del Historial y Gráfico
         const misRegistros = historial[al] || [];
         if(misRegistros.length > 0) {
             sectionChart.classList.remove('hidden');
             document.getElementById('sub-ventana-historial').classList.remove('hidden');
             actualizarGrafico(misRegistros);
-            
             const listaH = document.getElementById('lista-historial');
             listaH.innerHTML = "";
             [...misRegistros].reverse().forEach(reg => {
@@ -173,38 +164,39 @@
 
     function actualizarGrafico(datos) {
         const ctx = document.getElementById('progresoChart').getContext('2d');
+        const ultimosDatos = datos.slice(-30); // Analizamos más datos
+        const fechas = [...new Set(ultimosDatos.map(d => d.fecha.split(' ')[0]))]; // Fechas únicas para el eje X
         
-        // Extraemos etiquetas (fechas) y valores (pesos)
-        // Tomamos los últimos 10 registros para que no se vea amontonado
-        const ultimosDatos = datos.slice(-10);
-        const labels = ultimosDatos.map(d => d.fecha.split(' ')[0]); // Solo la fecha, sin hora
-        const valores = ultimosDatos.map(d => parseFloat(d.peso.replace(/[^0-9.]/g, "")));
+        // Agrupamos datos por ejercicio
+        const ejerciciosUnicos = [...new Set(ultimosDatos.map(d => d.ejercicio))];
+        const datasets = ejerciciosUnicos.map((ej, i) => {
+            return {
+                label: ej,
+                data: fechas.map(f => {
+                    const reg = ultimosDatos.find(d => d.ejercicio === ej && d.fecha.startsWith(f));
+                    return reg ? parseFloat(reg.peso.replace(/[^0-9.]/g, "")) : null;
+                }),
+                borderColor: coloresPalette[i % coloresPalette.length],
+                borderWidth: 2,
+                tension: 0.3,
+                spanGaps: true // Conecta puntos aunque falten días
+            };
+        });
 
-        if (miGrafico) miGrafico.destroy(); // Destruir gráfico anterior para recargar
-
+        if (miGrafico) miGrafico.destroy();
         miGrafico = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Carga Total (kg)',
-                    data: valores,
-                    borderColor: '#d4ff00',
-                    backgroundColor: 'rgba(212, 255, 0, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: true,
-                    pointBackgroundColor: '#00d4ff'
-                }]
-            },
+            data: { labels: fechas, datasets: datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: false, grid: { color: '#333' } },
+                    y: { grid: { color: '#333' }, title: { display: true, text: 'kg', color: '#888' } },
                     x: { grid: { display: false } }
                 },
-                plugins: { legend: { display: false } }
+                plugins: {
+                    legend: { labels: { color: '#eee', boxWidth: 10, font: { size: 10 } } }
+                }
             }
         });
     }
@@ -235,7 +227,6 @@
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        
         if (!historial[user]) historial[user] = [];
         const ahora = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
