@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.6</title>
+    <title>Pedro Alfonso - Coach System v1.7</title>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
@@ -19,14 +19,16 @@
         button.btn-save { background: var(--success); color: white; margin-top: 20px; }
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; }
         .hidden { display: none; }
+        
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         
-        /* ESTILOS PARA EL VISOR DEL PROFE */
+        /* ESTILOS DEL VISOR Y SUB-VENTANA HISTORIAL */
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
-        .item-progreso { border-bottom: 1px solid #333; padding: 12px 0; }
-        .txt-peso { color: var(--primary); font-size: 1.1rem; font-weight: bold; display: block; margin-top: 5px; }
-        .txt-fecha { color: var(--accent); font-size: 0.8rem; font-weight: bold; display: block; margin-top: 5px; background: rgba(0, 212, 255, 0.1); padding: 5px; border-radius: 4px; }
+        .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto; }
+        .registro-historial { font-size: 0.75rem; padding: 8px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .txt-fecha-h { color: var(--accent); }
+        .txt-peso-h { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -51,10 +53,18 @@
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">Agregar a la Rutina</button>
+        
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <h3>Seguimiento de Pesos</h3>
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina y Fecha</button>
+        
+        <h3>Seguimiento y Bitácora</h3>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina Actual</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
+        
+        <div id="sub-ventana-historial" class="hidden">
+            <h4 style="color:var(--accent); text-align:center; margin-top:15px;">📜 HISTORIAL DE CAMBIOS</h4>
+            <div id="lista-historial" class="sub-ventana-historial"></div>
+        </div>
+
         <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
 
@@ -69,13 +79,10 @@
 
 <script>
     function init() {
-        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        if (!users["juan"]) {
-            users["juan"] = { pass: "123", role: "alumno" };
-            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg", fecha: "23/2/2026 23:55" }];
-            localStorage.setItem('gym_users', JSON.stringify(users));
-            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        if (!localStorage.getItem('gym_users')) {
+            localStorage.setItem('gym_users', JSON.stringify({"juan": {pass: "123", role: "alumno"}}));
+            localStorage.setItem('gym_rutinas', JSON.stringify({"juan": [{nombre: "Press Banca", series: "4x10", peso: "60kg"}]}));
+            localStorage.setItem('gym_historial', JSON.stringify({"juan": []}));
         }
     }
     init();
@@ -111,6 +118,7 @@
         }
     }
 
+    // --- FUNCIONES PROFE ---
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const ej = document.getElementById('p-ejercicio').value;
@@ -118,63 +126,56 @@
         if (!al || !ej) return alert("Faltan datos");
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = [];
-        rutinas[al].push({ nombre: ej, series: se, peso: "", fecha: "Sin registros" });
+        rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         alert("Ejercicio agregado");
-        document.getElementById('p-ejercicio').value = "";
     }
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const visor = document.getElementById('visor-progreso');
+        const subVentana = document.getElementById('sub-ventana-historial');
+        const listaH = document.getElementById('lista-historial');
+        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        
-        if (!rutinas[al] || rutinas[al].length === 0) {
-            visor.classList.remove('hidden');
-            visor.innerHTML = "<p>No se encontró rutina para este alumno.</p>";
-            return;
-        }
+        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
 
+        if (!rutinas[al]) return alert("Alumno sin datos.");
+
+        // Mostrar Rutina Actual
         visor.classList.remove('hidden');
-        visor.innerHTML = `<h3 style="color:var(--accent)">ALUMNO: ${al.toUpperCase()}</h3>`;
-        
+        visor.innerHTML = `<h4>RUTINA ACTUAL: ${al.toUpperCase()}</h4>`;
         rutinas[al].forEach((item, index) => {
-            visor.innerHTML += `
-                <div class="item-progreso">
-                    <div style="display:flex; justify-content:space-between;">
-                        <strong>${item.nombre} (${item.series})</strong>
-                        <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Borrar</button>
-                    </div>
-                    <span class="txt-peso">Peso registrado: ${item.peso || 'S/D'}</span>
-                    <span class="txt-fecha">📅 ÚLTIMO CAMBIO: ${item.fecha || 'No hay fecha'}</span>
+            visor.innerHTML += `<div style="margin-bottom:8px;">${item.nombre}: <b>${item.peso || 'S/D'}</b></div>`;
+        });
+
+        // Mostrar Historial en Sub-ventana
+        subVentana.classList.remove('hidden');
+        const misRegistros = historial[al] || [];
+        listaH.innerHTML = misRegistros.length ? "" : "<p style='font-size:0.7rem;'>No hay registros previos.</p>";
+        
+        // Ordenar historial para que lo más nuevo salga arriba
+        [...misRegistros].reverse().forEach(reg => {
+            listaH.innerHTML += `
+                <div class="registro-historial">
+                    <span class="txt-fecha-h">${reg.fecha}</span>
+                    <span>${reg.ejercicio}</span>
+                    <span class="txt-peso-h">${reg.peso}</span>
                 </div>`;
         });
     }
 
-    function eliminarEjercicio(alumno, index) {
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        rutinas[alumno].splice(index, 1);
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        verProgreso();
-    }
-
+    // --- FUNCIONES ALUMNO ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         const miRutina = rutinas[u.toLowerCase()] || [];
-        if(miRutina.length === 0) {
-            container.innerHTML = "<p>Pide al Profe Pedro tu rutina.</p>";
-            document.getElementById('btn-save-rutina').classList.add('hidden');
-            return;
-        }
-        document.getElementById('btn-save-rutina').classList.remove('hidden');
         container.innerHTML = "";
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <label>Anotar Peso:</label>
-                    <input type="text" class="input-peso" data-index="${index}" placeholder="Ej: 80kg" value="${item.peso || ''}">
+                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Anote peso hoy" value="${item.peso || ''}">
                 </div>`;
         });
     }
@@ -183,22 +184,30 @@
         const user = sessionStorage.getItem('active_user');
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
         
-        const ahora = new Date();
-        const fechaFormateada = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        if (!historial[user]) historial[user] = [];
 
-        inputs.forEach(input => {
-            const index = input.getAttribute('data-index');
+        const ahora = new Date().toLocaleString();
+
+        inputs.forEach((input, index) => {
             const nuevoPeso = input.value;
-            // Solo actualiza la fecha si el valor escrito es distinto al que ya estaba
-            if(rutinas[user][index].peso !== nuevoPeso) {
+            const nombreEj = input.getAttribute('data-ej');
+
+            // Si el peso cambió, guardamos en el historial
+            if (rutinas[user][index].peso !== nuevoPeso && nuevoPeso !== "") {
+                historial[user].push({
+                    fecha: ahora,
+                    ejercicio: nombreEj,
+                    peso: nuevoPeso
+                });
                 rutinas[user][index].peso = nuevoPeso;
-                rutinas[user][index].fecha = fechaFormateada;
             }
         });
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("💪 ¡Datos guardados! El Profe ya puede ver tu progreso.");
+        localStorage.setItem('gym_historial', JSON.stringify(historial));
+        alert("💪 Historial actualizado.");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
