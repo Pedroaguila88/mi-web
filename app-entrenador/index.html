@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.3</title>
+    <title>Pedro Alfonso - Coach System v1.4</title>
     <style>
-        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; }
+        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
@@ -16,12 +16,13 @@
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         button:hover { background: #b8de00; transform: translateY(-2px); }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; float: right; }
+        button.btn-save { background: var(--success); color: white; margin-top: 20px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); overflow: hidden; }
+        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
         .item-progreso { border-bottom: 1px solid #333; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
     </style>
 </head>
 <body>
@@ -29,7 +30,6 @@
 <div class="container">
     <div id="section-auth" class="card">
         <h1>🏋️‍♂️ COACH SYSTEM PRO</h1>
-        <p style="text-align: center; font-size: 0.8rem; color: #888;">Panel de Acceso</p>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -47,12 +47,10 @@
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">Agregar a la Rutina</button>
-
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
         <h3>Gestión de Alumnos</h3>
         <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar / Editar Rutina</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
-        
         <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
 
@@ -60,12 +58,12 @@
         <h2>Mi Entrenamiento</h2>
         <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="lista-rutina"></div>
+        <button id="btn-save-rutina" class="btn-save" onclick="guardarRutinaAlumno()">✅ GUARDAR MI PROGRESO</button>
         <button class="secondary" onclick="logout()" style="margin-top:20px">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
-    // --- INICIALIZACIÓN ---
     function init() {
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
@@ -78,7 +76,6 @@
     }
     init();
 
-    // --- AUTH ---
     function login() {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
@@ -96,7 +93,7 @@
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r };
         localStorage.setItem('gym_users', JSON.stringify(users));
-        alert("Registrado");
+        alert("Usuario registrado.");
     }
 
     function showPanel(role, username) {
@@ -105,18 +102,17 @@
             document.getElementById('section-profe').classList.remove('hidden');
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
-            document.getElementById('display-alumno-name').innerText = username;
+            document.getElementById('display-alumno-name').innerText = username.toUpperCase();
             cargarRutinaAlumno(username);
         }
     }
 
-    // --- FUNCIONES PROFE (AGREGAR Y ELIMINAR) ---
+    // --- FUNCIONES PROFE ---
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const ej = document.getElementById('p-ejercicio').value;
         const se = document.getElementById('p-series').value;
         if (!al || !ej) return alert("Faltan datos");
-
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = [];
         rutinas[al].push({ nombre: ej, series: se, peso: "" });
@@ -130,52 +126,65 @@
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const visor = document.getElementById('visor-progreso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-
         if (!rutinas[al] || rutinas[al].length === 0) {
             visor.classList.remove('hidden');
-            visor.innerHTML = "<p>El alumno no tiene ejercicios.</p>";
+            visor.innerHTML = "<p>Sin rutina cargada.</p>";
             return;
         }
-
         visor.classList.remove('hidden');
         visor.innerHTML = `<h4>Rutina de ${al.toUpperCase()}:</h4>`;
         rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
                 <div class="item-progreso">
-                    <span>${item.nombre} (${item.series})</span>
-                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Eliminar</button>
+                    <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
+                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Borrar</button>
                 </div>`;
         });
     }
 
     function eliminarEjercicio(alumno, index) {
-        if(!confirm("¿Seguro que quieres borrar este ejercicio?")) return;
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         rutinas[alumno].splice(index, 1);
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        verProgreso(); // Refrescar vista
+        verProgreso();
     }
 
-    // --- FUNCIONES ALUMNO ---
+    // --- FUNCIONES ALUMNO (NUEVA LÓGICA DE GUARDADO) ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         const miRutina = rutinas[u.toLowerCase()] || [];
-        container.innerHTML = miRutina.length ? "" : "<p>No tienes ejercicios asignados.</p>";
+        
+        if(miRutina.length === 0) {
+            container.innerHTML = "<p>Aún no tienes rutina asignada.</p>";
+            document.getElementById('btn-save-rutina').classList.add('hidden');
+            return;
+        }
+
+        document.getElementById('btn-save-rutina').classList.remove('hidden');
+        container.innerHTML = "";
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" placeholder="Peso" value="${item.peso || ''}" 
-                           onchange="actualizarPeso('${u}', ${index}, this.value)">
+                    <label>Peso de hoy:</label>
+                    <input type="text" class="input-peso" data-index="${index}" placeholder="Ej: 80kg" value="${item.peso || ''}">
                 </div>`;
         });
     }
 
-    function actualizarPeso(alumno, index, valor) {
+    function guardarRutinaAlumno() {
+        const user = sessionStorage.getItem('active_user');
+        const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        rutinas[alumno.toLowerCase()][index].peso = valor;
+        
+        inputs.forEach(input => {
+            const index = input.getAttribute('data-index');
+            rutinas[user][index].peso = input.value;
+        });
+
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        alert("💪 ¡Progreso guardado con éxito, campeón!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
