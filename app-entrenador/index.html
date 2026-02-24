@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v2.5.2</title>
+    <title>Pedro Alfonso - Coach System v2.5.3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 15px; }
-        h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; font-size: 1.5rem; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
+        h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
-        input, select { background: #333; color: white; outline: none; border: 1px solid #444; }
+        input, select { background: #333; color: white; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
         button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; }
@@ -20,14 +20,14 @@
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .visor-profe-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--accent); min-height: 50px; }
+        .visor-profe-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v2.5.2</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v2.5.3</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -50,37 +50,36 @@
         </select>
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series">
-        <button onclick="asignarRutina()">ASIGNAR A ESE DÍA</button>
+        <button onclick="asignarRutina()">ASIGNAR AHORA</button>
         
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
         <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">VER PLAN SEMANAL</button>
         
         <div id="visor-progreso" class="hidden">
             <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
-                <button class="btn-day" id="btn-p-lunes" onclick="cambiarDiaVisor('lunes')">LUNES</button>
-                <button class="btn-day" id="btn-p-martes" onclick="cambiarDiaVisor('martes')">MARTES</button>
-                <button class="btn-day" id="btn-p-miercoles" onclick="cambiarDiaVisor('miercoles')">MIÉRCOLES</button>
-                <button class="btn-day" id="btn-p-jueves" onclick="cambiarDiaVisor('jueves')">JUEVES</button>
-                <button class="btn-day" id="btn-p-viernes" onclick="cambiarDiaVisor('viernes')">VIERNES</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUNES</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MARTES</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIÉRCOLES</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUEVES</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIERNES</button>
             </div>
             <div id="lista-ejercicios-visor" class="visor-profe-box"></div>
         </div>
-        
-        <button class="secondary" onclick="logout()" style="margin-top: 30px;">CERRAR SESIÓN</button>
+        <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
         <h2>Mi Plan Semanal</h2>
         <p>Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day" id="btn-a-lunes" onclick="cargarDiaAlumno('lunes')">Lunes</button>
-            <button class="btn-day" id="btn-a-martes" onclick="cargarDiaAlumno('martes')">Mar</button>
-            <button class="btn-day" id="btn-a-miercoles" onclick="cargarDiaAlumno('miercoles')">Mie</button>
-            <button class="btn-day" id="btn-a-jueves" onclick="cargarDiaAlumno('jueves')">Jue</button>
-            <button class="btn-day" id="btn-a-viernes" onclick="cargarDiaAlumno('viernes')">Vie</button>
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">Lunes</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">Mar</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">Mie</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">Jue</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">Vie</button>
         </div>
         <div id="lista-rutina"></div>
-        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
+        <button style="background:var(--success); color:white; margin-top:20px; padding:15px; width:100%; border-radius:8px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -89,18 +88,13 @@
     let diaActualVisor = 'lunes';
     let diaActualAlumno = 'lunes';
 
-    function init() {
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        if (!users["juan"]) {
-            users["juan"] = {pass: "123", role: "alumno"};
-            rutinas["juan"] = {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]};
-            localStorage.setItem('gym_users', JSON.stringify(users));
-            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-            localStorage.setItem('gym_historial', JSON.stringify({"juan": []}));
+    // FUNCIÓN DE AYUDA: Asegura que el alumno tenga la estructura de días
+    function asegurarEstructura(rutinas, al) {
+        if (!rutinas[al] || typeof rutinas[al] !== 'object' || Array.isArray(rutinas[al])) {
+            rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
         }
+        return rutinas;
     }
-    init();
 
     function login() {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
@@ -116,12 +110,20 @@
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
         const r = document.getElementById('auth-role').value;
+        if(!u || !p) return alert("Faltan datos");
+
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r };
         localStorage.setItem('gym_users', JSON.stringify(users));
+
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        rutinas[u] = {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]};
+        rutinas = asegurarEstructura(rutinas, u);
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+
+        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
+        if(!historial[u]) historial[u] = [];
+        localStorage.setItem('gym_historial', JSON.stringify(historial));
+
         alert("Usuario registrado.");
     }
 
@@ -141,49 +143,39 @@
         const dia = document.getElementById('p-dia-semana').value;
         const ej = document.getElementById('p-ejercicio').value;
         const se = document.getElementById('p-series').value;
-        
         if (!al || !ej) return alert("Faltan datos");
 
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        if (!rutinas[al]) rutinas[al] = {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]};
+        rutinas = asegurarEstructura(rutinas, al);
         
-        // Agregar el ejercicio al día seleccionado
         rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         
-        alert("Agregado al " + dia.toUpperCase());
-        
-        // Limpiar campos y forzar actualización del visor
+        alert("Agregado!");
         document.getElementById('p-ejercicio').value = "";
-        document.getElementById('p-series').value = "";
-        
-        // Mostrar el visor si estaba oculto y actualizar el día
-        document.getElementById('visor-progreso').classList.remove('hidden');
-        cambiarDiaVisor(dia); 
+        verProgreso(); 
     }
 
-    function cambiarDiaVisor(dia) {
+    function cambiarDiaVisor(dia, btn) {
         diaActualVisor = dia;
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const lista = document.getElementById('lista-ejercicios-visor');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        
-        // Actualizar UI de botones
+
         document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
-        const btn = document.getElementById('btn-p-' + dia);
         if(btn) btn.classList.add('active-day');
 
-        const diaRutina = rutinas[al]?.[dia] || [];
-        lista.innerHTML = `<h5 style="margin:0 0 10px 0; color:var(--accent)">${dia.toUpperCase()}</h5>`;
+        const diaRutina = rutinas[al] && rutinas[al][dia] ? rutinas[al][dia] : [];
+        lista.innerHTML = `<h5 style="color:var(--accent); margin:0 0 10px 0;">${dia.toUpperCase()}</h5>`;
         
         if(diaRutina.length === 0) {
-            lista.innerHTML += "<p style='color:#666;'>Vacio</p>";
+            lista.innerHTML += "<p>Vacio</p>";
         } else {
             diaRutina.forEach((item, index) => {
                 lista.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #222; padding-bottom:5px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #222;">
                         <span>${item.nombre} (<b>${item.peso || '-'}</b>)</span>
-                        <button class="btn-danger" style="width:auto; padding:2px 8px;" onclick="eliminarEjercicio('${al}','${dia}',${index})">X</button>
+                        <button onclick="eliminarEjercicio('${al}','${dia}',${index})" style="width:auto; padding:2px 5px; background:var(--danger); color:white;">X</button>
                     </div>`;
             });
         }
@@ -191,7 +183,7 @@
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if(!al) return alert("Ingresa nombre de alumno");
+        if(!al) return alert("Escribe nombre");
         document.getElementById('visor-progreso').classList.remove('hidden');
         cambiarDiaVisor(diaActualVisor);
     }
@@ -203,23 +195,23 @@
         cambiarDiaVisor(dia);
     }
 
-    function cargarDiaAlumno(dia) {
+    function cargarDiaAlumno(dia, btn) {
         diaActualAlumno = dia;
         const u = sessionStorage.getItem('active_user');
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         
         document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        document.getElementById('btn-a-' + dia).classList.add('active-day');
+        if(btn) btn.classList.add('active-day');
 
-        const miRutina = rutinas[u]?.[dia] || [];
-        container.innerHTML = miRutina.length ? "" : "<p style='text-align:center; color:#666;'>No hay rutina para hoy.</p>";
+        const miRutina = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
+        container.innerHTML = miRutina.length ? "" : "<p style='text-align:center; padding:20px;'>No hay rutina hoy.</p>";
         
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" class="input-peso" data-index="${index}" placeholder="Peso hoy" value="${item.peso || ''}">
+                    <input type="text" class="input-peso" data-index="${index}" placeholder="Tu peso" value="${item.peso || ''}">
                 </div>`;
         });
     }
@@ -243,7 +235,7 @@
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("✅ Rutina guardada.");
+        alert("✅ Guardado!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
