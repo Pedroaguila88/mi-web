@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v2.5 (Semanal)</title>
+    <title>Pedro Alfonso - Coach System v2.5.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
@@ -11,7 +11,7 @@
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 15px; }
         h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; font-size: 1.5rem; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; -webkit-appearance: none; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
         input, select { background: #333; color: white; outline: none; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
@@ -20,14 +20,14 @@
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .chart-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; background: #1a1a1a; border-radius: 12px; height: 300px; }
+        .visor-profe-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v2.5</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v2.5.1</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -40,7 +40,7 @@
 
     <div id="section-profe" class="card hidden">
         <h2>Panel Entrenador</h2>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre alumno">
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre alumno (ej: juan)">
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option>
             <option value="martes">Martes</option>
@@ -50,19 +50,20 @@
         </select>
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series">
-        <button onclick="asignarRutina()">Asignar a ese día</button>
-        <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver Plan Semanal / Gráfico</button>
+        <button onclick="asignarRutina()">Asignar Ejercicio</button>
         
-        <div id="visor-progreso" class="hidden" style="margin-top:20px;">
-            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-                <button class="btn-day active-day" onclick="cambiarDiaVisor('lunes')">Lunes</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('martes')">Martes</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('miercoles')">Miércoles</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('jueves')">Jueves</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('viernes')">Viernes</button>
+        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver Plan Semanal</button>
+        
+        <div id="visor-progreso" class="hidden">
+            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
+                <button class="btn-day" id="btn-p-lunes" onclick="cambiarDiaVisor('lunes')">Lun</button>
+                <button class="btn-day" id="btn-p-martes" onclick="cambiarDiaVisor('martes')">Mar</button>
+                <button class="btn-day" id="btn-p-miercoles" onclick="cambiarDiaVisor('miercoles')">Mie</button>
+                <button class="btn-day" id="btn-p-jueves" onclick="cambiarDiaVisor('jueves')">Jue</button>
+                <button class="btn-day" id="btn-p-viernes" onclick="cambiarDiaVisor('viernes')">Vie</button>
             </div>
-            <div id="lista-ejercicios-visor" class="card" style="background:#000; padding:10px;"></div>
+            <div id="lista-ejercicios-visor" class="visor-profe-box"></div>
         </div>
         
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
@@ -70,18 +71,16 @@
 
     <div id="section-alumno" class="card hidden">
         <h2>Mi Plan Semanal</h2>
-        <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
-        
-        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px; margin-bottom:10px;">
-            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes')">Lunes</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('martes')">Mar</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('miercoles')">Mie</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('jueves')">Jue</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('viernes')">Vie</button>
+        <p>Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
+        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
+            <button class="btn-day" id="btn-a-lunes" onclick="cargarDiaAlumno('lunes')">Lunes</button>
+            <button class="btn-day" id="btn-a-martes" onclick="cargarDiaAlumno('martes')">Mar</button>
+            <button class="btn-day" id="btn-a-miercoles" onclick="cargarDiaAlumno('miercoles')">Mie</button>
+            <button class="btn-day" id="btn-a-jueves" onclick="cargarDiaAlumno('jueves')">Jue</button>
+            <button class="btn-day" id="btn-a-viernes" onclick="cargarDiaAlumno('viernes')">Vie</button>
         </div>
-
         <div id="lista-rutina"></div>
-        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px; font-weight:bold;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
+        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -93,10 +92,7 @@
     function init() {
         if (!localStorage.getItem('gym_users')) {
             localStorage.setItem('gym_users', JSON.stringify({"juan": {pass: "123", role: "alumno"}}));
-            localStorage.setItem('gym_rutinas', JSON.stringify({"juan": {
-                lunes: [{nombre: "Press Banca", series: "4x10", peso: ""}],
-                martes: [], miercoles: [], jueves: [], viernes: []
-            }}));
+            localStorage.setItem('gym_rutinas', JSON.stringify({"juan": {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]}}));
             localStorage.setItem('gym_historial', JSON.stringify({"juan": []}));
         }
     }
@@ -119,15 +115,10 @@
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r };
         localStorage.setItem('gym_users', JSON.stringify(users));
-        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         rutinas[u] = {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]};
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        
-        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        historial[u] = [];
-        localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("Registrado con éxito.");
+        alert("Registrado.");
     }
 
     function showPanel(role, username) {
@@ -146,16 +137,14 @@
         const dia = document.getElementById('p-dia-semana').value;
         const ej = document.getElementById('p-ejercicio').value;
         const se = document.getElementById('p-series').value;
-        
         if (!al || !ej) return alert("Faltan datos");
-        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = {lunes:[], martes:[], miercoles:[], jueves:[], viernes:[]};
-        
         rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Ejercicio añadido al " + dia);
-        if(!document.getElementById('visor-progreso').classList.contains('hidden')) cambiarDiaVisor(dia);
+        alert("Agregado al " + dia);
+        document.getElementById('p-ejercicio').value = "";
+        cambiarDiaVisor(dia);
     }
 
     function cambiarDiaVisor(dia) {
@@ -165,22 +154,24 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         
         document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
-        event?.target.classList.add('active-day');
+        document.getElementById('btn-p-' + dia).classList.add('active-day');
 
         const diaRutina = rutinas[al]?.[dia] || [];
-        lista.innerHTML = `<h5>${dia.toUpperCase()}</h5>`;
-        if(diaRutina.length === 0) lista.innerHTML += "<p>Vacio</p>";
+        lista.innerHTML = `<h5 style="margin:0 0 10px 0; color:var(--accent)">Día: ${dia.toUpperCase()}</h5>`;
+        if(diaRutina.length === 0) lista.innerHTML += "<p style='font-size:0.8rem; color:#666;'>Sin ejercicios.</p>";
         
         diaRutina.forEach((item, index) => {
             lista.innerHTML += `
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>${item.nombre} (<b>${item.peso || '-'}</b>)</span>
-                    <button class="btn-danger" style="width:auto; padding:2px 8px;" onclick="eliminarEjercicio('${al}','${dia}',${index})">X</button>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #222; padding-bottom:5px;">
+                    <span style="font-size:0.9rem;">${item.nombre} (<b>${item.peso || '-'}</b>)</span>
+                    <button class="btn-danger" style="width:auto; padding:2px 8px; font-size:0.6rem;" onclick="eliminarEjercicio('${al}','${dia}',${index})">X</button>
                 </div>`;
         });
     }
 
     function verProgreso() {
+        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
+        if(!al) return alert("Escribe el nombre de un alumno");
         document.getElementById('visor-progreso').classList.remove('hidden');
         cambiarDiaVisor('lunes');
     }
@@ -199,10 +190,10 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         
         document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(event) event.target.classList.add('active-day');
+        document.getElementById('btn-a-' + dia).classList.add('active-day');
 
         const miRutina = rutinas[u]?.[dia] || [];
-        container.innerHTML = miRutina.length ? "" : "<p>No hay entrenamiento para hoy.</p>";
+        container.innerHTML = miRutina.length ? "" : "<p style='text-align:center; padding:20px; color:#666;'>No hay entrenamiento para este día.</p>";
         
         miRutina.forEach((item, index) => {
             container.innerHTML += `
@@ -224,7 +215,6 @@
             const idx = input.getAttribute('data-index');
             const nuevoPeso = input.value;
             const ej = rutinas[u][diaActualAlumno][idx];
-
             if (nuevoPeso !== "" && ej.peso !== nuevoPeso) {
                 historial[u].push({ fecha: ahora, ejercicio: ej.nombre, peso: nuevoPeso });
                 ej.peso = nuevoPeso;
@@ -233,7 +223,7 @@
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("💪 ¡Día guardado!");
+        alert("✅ Día guardado correctamente.");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
