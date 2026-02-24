@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.2</title>
+    <title>Pedro Alfonso - Coach System v1.3</title>
     <style>
-        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; }
+        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
@@ -16,11 +16,12 @@
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         button:hover { background: #b8de00; transform: translateY(-2px); }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; float: right; }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
+        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); overflow: hidden; }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
-        .atleta-nombre { color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .item-progreso { border-bottom: 1px solid #333; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -28,95 +29,74 @@
 <div class="container">
     <div id="section-auth" class="card">
         <h1>🏋️‍♂️ COACH SYSTEM PRO</h1>
-        <p style="text-align: center; font-size: 0.8rem; color: #888;">Ingresa tus datos de acceso</p>
-        <input type="text" id="auth-user" placeholder="Usuario (ej: juan)">
-        <input type="password" id="auth-pass" placeholder="Contraseña (ej: 123)">
+        <p style="text-align: center; font-size: 0.8rem; color: #888;">Panel de Acceso</p>
+        <input type="text" id="auth-user" placeholder="Usuario">
+        <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
             <option value="alumno">Soy Alumno</option>
             <option value="profe">Soy el Profe Pedro</option>
         </select>
-        <button onclick="login()">Entrar al Sistema</button>
-        <button class="secondary" onclick="register()">Registrar Nuevo Usuario</button>
-        <p style="text-align: center; font-size: 0.7rem; margin-top: 15px; color: #555;">Alumno de prueba: <b>juan</b> / Clave: <b>123</b></p>
+        <button onclick="login()">Entrar</button>
+        <button class="secondary" onclick="register()">Registrar Nuevo</button>
     </div>
 
     <div id="section-profe" class="card hidden">
-        <h2>Panel del Entrenador</h2>
-        <p style="text-align: center;">Bienvenido, Profe Pedro.</p>
-        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        
-        <h3>Asignar Ejercicios</h3>
-        <label>Nombre del Alumno</label>
-        <input type="text" id="p-nombre-alumno" placeholder="ej: juan">
-        <label>Ejercicio</label>
-        <input type="text" id="p-ejercicio" placeholder="ej: Press Militar">
-        <label>Series y Repeticiones</label>
-        <input type="text" id="p-series" placeholder="ej: 4x12">
-        <button onclick="asignarRutina()">Guardar en la Rutina</button>
+        <h2>Panel Entrenador</h2>
+        <h3>Asignar Ejercicio</h3>
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno (ej: juan)">
+        <input type="text" id="p-ejercicio" placeholder="Ejercicio">
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
+        <button onclick="asignarRutina()">Agregar a la Rutina</button>
 
-        <hr style="border:0; border-top:1px solid #333; margin: 25px 0;">
-        
-        <h3>Control de Pesos</h3>
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver lo que anotó el alumno</button>
+        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
+        <h3>Gestión de Alumnos</h3>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar / Editar Rutina</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
         
         <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
-        <h2>Mi Plan de Entrenamiento</h2>
-        <p style="text-align: center;">Atleta: <span id="display-alumno-name" class="atleta-nombre"></span></p>
+        <h2>Mi Entrenamiento</h2>
+        <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="lista-rutina"></div>
         <button class="secondary" onclick="logout()" style="margin-top:20px">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
-    // --- INICIALIZACIÓN AUTOMÁTICA DE JUAN ---
-    function inicializarSistema() {
+    // --- INICIALIZACIÓN ---
+    function init() {
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-
-        // Creamos a Juan si el sistema está nuevo
         if (!users["juan"]) {
             users["juan"] = { pass: "123", role: "alumno" };
-            rutinas["juan"] = [
-                { nombre: "Press de Banca", series: "4x10", peso: "60kg" },
-                { nombre: "Sentadilla Libre", series: "4x12", peso: "100kg" }
-            ];
+            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg" }];
             localStorage.setItem('gym_users', JSON.stringify(users));
             localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-            console.log("Datos de prueba (Juan) cargados correctamente.");
         }
     }
+    init();
 
-    // Ejecutar al abrir la página
-    inicializarSistema();
-
-    // --- LÓGICA DE ACCESO (LOGIN/REGISTRO) ---
+    // --- AUTH ---
     function login() {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-
         if (users[u] && users[u].pass === p) {
             sessionStorage.setItem('active_user', u);
             showPanel(users[u].role, u);
-        } else {
-            alert("Acceso denegado. Verifica usuario y clave.");
-        }
+        } else { alert("Datos incorrectos"); }
     }
 
     function register() {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
         const r = document.getElementById('auth-role').value;
-        if (!u || !p) return alert("Completa todos los campos.");
-
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r };
         localStorage.setItem('gym_users', JSON.stringify(users));
-        alert("Usuario '" + u + "' registrado con éxito.");
+        alert("Registrado");
     }
 
     function showPanel(role, username) {
@@ -130,21 +110,20 @@
         }
     }
 
-    // --- FUNCIONES DEL ENTRENADOR ---
+    // --- FUNCIONES PROFE (AGREGAR Y ELIMINAR) ---
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const ej = document.getElementById('p-ejercicio').value;
         const se = document.getElementById('p-series').value;
-        
-        if (!al || !ej) return alert("Escribe el nombre del alumno y el ejercicio.");
+        if (!al || !ej) return alert("Faltan datos");
 
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = [];
-
         rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Ejercicio añadido a la lista de " + al);
+        alert("Ejercicio agregado");
         document.getElementById('p-ejercicio').value = "";
+        if(!document.getElementById('visor-progreso').classList.contains('hidden')) verProgreso();
     }
 
     function verProgreso() {
@@ -152,55 +131,54 @@
         const visor = document.getElementById('visor-progreso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
 
-        if (!al || !rutinas[al]) return alert("Ese alumno no tiene rutinas registradas.");
+        if (!rutinas[al] || rutinas[al].length === 0) {
+            visor.classList.remove('hidden');
+            visor.innerHTML = "<p>El alumno no tiene ejercicios.</p>";
+            return;
+        }
 
         visor.classList.remove('hidden');
-        visor.innerHTML = `<h4>Historial de ${al.toUpperCase()}:</h4>`;
-        rutinas[al].forEach(item => {
+        visor.innerHTML = `<h4>Rutina de ${al.toUpperCase()}:</h4>`;
+        rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
-                <div style="font-size:0.85rem; padding:8px 0; border-bottom:1px solid #333;">
-                    <b>${item.nombre}</b>: <span style="color:var(--accent)">${item.peso || 'No anotó peso aún'}</span>
+                <div class="item-progreso">
+                    <span>${item.nombre} (${item.series})</span>
+                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Eliminar</button>
                 </div>`;
         });
     }
 
-    // --- FUNCIONES DEL ALUMNO ---
+    function eliminarEjercicio(alumno, index) {
+        if(!confirm("¿Seguro que quieres borrar este ejercicio?")) return;
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        rutinas[alumno].splice(index, 1);
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        verProgreso(); // Refrescar vista
+    }
+
+    // --- FUNCIONES ALUMNO ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        const miRutina = rutinas[u.toLowerCase().trim()] || [];
-
-        if (miRutina.length === 0) {
-            container.innerHTML = "<p style='color:#666; text-align:center;'>Pide a Pedro que te asigne una rutina para empezar.</p>";
-            return;
-        }
-
-        container.innerHTML = "";
+        const miRutina = rutinas[u.toLowerCase()] || [];
+        container.innerHTML = miRutina.length ? "" : "<p>No tienes ejercicios asignados.</p>";
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <label>Anotar peso levantado:</label>
-                    <input type="text" placeholder="Ej: 80kg" value="${item.peso || ''}" 
+                    <input type="text" placeholder="Peso" value="${item.peso || ''}" 
                            onchange="actualizarPeso('${u}', ${index}, this.value)">
                 </div>`;
         });
     }
 
     function actualizarPeso(alumno, index, valor) {
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        const key = alumno.toLowerCase().trim();
-        if (rutinas[key]) {
-            rutinas[key][index].peso = valor;
-            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-            console.log("Peso guardado.");
-        }
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        rutinas[alumno.toLowerCase()][index].peso = valor;
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
     }
 
-    function logout() {
-        sessionStorage.clear();
-        location.reload();
-    }
+    function logout() { sessionStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
