@@ -2,35 +2,45 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v2.1 (Gráfico Fijo)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pedro Alfonso - Coach System v2.3 (Mobile Pro)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
-        .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
-        h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 15px; }
+        h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; font-size: 1.5rem; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; -webkit-appearance: none; }
         input, select { background: #333; color: white; outline: none; border: 1px solid #444; }
-        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        button:hover { background: #b8de00; transform: translateY(-2px); }
+        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; border-radius: 4px; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; }
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
-        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
-        .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 10px; border-radius: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; }
-        .registro-historial { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 380px; }
+        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        
+        /* AJUSTES CRÍTICOS PARA MÓVIL */
+        .visor-alumno { background: #000; padding: 10px; border-radius: 10px; margin-top: 20px; border: 1px solid var(--accent); font-size: 0.9rem; }
+        .registro-historial { font-size: 0.7rem; padding: 8px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; gap: 5px; }
+        
+        /* CONTENEDOR DE GRÁFICO CON SCROLL */
+        .chart-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
+        .chart-area { min-width: 450px; height: 300px; padding: 10px; }
+        
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+            .card { padding: 15px; }
+            .registro-historial { flex-wrap: wrap; }
+            .registro-historial span { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM PRO v2.1</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v2.3</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -43,31 +53,36 @@
 
     <div id="section-profe" class="card hidden">
         <h2>Panel Entrenador</h2>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno (ej: juan)">
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre alumno">
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
-        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
-        <button onclick="asignarRutina()">Agregar a la Rutina</button>
-        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
+        <input type="text" id="p-series" placeholder="Series">
+        <button onclick="asignarRutina()">Asignar</button>
+        <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
         <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver Rutina y Gráfico</button>
+        
         <div id="visor-progreso" class="visor-alumno hidden"></div>
         
-        <div id="section-chart" class="chart-container hidden">
-            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Evolución de Cargas</h4>
-            <canvas id="progresoChart"></canvas>
+        <div id="section-chart" class="hidden">
+            <h4 style="text-align:center; color:var(--primary); margin-top:15px;">📈 Evolución (Desliza para ver más)</h4>
+            <div class="chart-wrapper">
+                <div class="chart-area">
+                    <canvas id="progresoChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <div id="sub-ventana-historial" class="hidden">
-            <h4 style="color:var(--accent); text-align:center;">📜 Historial</h4>
-            <div id="lista-historial" class="sub-ventana-historial"></div>
+            <h4 style="color:var(--accent); text-align:center;">📜 Historial Completo</h4>
+            <div id="lista-historial" class="card" style="background:#151515; max-height:200px; overflow-y:auto; padding:10px;"></div>
         </div>
-        <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
+        <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
         <h2>Mi Rutina</h2>
         <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="lista-rutina"></div>
-        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR MI PROGRESO</button>
+        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px; font-weight:bold;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -129,7 +144,7 @@
         if (!rutinas[al]) rutinas[al] = [];
         rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Ejercicio agregado.");
+        alert("Agregado.");
         verProgreso();
     }
 
@@ -140,15 +155,15 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
 
-        if (!rutinas[al]) return alert("Alumno no encontrado.");
+        if (!rutinas[al]) return alert("Sin datos.");
 
         visor.classList.remove('hidden');
         visor.innerHTML = `<h4>RUTINA ACTUAL: ${al.toUpperCase()}</h4>`;
         rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding:5px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #333; padding:5px;">
                     <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
-                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">ELIMINAR</button>
+                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">X</button>
                 </div>`;
         });
 
@@ -160,34 +175,25 @@
             const listaH = document.getElementById('lista-historial');
             listaH.innerHTML = "";
             [...misRegistros].reverse().forEach(reg => {
-                listaH.innerHTML += `<div class="registro-historial"><span>${reg.fecha}</span> <span>${reg.ejercicio}</span> <b>${reg.peso}kg</b></div>`;
+                listaH.innerHTML += `<div class="registro-historial"><span><b>${reg.fecha}</b></span> <span>${reg.ejercicio}</span> <span style="color:var(--primary)">${reg.peso}kg</span></div>`;
             });
         }
     }
 
     function actualizarGrafico(datos) {
         const ctx = document.getElementById('progresoChart').getContext('2d');
-        
-        // Creamos etiquetas genéricas (Sesión 1, 2, 3...) para evitar amontonamiento de tiempo
-        const maxRegistros = 10;
-        const ultimosDatos = datos.slice(-maxRegistros * 3); // Tomamos suficientes datos para los ejercicios
-        
-        // Obtenemos los nombres de ejercicios
+        const ultimosDatos = datos.slice(-30);
         const ejerciciosUnicos = [...new Set(ultimosDatos.map(d => d.ejercicio))];
-        
-        // El eje X ahora será simplemente el número de registro para que se expandan hacia la derecha
-        const etiquetasX = Array.from({length: maxRegistros}, (_, i) => `S${i+1}`);
+        const etiquetasX = Array.from({length: 10}, (_, i) => `S${i+1}`);
 
         const datasets = ejerciciosUnicos.map((ej, i) => {
-            const historialEj = ultimosDatos.filter(d => d.ejercicio === ej).slice(-maxRegistros);
+            const historialEj = ultimosDatos.filter(d => d.ejercicio === ej).slice(-10);
             return {
                 label: ej,
                 data: historialEj.map(d => parseFloat(d.peso.replace(/[^0-9.]/g, ""))),
                 borderColor: coloresPalette[i % coloresPalette.length],
-                backgroundColor: coloresPalette[i % coloresPalette.length],
                 borderWidth: 3,
-                tension: 0.4,
-                pointRadius: 5
+                tension: 0.4
             };
         });
 
@@ -198,13 +204,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: { grid: { color: '#333' }, ticks: { color: '#888' } },
-                    x: { grid: { display: false }, ticks: { color: '#888' } }
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { color: '#eee', boxWidth: 12, font: { size: 10 } } }
-                }
+                plugins: { legend: { position: 'top', labels: { color: '#eee', font: { size: 10 } } } }
             }
         });
     }
@@ -225,7 +225,7 @@
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso levantado hoy" value="${item.peso || ''}">
+                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso hoy" value="${item.peso || ''}">
                 </div>`;
         });
     }
@@ -235,14 +235,12 @@
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        
         if (!historial[user]) historial[user] = [];
         const ahora = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
         inputs.forEach((input, index) => {
             const nuevoPeso = input.value;
             const nombreEj = input.getAttribute('data-ej');
-            // Solo guarda si el peso cambió y no está vacío
             if (nuevoPeso !== "" && rutinas[user][index].peso !== nuevoPeso) {
                 historial[user].push({ fecha: ahora, ejercicio: nombreEj, peso: nuevoPeso });
                 rutinas[user][index].peso = nuevoPeso;
@@ -251,7 +249,7 @@
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("✅ Progreso guardado. ¡Mira el gráfico en el panel Profe!");
+        alert("✅ PROGRESO GUARDADO");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
