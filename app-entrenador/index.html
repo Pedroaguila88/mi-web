@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v2.0 (Colores)</title>
+    <title>Pedro Alfonso - Coach System v2.1 (Gráfico Fijo)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
@@ -23,14 +23,14 @@
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
         .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 10px; border-radius: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; }
         .registro-historial { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 350px; }
+        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 380px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM PRO v2.0</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM PRO v2.1</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -42,30 +42,32 @@
     </div>
 
     <div id="section-profe" class="card hidden">
-        <h2>Panel Entrenador Ever Fit</h2>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
+        <h2>Panel Entrenador</h2>
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno (ej: juan)">
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
-        <input type="text" id="p-series" placeholder="Series">
-        <button onclick="asignarRutina()">Agregar Ejercicio</button>
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
+        <button onclick="asignarRutina()">Agregar a la Rutina</button>
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Alumno & Gráfico</button>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Ver Rutina y Gráfico</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
+        
         <div id="section-chart" class="chart-container hidden">
-            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Análisis Multivariable de Cargas</h4>
+            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Evolución de Cargas</h4>
             <canvas id="progresoChart"></canvas>
         </div>
+
         <div id="sub-ventana-historial" class="hidden">
             <h4 style="color:var(--accent); text-align:center;">📜 Historial</h4>
             <div id="lista-historial" class="sub-ventana-historial"></div>
         </div>
-        <button class="secondary" onclick="logout()" style="margin-top: 30px;">Cerrar Sesión</button>
+        <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
         <h2>Mi Rutina</h2>
         <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="lista-rutina"></div>
-        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
+        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR MI PROGRESO</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -127,7 +129,8 @@
         if (!rutinas[al]) rutinas[al] = [];
         rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Agregado.");
+        alert("Ejercicio agregado.");
+        verProgreso();
     }
 
     function verProgreso() {
@@ -137,7 +140,7 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
 
-        if (!rutinas[al]) return alert("Alumno sin datos.");
+        if (!rutinas[al]) return alert("Alumno no encontrado.");
 
         visor.classList.remove('hidden');
         visor.innerHTML = `<h4>RUTINA ACTUAL: ${al.toUpperCase()}</h4>`;
@@ -145,7 +148,7 @@
             visor.innerHTML += `
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding:5px;">
                     <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
-                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">X</button>
+                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">ELIMINAR</button>
                 </div>`;
         });
 
@@ -164,38 +167,43 @@
 
     function actualizarGrafico(datos) {
         const ctx = document.getElementById('progresoChart').getContext('2d');
-        const ultimosDatos = datos.slice(-30); // Analizamos más datos
-        const fechas = [...new Set(ultimosDatos.map(d => d.fecha.split(' ')[0]))]; // Fechas únicas para el eje X
         
-        // Agrupamos datos por ejercicio
+        // Creamos etiquetas genéricas (Sesión 1, 2, 3...) para evitar amontonamiento de tiempo
+        const maxRegistros = 10;
+        const ultimosDatos = datos.slice(-maxRegistros * 3); // Tomamos suficientes datos para los ejercicios
+        
+        // Obtenemos los nombres de ejercicios
         const ejerciciosUnicos = [...new Set(ultimosDatos.map(d => d.ejercicio))];
+        
+        // El eje X ahora será simplemente el número de registro para que se expandan hacia la derecha
+        const etiquetasX = Array.from({length: maxRegistros}, (_, i) => `S${i+1}`);
+
         const datasets = ejerciciosUnicos.map((ej, i) => {
+            const historialEj = ultimosDatos.filter(d => d.ejercicio === ej).slice(-maxRegistros);
             return {
                 label: ej,
-                data: fechas.map(f => {
-                    const reg = ultimosDatos.find(d => d.ejercicio === ej && d.fecha.startsWith(f));
-                    return reg ? parseFloat(reg.peso.replace(/[^0-9.]/g, "")) : null;
-                }),
+                data: historialEj.map(d => parseFloat(d.peso.replace(/[^0-9.]/g, ""))),
                 borderColor: coloresPalette[i % coloresPalette.length],
-                borderWidth: 2,
-                tension: 0.3,
-                spanGaps: true // Conecta puntos aunque falten días
+                backgroundColor: coloresPalette[i % coloresPalette.length],
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 5
             };
         });
 
         if (miGrafico) miGrafico.destroy();
         miGrafico = new Chart(ctx, {
             type: 'line',
-            data: { labels: fechas, datasets: datasets },
+            data: { labels: etiquetasX, datasets: datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { grid: { color: '#333' }, title: { display: true, text: 'kg', color: '#888' } },
-                    x: { grid: { display: false } }
+                    y: { grid: { color: '#333' }, ticks: { color: '#888' } },
+                    x: { grid: { display: false }, ticks: { color: '#888' } }
                 },
                 plugins: {
-                    legend: { labels: { color: '#eee', boxWidth: 10, font: { size: 10 } } }
+                    legend: { position: 'top', labels: { color: '#eee', boxWidth: 12, font: { size: 10 } } }
                 }
             }
         });
@@ -217,7 +225,7 @@
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso hoy" value="${item.peso || ''}">
+                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso levantado hoy" value="${item.peso || ''}">
                 </div>`;
         });
     }
@@ -227,13 +235,15 @@
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
+        
         if (!historial[user]) historial[user] = [];
         const ahora = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
         inputs.forEach((input, index) => {
             const nuevoPeso = input.value;
             const nombreEj = input.getAttribute('data-ej');
-            if (rutinas[user][index].peso !== nuevoPeso && nuevoPeso !== "") {
+            // Solo guarda si el peso cambió y no está vacío
+            if (nuevoPeso !== "" && rutinas[user][index].peso !== nuevoPeso) {
                 historial[user].push({ fecha: ahora, ejercicio: nombreEj, peso: nuevoPeso });
                 rutinas[user][index].peso = nuevoPeso;
             }
@@ -241,7 +251,7 @@
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("✅ Progreso guardado.");
+        alert("✅ Progreso guardado. ¡Mira el gráfico en el panel Profe!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
