@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.4</title>
+    <title>Pedro Alfonso - Coach System v1.5</title>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
@@ -16,13 +16,14 @@
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         button:hover { background: #b8de00; transform: translateY(-2px); }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-save { background: var(--success); color: white; margin-top: 20px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        button.btn-save { background: var(--success); color: white; margin-top: 20px; }
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; }
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .item-progreso { border-bottom: 1px solid #333; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #555; }
+        .item-progreso { border-bottom: 1px solid #333; padding: 12px 0; }
+        .fecha-update { display: block; font-size: 0.7rem; color: var(--accent); margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -48,8 +49,8 @@
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">Agregar a la Rutina</button>
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <h3>Gestión de Alumnos</h3>
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar / Editar Rutina</button>
+        <h3>Gestión y Seguimiento</h3>
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina y Tiempos</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
         <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
     </div>
@@ -69,7 +70,7 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!users["juan"]) {
             users["juan"] = { pass: "123", role: "alumno" };
-            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg" }];
+            rutinas["juan"] = [{ nombre: "Press de Banca", series: "4x10", peso: "60kg", fecha: "2026-02-23 10:00" }];
             localStorage.setItem('gym_users', JSON.stringify(users));
             localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         }
@@ -115,11 +116,10 @@
         if (!al || !ej) return alert("Faltan datos");
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if (!rutinas[al]) rutinas[al] = [];
-        rutinas[al].push({ nombre: ej, series: se, peso: "" });
+        rutinas[al].push({ nombre: ej, series: se, peso: "", fecha: "Nunca" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         alert("Ejercicio agregado");
         document.getElementById('p-ejercicio').value = "";
-        if(!document.getElementById('visor-progreso').classList.contains('hidden')) verProgreso();
     }
 
     function verProgreso() {
@@ -132,12 +132,16 @@
             return;
         }
         visor.classList.remove('hidden');
-        visor.innerHTML = `<h4>Rutina de ${al.toUpperCase()}:</h4>`;
+        visor.innerHTML = `<h4>Seguimiento: ${al.toUpperCase()}</h4>`;
         rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
                 <div class="item-progreso">
-                    <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
-                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Borrar</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>${item.nombre}</strong>
+                        <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">Borrar</button>
+                    </div>
+                    <span style="color:var(--primary)">Peso: ${item.peso || 'S/D'}</span>
+                    <span class="fecha-update">📅 Modificado: ${item.fecha || 'Sin registro'}</span>
                 </div>`;
         });
     }
@@ -149,18 +153,16 @@
         verProgreso();
     }
 
-    // --- FUNCIONES ALUMNO (NUEVA LÓGICA DE GUARDADO) ---
+    // --- FUNCIONES ALUMNO ---
     function cargarRutinaAlumno(u) {
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         const miRutina = rutinas[u.toLowerCase()] || [];
-        
         if(miRutina.length === 0) {
-            container.innerHTML = "<p>Aún no tienes rutina asignada.</p>";
+            container.innerHTML = "<p>Sin rutina asignada.</p>";
             document.getElementById('btn-save-rutina').classList.add('hidden');
             return;
         }
-
         document.getElementById('btn-save-rutina').classList.remove('hidden');
         container.innerHTML = "";
         miRutina.forEach((item, index) => {
@@ -178,13 +180,23 @@
         const inputs = document.querySelectorAll('.input-peso');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         
+        // Obtener fecha y hora actual
+        const ahora = new Date();
+        const fechaFormateada = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
         inputs.forEach(input => {
             const index = input.getAttribute('data-index');
-            rutinas[user][index].peso = input.value;
+            const nuevoPeso = input.value;
+            
+            // Solo actualiza la fecha si el peso cambió o si es la primera vez que guarda
+            if(rutinas[user][index].peso !== nuevoPeso) {
+                rutinas[user][index].peso = nuevoPeso;
+                rutinas[user][index].fecha = fechaFormateada;
+            }
         });
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("💪 ¡Progreso guardado con éxito, campeón!");
+        alert("💪 ¡Progreso y tiempo guardados!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
