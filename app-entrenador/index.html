@@ -3,30 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedro Alfonso - Coach System v1.8</title>
+    <title>Pedro Alfonso - Coach System v1.9 (Gráficos)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--primary); margin-bottom: 20px; }
         h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
-        label { display: block; font-size: 0.75rem; color: #888; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
         input, select { background: #333; color: white; outline: none; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         button:hover { background: #b8de00; transform: translateY(-2px); }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-save { background: var(--success); color: white; margin-top: 20px; }
-        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; margin: 0; border-radius: 4px; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; width: auto; font-size: 0.7rem; border-radius: 4px; }
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .visor-alumno { background: #000; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid var(--accent); }
-        .item-progreso { border-bottom: 1px solid #333; padding: 12px 0; display: flex; flex-direction: column; gap: 5px; }
-        .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto; }
-        .registro-historial { font-size: 0.75rem; padding: 8px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .txt-fecha-h { color: var(--accent); }
-        .txt-peso-h { color: var(--primary); font-weight: bold; }
+        .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 10px; border-radius: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; }
+        .registro-historial { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        
+        /* ESTILO PARA EL CONTENEDOR DEL GRÁFICO */
+        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 300px; }
     </style>
 </head>
 <body>
@@ -46,51 +45,47 @@
 
     <div id="section-profe" class="card hidden">
         <h2>Panel Entrenador Ever Fit</h2>
-        <h3>Asignar Ejercicio</h3>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno (ej: juan)">
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
-        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
-        <button onclick="asignarRutina()">Agregar a la Rutina</button>
+        <input type="text" id="p-series" placeholder="Series">
+        <button onclick="asignarRutina()">Agregar Ejercicio</button>
         
         <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
+        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Alumno & Gráfico</button>
         
-        <h3>Seguimiento y Bitácora</h3>
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">Consultar Rutina Actual</button>
         <div id="visor-progreso" class="visor-alumno hidden"></div>
-        
+
+        <div id="section-chart" class="chart-container hidden">
+            <h4 style="color:var(--primary); margin:0 0 10px 0; font-size:0.9rem;">📈 Curva de Cargas</h4>
+            <canvas id="progresoChart"></canvas>
+        </div>
+
         <div id="sub-ventana-historial" class="hidden">
-            <h4 style="color:var(--accent); text-align:center; margin-top:15px;">📜 HISTORIAL DE CAMBIOS</h4>
+            <h4 style="color:var(--accent); text-align:center;">📜 Bitácora</h4>
             <div id="lista-historial" class="sub-ventana-historial"></div>
         </div>
 
-        <button class="secondary" onclick="logout()" style="margin-top: 40px;">Cerrar Sesión</button>
+        <button class="secondary" onclick="logout()" style="margin-top: 30px;">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
-        <h2>Mi Entrenamiento</h2>
+        <h2>Mi Rutina</h2>
         <p style="text-align: center;">Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
         <div id="lista-rutina"></div>
-        <button id="btn-save-rutina" class="btn-save" onclick="guardarRutinaAlumno()">✅ GUARDAR MI PROGRESO</button>
-        <button class="secondary" onclick="logout()" style="margin-top:20px">Cerrar Sesión</button>
+        <button class="btn-save" style="background:var(--success); color:white; width:100%; padding:15px; border-radius:8px; margin-top:20px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
+        <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
+    let miGrafico = null; // Variable global para el gráfico
+
     function init() {
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
-
         if (!users["juan"]) {
-            users["juan"] = {pass: "123", role: "alumno"};
-            rutinas["juan"] = [{nombre: "Press Banca", series: "4x10", peso: "60"}];
-            localStorage.setItem('gym_users', JSON.stringify(users));
-            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        }
-        // Asegurar que el historial exista para evitar errores
-        if (!historial["juan"]) {
-            historial["juan"] = [];
-            localStorage.setItem('gym_historial', JSON.stringify(historial));
+            localStorage.setItem('gym_users', JSON.stringify({"juan": {pass: "123", role: "alumno"}}));
+            localStorage.setItem('gym_rutinas', JSON.stringify({"juan": [{nombre: "Press Banca", series: "4x10", peso: "60"}]}));
+            localStorage.setItem('gym_historial', JSON.stringify({"juan": []}));
         }
     }
     init();
@@ -112,11 +107,9 @@
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r };
         localStorage.setItem('gym_users', JSON.stringify(users));
-        
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
         if(!historial[u]) historial[u] = [];
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        
         alert("Usuario registrado.");
     }
 
@@ -140,15 +133,13 @@
         if (!rutinas[al]) rutinas[al] = [];
         rutinas[al].push({ nombre: ej, series: se, peso: "" });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Ejercicio agregado");
-        verProgreso(); 
+        alert("Agregado.");
     }
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const visor = document.getElementById('visor-progreso');
-        const subVentana = document.getElementById('sub-ventana-historial');
-        const listaH = document.getElementById('lista-historial');
+        const sectionChart = document.getElementById('section-chart');
         
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
@@ -159,30 +150,66 @@
         visor.innerHTML = `<h4>RUTINA ACTUAL: ${al.toUpperCase()}</h4>`;
         rutinas[al].forEach((item, index) => {
             visor.innerHTML += `
-                <div class="item-progreso">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
-                        <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">ELIMINAR</button>
-                    </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding:5px;">
+                    <span>${item.nombre}: <b>${item.peso || 'S/D'}</b></span>
+                    <button class="btn-danger" onclick="eliminarEjercicio('${al}', ${index})">X</button>
                 </div>`;
         });
 
-        subVentana.classList.remove('hidden');
+        // Lógica del Historial y Gráfico
         const misRegistros = historial[al] || [];
-        listaH.innerHTML = misRegistros.length ? "" : "<p style='font-size:0.75rem; text-align:center;'>No hay registros en la bitácora todavía.</p>";
+        if(misRegistros.length > 0) {
+            sectionChart.classList.remove('hidden');
+            document.getElementById('sub-ventana-historial').classList.remove('hidden');
+            actualizarGrafico(misRegistros);
+            
+            const listaH = document.getElementById('lista-historial');
+            listaH.innerHTML = "";
+            [...misRegistros].reverse().forEach(reg => {
+                listaH.innerHTML += `<div class="registro-historial"><span>${reg.fecha}</span> <span>${reg.ejercicio}</span> <b>${reg.peso}kg</b></div>`;
+            });
+        }
+    }
+
+    function actualizarGrafico(datos) {
+        const ctx = document.getElementById('progresoChart').getContext('2d');
         
-        [...misRegistros].reverse().forEach(reg => {
-            listaH.innerHTML += `
-                <div class="registro-historial">
-                    <span class="txt-fecha-h">${reg.fecha}</span>
-                    <span>${reg.ejercicio}</span>
-                    <span class="txt-peso-h">${reg.peso}</span>
-                </div>`;
+        // Extraemos etiquetas (fechas) y valores (pesos)
+        // Tomamos los últimos 10 registros para que no se vea amontonado
+        const ultimosDatos = datos.slice(-10);
+        const labels = ultimosDatos.map(d => d.fecha.split(' ')[0]); // Solo la fecha, sin hora
+        const valores = ultimosDatos.map(d => parseFloat(d.peso.replace(/[^0-9.]/g, "")));
+
+        if (miGrafico) miGrafico.destroy(); // Destruir gráfico anterior para recargar
+
+        miGrafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Carga Total (kg)',
+                    data: valores,
+                    borderColor: '#d4ff00',
+                    backgroundColor: 'rgba(212, 255, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#00d4ff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: false, grid: { color: '#333' } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
         });
     }
 
     function eliminarEjercicio(alumno, index) {
-        if(!confirm("¿Borrar este ejercicio de la rutina?")) return;
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         rutinas[alumno].splice(index, 1);
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
@@ -193,12 +220,12 @@
         const container = document.getElementById('lista-rutina');
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         const miRutina = rutinas[u.toLowerCase()] || [];
-        container.innerHTML = miRutina.length ? "" : "<p>No tienes rutina hoy.</p>";
+        container.innerHTML = "";
         miRutina.forEach((item, index) => {
             container.innerHTML += `
                 <div class="rutina-item">
                     <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso levantado" value="${item.peso || ''}">
+                    <input type="text" class="input-peso" data-ej="${item.nombre}" placeholder="Peso hoy" value="${item.peso || ''}">
                 </div>`;
         });
     }
@@ -215,7 +242,6 @@
         inputs.forEach((input, index) => {
             const nuevoPeso = input.value;
             const nombreEj = input.getAttribute('data-ej');
-
             if (rutinas[user][index].peso !== nuevoPeso && nuevoPeso !== "") {
                 historial[user].push({ fecha: ahora, ejercicio: nombreEj, peso: nuevoPeso });
                 rutinas[user][index].peso = nuevoPeso;
@@ -224,7 +250,7 @@
 
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("✅ Rutina y Bitácora guardadas.");
+        alert("✅ Progreso guardado.");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
