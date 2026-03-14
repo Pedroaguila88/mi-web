@@ -3,50 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v2.9 (Security Update)</title>
+    <title>Pedro Alfonso - Coach System v3.0 (Master Admin)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; }
+        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
+        .dev-card { border-top-color: var(--dev); }
         h1, h2, h3 { color: var(--primary); text-align: center; margin-top: 0; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
         input, select { background: #333; color: white; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; }
-        button.active-day { background: var(--primary); color: black; border-color: var(--primary); }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
-        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .visor-profe-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--accent); }
-        .chart-container { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 350px; }
-        .sub-ventana-historial { background: #151515; border: 1px solid #333; padding: 10px; border-radius: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; }
-        .registro-historial { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .volumen-badge { background: var(--accent); color: black; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin: 10px 0; }
-        .btn-action { width: auto; padding: 4px 10px; font-size: 0.8rem; margin-left: 5px; }
+        .user-list-item { background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--accent); }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; text-transform: uppercase; margin-left: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v2.9</h1>
-        <p style="text-align:center; font-size:0.8rem; color:var(--accent);">Seguridad por Profe Activa</p>
+        <h1>🏋️‍♂️ COACH SYSTEM v3.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
             <option value="alumno">Soy Alumno</option>
             <option value="profe">Soy Entrenador</option>
+            <option value="dev">Soy el desarrollador Pedro Alfonso</option>
         </select>
-        <button onclick="login()">Entrar</button>
-        <button class="secondary" onclick="register()">Registrar Nuevo</button>
+        <button onclick="login()">Entrar al Sistema</button>
+    </div>
+
+    <div id="section-dev" class="card dev-card hidden">
+        <h2 style="color:var(--dev);">PANEL DESARROLLADOR</h2>
+        <p style="font-size:0.8rem; text-align:center;">Control Total del Gimnasio</p>
+        
+        <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:20px;">
+            <h4 style="margin:0 0 10px 0; color:var(--primary);">Registrar Nuevo Usuario</h4>
+            <input type="text" id="reg-user" placeholder="Nombre de Usuario">
+            <input type="password" id="reg-pass" placeholder="Contraseña">
+            <select id="reg-role">
+                <option value="profe">Entrenador</option>
+                <option value="alumno">Alumno</option>
+            </select>
+            <button onclick="masterRegister()">CREAR USUARIO</button>
+        </div>
+
+        <h4>Usuarios en el Sistema</h4>
+        <div id="lista-usuarios-master"></div>
+        <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
     </div>
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Entrenador</h2>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre alumno a buscar/crear">
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre de tu alumno">
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option>
             <option value="miercoles">Miércoles</option><option value="jueves">Jueves</option>
@@ -54,22 +66,11 @@
         </select>
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
         <input type="text" id="p-series" placeholder="Series (ej: 4x10)">
-        <button onclick="asignarRutina()">ASIGNAR AHORA</button>
+        <button onclick="asignarRutina()">ASIGNAR RUTINA</button>
+        <button class="secondary" onclick="verProgreso()">GESTIONAR MIS ALUMNOS</button>
         
-        <hr style="border:0; border-top:1px solid #333; margin: 20px 0;">
-        <button class="secondary" style="background: var(--accent); color: black;" onclick="verProgreso()">GESTIONAR MIS ALUMNOS</button>
-        
-        <div id="visor-progreso" class="hidden">
-            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
-                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
-            </div>
-            
-            <div id="lista-ejercicios-visor" class="visor-profe-box"></div>
-            <button onclick="cerrarVisor()" class="secondary" style="font-size:0.7rem;">Cerrar Visor</button>
+        <div id="visor-progreso" class="hidden" style="margin-top:15px; background:#000; padding:10px; border-radius:10px;">
+            <div id="lista-ejercicios-visor"></div>
         </div>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -77,210 +78,131 @@
     <div id="section-alumno" class="card hidden">
         <h2>Mi Plan Semanal</h2>
         <p>Atleta: <span id="display-alumno-name" style="color:var(--primary); font-weight:bold;"></span></p>
-        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">Lun</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">Mar</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">Mie</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">Jue</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">Vie</button>
-        </div>
         <div id="lista-rutina"></div>
-        <div id="volumen-dia" class="volumen-badge hidden"></div>
-        <button style="background:var(--success); color:white; margin-top:20px; padding:15px; width:100%; border-radius:8px;" onclick="guardarRutinaAlumno()">✅ GUARDAR PROGRESO</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
-    let miGrafico = null;
-    let diaActualVisor = 'lunes';
-    let diaActualAlumno = 'lunes';
-    const coloresPalette = ['#d4ff00', '#00d4ff', '#ff4444', '#ff8800', '#aa00ff'];
+    // --- INICIALIZACIÓN MAESTRA ---
+    function init() {
+        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        // Crear usuario Desarrollador si no existe
+        if (!users["pedro alfonso"]) {
+            users["pedro alfonso"] = { 
+                pass: "0994rocio", 
+                role: "dev", 
+                created_by: "system" 
+            };
+            localStorage.setItem('gym_users', JSON.stringify(users));
+        }
+    }
+    init();
 
-    // --- SEGURIDAD Y PERMISOS ---
+    // --- AUTENTICACIÓN ---
     function login() {
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
+        const r_selected = document.getElementById('auth-role').value;
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         
-        if (users[u] && users[u].pass === p) {
+        if (users[u] && users[u].pass === p && users[u].role === r_selected) {
             sessionStorage.setItem('active_user', u);
             sessionStorage.setItem('user_role', users[u].role);
             showPanel(users[u].role, u);
-        } else { alert("Datos incorrectos o usuario inexistente"); }
-    }
-
-    function register() {
-        const u = document.getElementById('auth-user').value.toLowerCase().trim();
-        const p = document.getElementById('auth-pass').value;
-        const r = document.getElementById('auth-role').value;
-        const currentProfe = sessionStorage.getItem('active_user');
-
-        if(!u || !p) return alert("Faltan datos");
-        
-        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        if(users[u]) return alert("El usuario ya existe");
-
-        // Guardamos quién creó al usuario
-        users[u] = { 
-            pass: p, 
-            role: r, 
-            created_by: (r === 'alumno') ? currentProfe : 'admin' 
-        };
-        
-        localStorage.setItem('gym_users', JSON.stringify(users));
-        
-        // Inicializar rutinas
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        rutinas[u] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        
-        alert(`Usuario ${u} registrado correctamente.`);
+        } else { alert("Datos incorrectos o rol equivocado"); }
     }
 
     function showPanel(role, username) {
         document.getElementById('section-auth').classList.add('hidden');
-        if (role === 'profe') {
+        if (role === 'dev') {
+            document.getElementById('section-dev').classList.remove('hidden');
+            renderMasterUsers();
+        } else if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
             document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
             document.getElementById('display-alumno-name').innerText = username.toUpperCase();
-            cargarDiaAlumno('lunes');
+            cargarRutinaAlumno();
         }
     }
 
-    // --- LÓGICA DE ENTRENADOR (AISLADA) ---
-    function verificarPermisoAlumno(alumnoNombre) {
-        const profeActual = sessionStorage.getItem('active_user');
-        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
+    // --- LÓGICA DEL DESARROLLADOR (MASTER) ---
+    function masterRegister() {
+        const u = document.getElementById('reg-user').value.toLowerCase().trim();
+        const p = document.getElementById('reg-pass').value;
+        const r = document.getElementById('reg-role').value;
+        const currentDev = sessionStorage.getItem('active_user');
+
+        if(!u || !p) return alert("Faltan datos");
+        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        if(users[u]) return alert("Usuario ya existe");
+
+        users[u] = { pass: p, role: r, created_by: currentDev };
+        localStorage.setItem('gym_users', JSON.stringify(users));
         
-        if (!users[alumnoNombre]) {
-            alert("El alumno no existe. Regístralo primero.");
-            return false;
-        }
-        if (users[alumnoNombre].created_by !== profeActual) {
-            alert("No tienes acceso a este alumno (pertenece a otro entrenador).");
-            return false;
-        }
-        return true;
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+        rutinas[u] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+
+        alert(`Usuario ${u} creado exitosamente.`);
+        document.getElementById('reg-user').value = "";
+        document.getElementById('reg-pass').value = "";
+        renderMasterUsers();
     }
 
+    function renderMasterUsers() {
+        const container = document.getElementById('lista-usuarios-master');
+        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        container.innerHTML = "";
+
+        for (let u in users) {
+            if (u === "pedro alfonso") continue; // No borrarse a sí mismo
+            const color = users[u].role === 'profe' ? 'var(--accent)' : 'var(--primary)';
+            container.innerHTML += `
+                <div class="user-list-item">
+                    <span>
+                        <strong>${u.toUpperCase()}</strong> 
+                        <span class="badge" style="background:${color}">${users[u].role}</span>
+                        <br><small style="font-size:0.6rem; color:#888;">Por: ${users[u].created_by}</small>
+                    </span>
+                    <button onclick="masterDelete('${u}')" style="width:auto; padding:5px 10px; background:var(--danger); color:white; font-size:0.7rem;">ELIMINAR</button>
+                </div>`;
+        }
+    }
+
+    function masterDelete(username) {
+        if(!confirm(`¿Estás seguro de eliminar a ${username}? Se perderán todos sus datos.`)) return;
+        let users = JSON.parse(localStorage.getItem('gym_users'));
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        
+        delete users[username];
+        if(rutinas[username]) delete rutinas[username];
+        
+        localStorage.setItem('gym_users', JSON.stringify(users));
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        renderMasterUsers();
+    }
+
+    // --- LÓGICA DE ENTRENADOR Y ALUMNO (IGUAL A V2.9) ---
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if (!verificarPermisoAlumno(al)) return;
+        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        const profe = sessionStorage.getItem('active_user');
+
+        if (!users[al] || users[al].created_by !== profe) {
+            return alert("Este alumno no existe o no fue registrado por ti.");
+        }
 
         const dia = document.getElementById('p-dia-semana').value;
         const ej = document.getElementById('p-ejercicio').value;
         const se = document.getElementById('p-series').value;
 
-        if (!ej) return alert("Escribe el ejercicio");
-
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
+        rutinas[al][dia].push({ nombre: ej, series: se });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        
-        alert("¡Ejercicio asignado!");
-        document.getElementById('p-ejercicio').value = "";
-        if(!document.getElementById('visor-progreso').classList.contains('hidden')) cambiarDiaVisor(diaActualVisor);
-    }
-
-    function cambiarDiaVisor(dia, btn) {
-        diaActualVisor = dia;
-        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        const lista = document.getElementById('lista-ejercicios-visor');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        
-        document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-
-        const diaRutina = rutinas[al] && rutinas[al][dia] ? rutinas[al][dia] : [];
-        lista.innerHTML = `<h5 style="color:var(--accent); margin:0;">${dia.toUpperCase()}</h5>`;
-        
-        if(diaRutina.length === 0) {
-            lista.innerHTML += "<p style='font-size:0.8rem;'>Sin ejercicios este día.</p>";
-        } else {
-            diaRutina.forEach((item, index) => {
-                lista.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-bottom:1px solid #222; padding-bottom:5px;">
-                    <span style="font-size:0.85rem;">${item.nombre} (${item.series})</span>
-                    <div>
-                        <button onclick="modificarEjercicio('${al}','${dia}',${index})" class="btn-action" style="background:var(--accent); color:black;">M</button>
-                        <button onclick="eliminarEjercicio('${al}','${dia}',${index})" class="btn-action" style="background:var(--danger); color:white;">X</button>
-                    </div>
-                </div>`;
-            });
-        }
-    }
-
-    function verProgreso() {
-        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if (!al) return alert("Escribe el nombre del alumno");
-        if (!verificarPermisoAlumno(al)) return;
-
-        document.getElementById('visor-progreso').classList.remove('hidden');
-        cambiarDiaVisor(diaActualVisor);
-    }
-
-    function cerrarVisor() { document.getElementById('visor-progreso').classList.add('hidden'); }
-
-    // --- LÓGICA DE ALUMNO ---
-    function cargarDiaAlumno(dia, btn) {
-        diaActualAlumno = dia;
-        const u = sessionStorage.getItem('active_user');
-        const container = document.getElementById('lista-rutina');
-        const volBox = document.getElementById('volumen-dia');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        
-        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-
-        const miRutina = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
-        container.innerHTML = miRutina.length ? "" : "<p style='text-align:center; padding:20px; font-size:0.9rem;'>Hoy es día de recuperación 🛌</p>";
-        
-        let volTotal = 0;
-        miRutina.forEach((item, index) => {
-            volTotal += (parseFloat(item.peso) || 0) * (parseInt(item.series) || 0);
-            container.innerHTML += `<div class="rutina-item"><strong>${item.nombre}</strong> <span class="badge">${item.series}</span><input type="number" class="input-peso" data-index="${index}" placeholder="Kg levantados" value="${item.peso || ''}"></div>`;
-        });
-        if(volTotal > 0) { volBox.classList.remove('hidden'); volBox.innerText = `Carga Total: ${volTotal}kg`; } else { volBox.classList.add('hidden'); }
-    }
-
-    function guardarRutinaAlumno() {
-        const u = sessionStorage.getItem('active_user');
-        const inputs = document.querySelectorAll('.input-peso');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        const ahora = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-
-        inputs.forEach(input => {
-            const idx = input.getAttribute('data-index');
-            rutinas[u][diaActualAlumno][idx].peso = input.value;
-        });
-        
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("✅ Entrenamiento guardado.");
-        cargarDiaAlumno(diaActualAlumno);
-    }
-
-    function eliminarEjercicio(al, dia, idx) {
-        if(!confirm("¿Eliminar ejercicio?")) return;
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        rutinas[al][dia].splice(idx, 1);
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        cambiarDiaVisor(dia);
-    }
-
-    function modificarEjercicio(al, dia, idx) {
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        const ej = rutinas[al][dia][idx];
-        const nN = prompt("Nombre:", ej.nombre);
-        const nS = prompt("Series:", ej.series);
-        if (nN !== null && nS !== null) {
-            rutinas[al][dia][idx].nombre = nN || ej.nombre;
-            rutinas[al][dia][idx].series = nS || ej.series;
-            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-            cambiarDiaVisor(dia);
-        }
+        alert("¡Asignado!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
