@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v3.1 (Full Control)</title>
+    <title>Pedro Alfonso - Coach System v3.2 (Mirror Interface)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -18,16 +18,16 @@
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
         .hidden { display: none; }
         .user-list-item { background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--accent); }
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; text-transform: uppercase; margin-left: 5px; }
-        .btn-small { width: auto; padding: 5px 8px; font-size: 0.65rem; margin-left: 5px; }
-        .perfil-box { background: #000; padding: 10px; border-radius: 10px; margin-top: 15px; border: 1px dashed #555; }
+        .btn-small { width: auto; padding: 5px 12px; font-size: 0.7rem; margin-left: 5px; }
+        .perfil-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px dashed #555; }
+        .badge { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v3.1</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v3.2</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -41,35 +41,40 @@
     <div id="section-dev" class="card dev-card hidden">
         <h2 style="color:var(--dev);">PANEL DESARROLLADOR</h2>
         <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:20px;">
-            <h4 style="margin:0 0 10px 0;">Nuevo Usuario</h4>
+            <h4 style="margin:0 0 10px 0;">Crear Nuevo Acceso</h4>
             <input type="text" id="reg-user" placeholder="Usuario">
             <input type="password" id="reg-pass" placeholder="Contraseña">
             <select id="reg-role"><option value="profe">Entrenador</option><option value="alumno">Alumno</option></select>
-            <button onclick="masterRegister()">CREAR</button>
+            <button onclick="masterRegister()">DAR DE ALTA</button>
         </div>
-        <h4>Gestión Global de Usuarios</h4>
+        <h4>Control Global de Usuarios</h4>
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
     </div>
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
-        <button class="secondary" onclick="togglePerfil()">⚙️ MODIFICAR MI PERFIL</button>
+        <button class="secondary" onclick="togglePerfil('profe')">⚙️ MODIFICAR MI PERFIL</button>
         <div id="perfil-profe" class="perfil-box hidden">
             <input type="text" id="edit-u-profe" placeholder="Nuevo Usuario">
             <input type="password" id="edit-p-profe" placeholder="Nueva Clave">
             <button onclick="actualizarDatos('profe')" style="background:var(--success); color:white;">GUARDAR CAMBIOS</button>
         </div>
         <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre de tu alumno">
+        <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
         <input type="text" id="p-ejercicio" placeholder="Ejercicio">
-        <button onclick="asignarRutina()">ASIGNAR</button>
+        <input type="text" id="p-series" placeholder="Series (ej: 4x10)">
+        <button onclick="asignarRutina()">ASIGNAR RUTINA</button>
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR MIS ALUMNOS</button>
+        <div id="visor-progreso" class="hidden" style="margin-top:15px; background:#000; padding:10px; border-radius:10px;">
+            <div id="lista-ejercicios-visor"></div>
+        </div>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Plan</h2>
-        <button class="secondary" onclick="togglePerfil()">⚙️ MODIFICAR MI PERFIL</button>
+        <button class="secondary" onclick="togglePerfil('alumno')">⚙️ MODIFICAR MI PERFIL</button>
         <div id="perfil-alumno" class="perfil-box hidden">
             <input type="text" id="edit-u-alumno" placeholder="Nuevo Usuario">
             <input type="password" id="edit-p-alumno" placeholder="Nueva Clave">
@@ -91,35 +96,40 @@
     }
     init();
 
-    // --- AUTH ---
-    function login(u_manual, p_manual, r_manual) {
-        const u = u_manual || document.getElementById('auth-user').value.toLowerCase().trim();
-        const p = p_manual || document.getElementById('auth-pass').value;
-        const r = r_manual || document.getElementById('auth-role').value;
+    // --- AUTENTICACIÓN CENTRALIZADA ---
+    function login(u_ext, p_ext, r_ext) {
+        const u = u_ext || document.getElementById('auth-user').value.toLowerCase().trim();
+        const p = p_ext || document.getElementById('auth-pass').value;
+        const r = r_ext || document.getElementById('auth-role').value;
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         
-        if (users[u] && users[u].pass === p && users[u].role === r) {
+        if (users[u] && users[u].pass === p) {
             sessionStorage.setItem('active_user', u);
             sessionStorage.setItem('user_role', r);
-            showPanel(r, u);
-        } else { if(!u_manual) alert("Datos incorrectos"); }
+            renderDashboard(r, u);
+        } else { if(!u_ext) alert("Acceso denegado"); }
     }
 
-    function showPanel(role, username) {
+    // --- RENDERIZADOR DE INTERFACES ---
+    function renderDashboard(role, username) {
         document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+        
         if (role === 'dev') {
             document.getElementById('section-dev').classList.remove('hidden');
             renderMasterUsers();
         } else if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
             document.getElementById('welcome-profe').innerText = `PROFE: ${username.toUpperCase()}`;
+            // Limpiar visor al entrar
+            document.getElementById('visor-progreso').classList.add('hidden');
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
             document.getElementById('welcome-alumno').innerText = `ATLETA: ${username.toUpperCase()}`;
+            cargarRutinaAlumno(username);
         }
     }
 
-    // --- DEVELOPER ACTIONS ---
+    // --- FUNCIONES MASTER (PEDRO ALFONSO) ---
     function renderMasterUsers() {
         const container = document.getElementById('lista-usuarios-master');
         const users = JSON.parse(localStorage.getItem('gym_users')) || {};
@@ -128,29 +138,24 @@
             if (u === "pedro alfonso") continue;
             container.innerHTML += `
                 <div class="user-list-item">
-                    <span><strong>${u}</strong> <span class="badge">${users[u].role}</span></span>
+                    <span><strong>${u.toUpperCase()}</strong> <span class="badge">${users[u].role}</span></span>
                     <div>
-                        <button onclick="masterLogin('${u}')" class="btn-small" style="background:var(--success); color:white;">INGRESAR</button>
+                        <button onclick="login('${u}', '${users[u].pass}', '${users[u].role}')" class="btn-small" style="background:var(--success); color:white;">INGRESAR</button>
                         <button onclick="masterDelete('${u}')" class="btn-small" style="background:var(--danger); color:white;">X</button>
                     </div>
                 </div>`;
         }
     }
 
-    function masterLogin(username) {
-        let users = JSON.parse(localStorage.getItem('gym_users'));
-        const uData = users[username];
-        login(username, uData.pass, uData.role);
-    }
-
     function masterRegister() {
         const u = document.getElementById('reg-user').value.toLowerCase().trim();
         const p = document.getElementById('reg-pass').value;
         const r = document.getElementById('reg-role').value;
-        if(!u || !p) return;
+        if(!u || !p) return alert("Faltan datos");
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
         users[u] = { pass: p, role: r, created_by: sessionStorage.getItem('active_user') };
         localStorage.setItem('gym_users', JSON.stringify(users));
+        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if(!rutinas[u]) rutinas[u] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
@@ -158,46 +163,58 @@
     }
 
     function masterDelete(u) {
-        if(!confirm("¿Eliminar usuario?")) return;
-        let users = JSON.parse(localStorage.getItem('gym_users'));
-        delete users[u];
-        localStorage.setItem('gym_users', JSON.stringify(users));
-        renderMasterUsers();
+        if(confirm(`¿Eliminar permanentemente a ${u}?`)) {
+            let users = JSON.parse(localStorage.getItem('gym_users'));
+            delete users[u];
+            localStorage.setItem('gym_users', JSON.stringify(users));
+            renderMasterUsers();
+        }
     }
 
-    // --- GESTIÓN DE PERFIL ---
-    function togglePerfil() {
-        const role = sessionStorage.getItem('user_role');
-        document.getElementById(`perfil-${role}`).classList.toggle('hidden');
+    // --- FUNCIONES DE PROFE ---
+    function asignarRutina() {
+        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
+        const ej = document.getElementById('p-ejercicio').value;
+        const se = document.getElementById('p-series').value;
+        const profe = sessionStorage.getItem('active_user');
+        let users = JSON.parse(localStorage.getItem('gym_users'));
+
+        if (!users[al] || users[al].created_by !== profe) return alert("Alumno no válido.");
+
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        rutinas[al]["lunes"].push({ nombre: ej, series: se, peso: "" }); // Ejemplo en lunes
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        alert("¡Asignado!");
     }
+
+    function verProgreso() {
+        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
+        if(!al) return alert("Nombre de alumno requerido");
+        document.getElementById('visor-progreso').classList.remove('hidden');
+        document.getElementById('lista-ejercicios-visor').innerHTML = `<p>Mostrando plan de: ${al.toUpperCase()}</p>`;
+    }
+
+    // --- PERFIL Y SEGURIDAD ---
+    function togglePerfil(role) { document.getElementById(`perfil-${role}`).classList.toggle('hidden'); }
 
     function actualizarDatos(role) {
         const nuevoU = document.getElementById(`edit-u-${role}`).value.toLowerCase().trim();
         const nuevoP = document.getElementById(`edit-p-${role}`).value;
         const viejoU = sessionStorage.getItem('active_user');
-
-        if(!nuevoU || !nuevoP) return alert("Completa los campos");
+        if(!nuevoU || !nuevoP) return;
 
         let users = JSON.parse(localStorage.getItem('gym_users'));
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-
-        // Si cambia el nombre de usuario, migrar datos
-        if (nuevoU !== viejoU) {
-            if(users[nuevoU]) return alert("Ese nombre de usuario ya existe");
-            users[nuevoU] = { ...users[viejoU], pass: nuevoP };
-            delete users[viejoU];
-            if(rutinas[viejoU]) {
-                rutinas[nuevoU] = rutinas[viejoU];
-                delete rutinas[viejoU];
-            }
-        } else {
-            users[viejoU].pass = nuevoP;
-        }
-
+        users[nuevoU] = { ...users[viejoU], pass: nuevoP };
+        if(nuevoU !== viejoU) delete users[viejoU];
+        
         localStorage.setItem('gym_users', JSON.stringify(users));
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Datos actualizados. Reinicia sesión.");
+        alert("Cambios guardados. Reiniciando...");
         logout();
+    }
+
+    function cargarRutinaAlumno(u) {
+        const container = document.getElementById('lista-rutina');
+        container.innerHTML = "<p style='text-align:center;'>Cargando tus rutinas del servidor...</p>";
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
