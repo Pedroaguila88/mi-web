@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v4.1</title>
+    <title>Pedro Alfonso - Coach System v4.2 (Full Restore)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -24,18 +24,21 @@
         .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
         .gif-container img { width: 100%; display: block; background: #000; }
         .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 8px; margin-top: 10px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); font-weight: bold; }
-        .chart-wrap { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 10px; height: 200px; }
+        .chart-wrap { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 10px; height: 180px; }
         .historial-box { margin-top: 10px; max-height: 120px; overflow-y: auto; background: #111; border-radius: 8px; padding: 8px; border: 1px solid #444; }
         .historial-item { font-size: 0.65rem; padding: 4px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
         label { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin-top: 5px; display: block; }
-        .ejercicio-lista-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 8px 0; font-size: 0.85rem; }
+        /* Estilos para la lista del Visor */
+        .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
+        .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; }
+        .ejercicio-visor-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v4.1</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v4.2</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -55,25 +58,17 @@
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
         <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
-        
-        <label>1. Día de la Semana:</label>
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
-
-        <label>2. Nombre del Ejercicio:</label>
-        <input type="text" id="p-ejercicio-nombre" placeholder="Ej: Press con Mancuernas">
-
-        <label>3. Seleccionar Técnica (GIF):</label>
+        <input type="text" id="p-ejercicio-nombre" placeholder="Ejercicio Manual">
+        <label>Técnica (GIF):</label>
         <select id="p-gif-selector">
             <option value="">-- Sin GIF --</option>
             <option value="press_banca_barra.gif">Press de Banca Barra</option>
             <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
         </select>
-        
-        <label>4. Volumen:</label>
-        <input type="text" id="p-series" placeholder="Series y Reps (Ej: 4x12)">
-        
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR RUTINA</button>
         <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN & GRÁFICOS</button>
         
@@ -85,7 +80,7 @@
                 <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
                 <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
             </div>
-            <div id="lista-ejercicios-visor" class="card" style="background:#000; padding:10px;"></div>
+            <div id="lista-ejercicios-visor" class="visor-box"></div>
             <div class="chart-wrap"><canvas id="progresoChart"></canvas></div>
             <div id="items-historial" class="historial-box"></div>
         </div>
@@ -95,7 +90,7 @@
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Plan</h2>
         <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
             <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
             <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
             <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
@@ -130,7 +125,7 @@
             sessionStorage.setItem('active_user', u);
             sessionStorage.setItem('user_role', r);
             renderDashboard(r, u);
-        } else { if(!u_ext) alert("Acceso denegado"); }
+        } else { if(!u_ext) alert("Datos incorrectos"); }
     }
 
     function renderDashboard(role, username) {
@@ -154,12 +149,10 @@
         const ejNombre = document.getElementById('p-ejercicio-nombre').value;
         const gifSeleccionado = document.getElementById('p-gif-selector').value;
         const se = document.getElementById('p-series').value;
-
         if (!al || !ejNombre) return alert("Faltan datos");
 
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if(!rutinas[al]) rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-
         rutinas[al][dia].push({ nombre: ejNombre, series: se, peso: "", gif: gifSeleccionado });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         alert("¡Asignado!");
@@ -185,13 +178,14 @@
         const r = (rutinas[al] && rutinas[al][dia]) ? rutinas[al][dia] : [];
         lista.innerHTML = `<h5 style="color:var(--accent); margin:0 0 10px 0;">PLAN ${dia.toUpperCase()}</h5>`;
         
+        // RECORREMOS Y DIBUJAMOS LOS EJERCICIOS
         r.forEach((item, idx) => {
             lista.innerHTML += `
-            <div class="ejercicio-lista-item">
-                <span>${item.nombre} (${item.series})</span>
+            <div class="ejercicio-visor-item">
+                <span style="font-size:0.8rem;">${item.nombre} (${item.series})</span>
                 <div>
-                    <b style="margin-right:10px;">${item.peso || '-'}kg</b>
-                    <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" style="width:auto; padding:3px 8px; background:var(--danger); color:white; font-size:0.7rem;">X</button>
+                    <b style="margin-right:8px; font-size:0.8rem;">${item.peso || '-'}kg</b>
+                    <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" style="width:auto; padding:2px 6px; background:var(--danger); color:white; font-size:0.65rem;">X</button>
                 </div>
             </div>`;
         });
@@ -214,24 +208,14 @@
 
         const container = document.getElementById('lista-rutina');
         const r = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
-        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Descanso</p>";
+        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso</p>";
         
         r.forEach((item, idx) => {
-            container.innerHTML += `
-            <div class="rutina-item">
-                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                <br>
-                ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div>
-                <div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}
-                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Kg" value="${item.peso || ''}">
-            </div>`;
+            container.innerHTML += `<div class="rutina-item"><strong>${item.nombre}</strong> <span class="badge">${item.series}</span><br>${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div><div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}<input type="number" class="peso-input" data-idx="${idx}" placeholder="Kg" value="${item.peso || ''}"></div>`;
         });
     }
 
-    function toggleGif(id) {
-        const el = document.getElementById(`gif-${id}`);
-        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-    }
+    function toggleGif(id) { const el = document.getElementById(`gif-${id}`); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
 
     function dibujarGrafico(al) {
         const ctx = document.getElementById('progresoChart').getContext('2d');
@@ -240,11 +224,7 @@
         const labels = datos.length ? datos.slice(-10).map(d => d.fecha) : ['-'];
         const pesos = datos.length ? datos.slice(-10).map(d => parseFloat(d.peso)) : [0];
         if (miGrafico) miGrafico.destroy();
-        miGrafico = new Chart(ctx, {
-            type: 'line',
-            data: { labels: labels, datasets: [{ label: 'Kg', data: pesos, borderColor: '#00d4ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0,212,255,0.1)' }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        miGrafico = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Kg', data: pesos, borderColor: '#00d4ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0,212,255,0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
 
     function renderHistorial(al) {
@@ -252,9 +232,7 @@
         const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
         const regs = h[al] || [];
         container.innerHTML = "<strong>BITÁCORA:</strong><br>";
-        [...regs].reverse().slice(0,10).forEach(r => {
-            container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`;
-        });
+        [...regs].reverse().slice(0,10).forEach(r => { container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`; });
     }
 
     function guardarProgresoAlumno() {
@@ -264,15 +242,7 @@
         const inputs = document.querySelectorAll('.peso-input');
         const fecha = new Date().toLocaleDateString('es-PY', {day:'2-digit', month:'2-digit'});
         if(!historial[u]) historial[u] = [];
-        inputs.forEach(input => {
-            const idx = input.getAttribute('data-idx');
-            const nP = input.value;
-            const ej = rutinas[u][diaActualAlumno][idx];
-            if (nP && nP !== ej.peso) {
-                historial[u].push({ fecha: fecha, ejercicio: ej.nombre, peso: nP });
-                ej.peso = nP;
-            }
-        });
+        inputs.forEach(input => { const idx = input.getAttribute('data-idx'); const nP = input.value; const ej = rutinas[u][diaActualAlumno][idx]; if (nP && nP !== ej.peso) { historial[u].push({ fecha: fecha, ejercicio: ej.nombre, peso: nP }); ej.peso = nP; } });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
         alert("¡Guardado!");
@@ -283,27 +253,11 @@
         const container = document.getElementById('lista-usuarios-master');
         const users = JSON.parse(localStorage.getItem('gym_users')) || {};
         container.innerHTML = "<h4>Gestión:</h4>";
-        for (let u in users) {
-            if (u === "pedro alfonso") continue;
-            container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;">
-                <span>${u.toUpperCase()}</span>
-                <div>
-                    <button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px; background:var(--success); color:white; font-size:0.6rem;">ENTRAR</button>
-                    <button onclick="masterDelete('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem; margin-left:4px;">BORRAR</button>
-                </div>
-            </div>`;
-        }
+        for (let u in users) { if (u === "pedro alfonso") continue; container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;"><span>${u.toUpperCase()}</span><div><button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px; background:var(--success); color:white; font-size:0.6rem;">ENTRAR</button><button onclick="masterDelete('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem; margin-left:4px;">BORRAR</button></div></div>`; }
     }
 
-    function masterDelete(u) {
-        if(confirm(`¿Borrar a ${u}?`)) {
-            let users = JSON.parse(localStorage.getItem('gym_users'));
-            delete users[u];
-            localStorage.setItem('gym_users', JSON.stringify(users));
-            renderMasterUsers();
-        }
-    }
-
+    function masterRegister() { const u = document.getElementById('reg-user').value.toLowerCase().trim(); const p = document.getElementById('reg-pass').value; const r = document.getElementById('reg-role').value; if(!u || !p) return; let users = JSON.parse(localStorage.getItem('gym_users')) || {}; users[u] = { pass: p, role: r, created_by: sessionStorage.getItem('active_user') }; localStorage.setItem('gym_users', JSON.stringify(users)); renderMasterUsers(); }
+    function masterDelete(u) { if(confirm(`¿Borrar a ${u}?`)) { let users = JSON.parse(localStorage.getItem('gym_users')); delete users[u]; localStorage.setItem('gym_users', JSON.stringify(users)); renderMasterUsers(); } }
     function logout() { sessionStorage.clear(); location.reload(); }
 </script>
 </body>
