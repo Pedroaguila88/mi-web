@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v3.7 (Full Restore)</title>
+    <title>Pedro Alfonso - Coach System v3.9</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -21,18 +21,19 @@
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid var(--accent); }
-        .chart-wrap { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #333; height: 220px; }
-        .historial-box { margin-top: 15px; max-height: 150px; overflow-y: auto; background: #111; border-radius: 10px; padding: 10px; border: 1px solid #444; }
-        .historial-item { font-size: 0.7rem; padding: 5px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .perfil-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed #555; }
+        .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
+        .gif-container img { width: 100%; display: block; background: #000; }
+        .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 8px; margin-top: 10px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); font-weight: bold; }
+        .chart-wrap { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 10px; height: 200px; }
+        .historial-box { margin-top: 10px; max-height: 120px; overflow-y: auto; background: #111; border-radius: 8px; padding: 8px; border: 1px solid #444; }
+        .historial-item { font-size: 0.65rem; padding: 4px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM Pedro Alfonso</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v3.9</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -44,12 +45,12 @@
     </div>
 
     <div id="section-dev" class="card dev-card hidden">
-        <h2 style="color:var(--dev);">PANEL DESARROLLADOR</h2>
-        <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:20px;">
-            <input type="text" id="reg-user" placeholder="Usuario">
+        <h2 style="color:var(--dev);">MASTER PANEL</h2>
+        <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:15px;">
+            <input type="text" id="reg-user" placeholder="Usuario Nuevo">
             <input type="password" id="reg-pass" placeholder="Contraseña">
             <select id="reg-role"><option value="profe">Entrenador</option><option value="alumno">Alumno</option></select>
-            <button onclick="masterRegister()">DAR DE ALTA</button>
+            <button onclick="masterRegister()">CREAR USUARIO</button>
         </div>
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
@@ -57,21 +58,25 @@
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
-        <button class="secondary" onclick="togglePerfil('profe')">⚙️ MODIFICAR MI PERFIL</button>
-        <div id="perfil-profe" class="perfil-box hidden">
+        <button class="secondary" onclick="togglePerfil('profe')">⚙️ MI PERFIL</button>
+        <div id="perfil-profe" class="hidden" style="background:#000; padding:10px; border-radius:10px; margin-bottom:10px;">
             <input type="text" id="edit-u-profe" placeholder="Nuevo Usuario">
             <input type="password" id="edit-p-profe" placeholder="Nueva Clave">
-            <button onclick="actualizarDatos('profe')" style="background:var(--success); color:white;">GUARDAR CAMBIOS</button>
+            <button onclick="actualizarDatos('profe')">GUARDAR</button>
         </div>
         <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
         <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
-        <input type="text" id="p-ejercicio" placeholder="Ejercicio">
-        <input type="text" id="p-series" placeholder="Series">
-        <button onclick="asignarRutina()">ASIGNAR RUTINA</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">VER HISTORIAL Y GRÁFICO</button>
+        <select id="p-ejercicio-lista">
+            <option value="Press de Banca Barra">Press de Banca Barra</option>
+            <option value="Personalizado">-- Otro (Sin GIF) --</option>
+        </select>
+        <input type="text" id="p-ejercicio-manual" placeholder="Ejercicio Manual" class="hidden">
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
+        <button onclick="asignarRutina()">ASIGNAR CON GIF</button>
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN & GRÁFICOS</button>
         
         <div id="visor-progreso" class="hidden">
             <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
@@ -83,20 +88,14 @@
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
             <div class="chart-wrap"><canvas id="progresoChart"></canvas></div>
-            <div id="historial-lista" class="historial-box"><div id="items-historial"></div></div>
+            <div id="items-historial" class="historial-box"></div>
         </div>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Plan</h2>
-        <button class="secondary" onclick="togglePerfil('alumno')">⚙️ MI PERFIL</button>
-        <div id="perfil-alumno" class="perfil-box hidden">
-            <input type="text" id="edit-u-alumno" placeholder="Nuevo Usuario">
-            <input type="password" id="edit-p-alumno" placeholder="Nueva Clave">
-            <button onclick="actualizarDatos('alumno')" style="background:var(--success); color:white;">GUARDAR CAMBIOS</button>
-        </div>
-        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding:15px 0;">
+        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
             <button class="btn-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
             <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
             <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
@@ -110,6 +109,11 @@
 </div>
 
 <script>
+    // --- CONFIGURACIÓN DE GIFS (NOMBRE ARCHIVO EN GITHUB) ---
+    const libreriaGifs = {
+        "Press de Banca Barra": "press_banca_barra.gif"
+    };
+
     let miGrafico = null;
     let diaActualVisor = 'lunes';
     let diaActualAlumno = 'lunes';
@@ -122,6 +126,10 @@
         }
     }
     init();
+
+    document.getElementById('p-ejercicio-lista').addEventListener('change', function() {
+        document.getElementById('p-ejercicio-manual').classList.toggle('hidden', this.value !== "Personalizado");
+    });
 
     function login(u_ext, p_ext, r_ext) {
         const u = u_ext || document.getElementById('auth-user').value.toLowerCase().trim();
@@ -150,60 +158,25 @@
         }
     }
 
-    function renderMasterUsers() {
-        const container = document.getElementById('lista-usuarios-master');
-        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        container.innerHTML = "<h4>Gestión Global:</h4>";
-        for (let u in users) {
-            if (u === "pedro alfonso") continue;
-            container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; background:#333; padding:10px; border-radius:8px;">
-                <span><strong>${u.toUpperCase()}</strong> (${users[u].role})</span>
-                <div>
-                    <button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px 8px; background:var(--success); color:white; font-size:0.65rem;">INGRESAR</button>
-                    <button onclick="masterDelete('${u}')" style="width:auto; padding:5px 8px; background:var(--danger); color:white; font-size:0.65rem; margin-left:4px;">ELIMINAR</button>
-                </div>
-            </div>`;
-        }
-    }
-
-    function masterRegister() {
-        const u = document.getElementById('reg-user').value.toLowerCase().trim();
-        const p = document.getElementById('reg-pass').value;
-        const r = document.getElementById('reg-role').value;
-        if(!u || !p) return alert("Faltan datos");
-        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        users[u] = { pass: p, role: r, created_by: sessionStorage.getItem('active_user') };
-        localStorage.setItem('gym_users', JSON.stringify(users));
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        rutinas[u] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        renderMasterUsers();
-    }
-
-    function masterDelete(u) {
-        if(confirm(`¿Eliminar permanentemente a ${u}?`)) {
-            let users = JSON.parse(localStorage.getItem('gym_users'));
-            delete users[u];
-            localStorage.setItem('gym_users', JSON.stringify(users));
-            renderMasterUsers();
-        }
-    }
-
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const dia = document.getElementById('p-dia-semana').value;
-        const ej = document.getElementById('p-ejercicio').value;
+        let ej = document.getElementById('p-ejercicio-lista').value;
         const se = document.getElementById('p-series').value;
+        if (ej === "Personalizado") ej = document.getElementById('p-ejercicio-manual').value;
+        
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        if(!rutinas[al]) return alert("Alumno no existe");
-        rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
+        if(!rutinas[al]) rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+
+        const gifFile = libreriaGifs[ej] || "";
+        rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gifFile });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Asignado");
+        alert("¡Asignado!");
     }
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if(!al) return alert("Nombre de alumno requerido");
+        if(!al) return alert("Escribe el nombre");
         document.getElementById('visor-progreso').classList.remove('hidden');
         cambiarDiaVisor('lunes');
         setTimeout(() => { dibujarGrafico(al); renderHistorial(al); }, 100);
@@ -218,17 +191,45 @@
         const lista = document.getElementById('lista-ejercicios-visor');
         const r = rutinas[al][dia] || [];
         lista.innerHTML = `<h5>${dia.toUpperCase()}</h5>`;
-        r.forEach(item => { lista.innerHTML += `<p style="font-size:0.8rem;">${item.nombre} (${item.series}) - <b>${item.peso || '-'}kg</b></p>`; });
+        r.forEach((item, idx) => {
+            lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span>${item.nombre} (${item.series})</span>
+                <b>${item.peso || '-'}kg</b>
+                <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" style="width:auto; padding:2px 5px; background:var(--danger); color:white; font-size:0.6rem;">X</button>
+            </div>`;
+        });
     }
 
-    function renderHistorial(al) {
-        const container = document.getElementById('items-historial');
-        const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        const regs = h[al] || [];
-        container.innerHTML = "<strong>HISTORIAL RECIENTE:</strong><br>";
-        [...regs].reverse().slice(0,15).forEach(r => {
-            container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <span style="color:var(--primary)">${r.peso}kg</span></div>`;
+    function eliminarEjercicio(al, dia, idx) {
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        rutinas[al][dia].splice(idx, 1);
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        cambiarDiaVisor(dia);
+    }
+
+    function cargarDiaAlumno(dia, btn) {
+        diaActualAlumno = dia;
+        const u = sessionStorage.getItem('active_user');
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
+        if(btn) btn.classList.add('active-day');
+        const container = document.getElementById('lista-rutina');
+        const r = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
+        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso</p>";
+        r.forEach((item, idx) => {
+            container.innerHTML += `<div class="rutina-item">
+                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
+                <br>
+                ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div>
+                <div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}
+                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso" value="${item.peso || ''}">
+            </div>`;
         });
+    }
+
+    function toggleGif(id) {
+        const el = document.getElementById(`gif-${id}`);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 
     function dibujarGrafico(al) {
@@ -245,17 +246,13 @@
         });
     }
 
-    function cargarDiaAlumno(dia, btn) {
-        diaActualAlumno = dia;
-        const u = sessionStorage.getItem('active_user');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-        const container = document.getElementById('lista-rutina');
-        const r = rutinas[u][dia] || [];
-        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Descanso</p>";
-        r.forEach((item, idx) => {
-            container.innerHTML += `<div class="rutina-item"><strong>${item.nombre}</strong> <span class="badge">${item.series}</span><input type="number" class="peso-input" data-idx="${idx}" placeholder="Kg" value="${item.peso || ''}"></div>`;
+    function renderHistorial(al) {
+        const container = document.getElementById('items-historial');
+        const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
+        const regs = h[al] || [];
+        container.innerHTML = "<strong>HISTORIAL:</strong><br>";
+        [...regs].reverse().slice(0,10).forEach(r => {
+            container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`;
         });
     }
 
@@ -281,24 +278,51 @@
         cargarDiaAlumno(diaActualAlumno);
     }
 
-    function togglePerfil(role) { document.getElementById(`perfil-${role}`).classList.toggle('hidden'); }
+    function renderMasterUsers() {
+        const container = document.getElementById('lista-usuarios-master');
+        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        container.innerHTML = "<h4>Gestión:</h4>";
+        for (let u in users) {
+            if (u === "pedro alfonso") continue;
+            container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;">
+                <span>${u.toUpperCase()}</span>
+                <div>
+                    <button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px; background:var(--success); color:white; font-size:0.6rem;">ENTRAR</button>
+                    <button onclick="masterDelete('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem; margin-left:4px;">BORRAR</button>
+                </div>
+            </div>`;
+        }
+    }
 
+    function masterRegister() {
+        const u = document.getElementById('reg-user').value.toLowerCase().trim();
+        const p = document.getElementById('reg-pass').value;
+        const r = document.getElementById('reg-role').value;
+        if(!u || !p) return;
+        let users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        users[u] = { pass: p, role: r, created_by: sessionStorage.getItem('active_user') };
+        localStorage.setItem('gym_users', JSON.stringify(users));
+        renderMasterUsers();
+    }
+
+    function masterDelete(u) {
+        if(confirm(`¿Borrar a ${u}?`)) {
+            let users = JSON.parse(localStorage.getItem('gym_users'));
+            delete users[u];
+            localStorage.setItem('gym_users', JSON.stringify(users));
+            renderMasterUsers();
+        }
+    }
+
+    function togglePerfil(role) { document.getElementById(`perfil-${role}`).classList.toggle('hidden'); }
     function actualizarDatos(role) {
         const nU = document.getElementById(`edit-u-${role}`).value.toLowerCase().trim();
         const nP = document.getElementById(`edit-p-${role}`).value;
         const vU = sessionStorage.getItem('active_user');
-        if(!nU || !nP) return alert("Completa los datos");
         let users = JSON.parse(localStorage.getItem('gym_users'));
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        if (nU !== vU) {
-            if(users[nU]) return alert("Usuario ya existe");
-            users[nU] = { ...users[vU], pass: nP };
-            delete users[vU];
-            if(rutinas[vU]) { rutinas[nU] = rutinas[vU]; delete rutinas[vU]; }
-        } else { users[vU].pass = nP; }
+        users[nU] = { ...users[vU], pass: nP };
+        if(nU !== vU) delete users[vU];
         localStorage.setItem('gym_users', JSON.stringify(users));
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("Cambios guardados. Reiniciando...");
         logout();
     }
 
