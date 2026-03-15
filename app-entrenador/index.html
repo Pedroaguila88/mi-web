@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v4.2 (Full Restore)</title>
+    <title>Pedro Alfonso - Coach System v4.3 (Update Ready)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -28,17 +28,17 @@
         .historial-box { margin-top: 10px; max-height: 120px; overflow-y: auto; background: #111; border-radius: 8px; padding: 8px; border: 1px solid #444; }
         .historial-item { font-size: 0.65rem; padding: 4px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
         label { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin-top: 5px; display: block; }
-        /* Estilos para la lista del Visor */
         .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
         .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; }
-        .ejercicio-visor-item:last-child { border-bottom: none; }
+        .btn-edit { background: var(--accent); color: black; width: auto; padding: 3px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
+        .btn-del { background: var(--danger); color: white; width: auto; padding: 3px 8px; font-size: 0.65rem; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v4.2</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v4.3</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -49,19 +49,13 @@
         <button onclick="login()">Entrar</button>
     </div>
 
-    <div id="section-dev" class="card dev-card hidden">
-        <h2 style="color:var(--dev);">MASTER PANEL</h2>
-        <div id="lista-usuarios-master"></div>
-        <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
-    </div>
-
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
         <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
-        <input type="text" id="p-ejercicio-nombre" placeholder="Ejercicio Manual">
+        <input type="text" id="p-ejercicio-nombre" placeholder="Nombre del Ejercicio">
         <label>Técnica (GIF):</label>
         <select id="p-gif-selector">
             <option value="">-- Sin GIF --</option>
@@ -116,24 +110,20 @@
     }
     init();
 
-    function login(u_ext, p_ext, r_ext) {
-        const u = u_ext || document.getElementById('auth-user').value.toLowerCase().trim();
-        const p = p_ext || document.getElementById('auth-pass').value;
-        const r = r_ext || document.getElementById('auth-role').value;
+    function login(u, p, r) {
+        const user = u || document.getElementById('auth-user').value.toLowerCase().trim();
+        const pass = p || document.getElementById('auth-pass').value;
+        const role = r || document.getElementById('auth-role').value;
         let users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        if (users[u] && users[u].pass === p) {
-            sessionStorage.setItem('active_user', u);
-            sessionStorage.setItem('user_role', r);
-            renderDashboard(r, u);
-        } else { if(!u_ext) alert("Datos incorrectos"); }
+        if (users[user] && users[user].pass === pass) {
+            sessionStorage.setItem('active_user', user);
+            renderDashboard(role, user);
+        } else { if(!u) alert("Error"); }
     }
 
     function renderDashboard(role, username) {
         document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-        if (role === 'dev') {
-            document.getElementById('section-dev').classList.remove('hidden');
-            renderMasterUsers();
-        } else if (role === 'profe') {
+        if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
             document.getElementById('welcome-profe').innerText = `PROFE: ${username.toUpperCase()}`;
         } else {
@@ -146,14 +136,14 @@
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const dia = document.getElementById('p-dia-semana').value;
-        const ejNombre = document.getElementById('p-ejercicio-nombre').value;
-        const gifSeleccionado = document.getElementById('p-gif-selector').value;
+        const ej = document.getElementById('p-ejercicio-nombre').value;
+        const gif = document.getElementById('p-gif-selector').value;
         const se = document.getElementById('p-series').value;
-        if (!al || !ejNombre) return alert("Faltan datos");
+        if (!al || !ej) return alert("Faltan datos");
 
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if(!rutinas[al]) rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        rutinas[al][dia].push({ nombre: ejNombre, series: se, peso: "", gif: gifSeleccionado });
+        rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         alert("¡Asignado!");
         document.getElementById('p-ejercicio-nombre').value = "";
@@ -161,7 +151,7 @@
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if(!al) return alert("Escribe el nombre del alumno");
+        if(!al) return alert("Escribe el alumno");
         document.getElementById('visor-progreso').classList.remove('hidden');
         cambiarDiaVisor('lunes');
         setTimeout(() => { dibujarGrafico(al); renderHistorial(al); }, 100);
@@ -178,21 +168,35 @@
         const r = (rutinas[al] && rutinas[al][dia]) ? rutinas[al][dia] : [];
         lista.innerHTML = `<h5 style="color:var(--accent); margin:0 0 10px 0;">PLAN ${dia.toUpperCase()}</h5>`;
         
-        // RECORREMOS Y DIBUJAMOS LOS EJERCICIOS
         r.forEach((item, idx) => {
             lista.innerHTML += `
             <div class="ejercicio-visor-item">
                 <span style="font-size:0.8rem;">${item.nombre} (${item.series})</span>
                 <div>
-                    <b style="margin-right:8px; font-size:0.8rem;">${item.peso || '-'}kg</b>
-                    <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" style="width:auto; padding:2px 6px; background:var(--danger); color:white; font-size:0.65rem;">X</button>
+                    <button onclick="actualizarEjercicio('${al}','${dia}',${idx})" class="btn-edit">✏️</button>
+                    <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" class="btn-del">X</button>
                 </div>
             </div>`;
         });
     }
 
+    function actualizarEjercicio(al, dia, idx) {
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
+        let ej = rutinas[al][dia][idx];
+        
+        const nuevoNombre = prompt("Nuevo nombre del ejercicio:", ej.nombre);
+        const nuevasSeries = prompt("Nuevas series/reps:", ej.series);
+        
+        if (nuevoNombre && nuevasSeries) {
+            ej.nombre = nuevoNombre;
+            ej.series = nuevasSeries;
+            localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+            cambiarDiaVisor(dia);
+        }
+    }
+
     function eliminarEjercicio(al, dia, idx) {
-        if(!confirm("¿Borrar este ejercicio?")) return;
+        if(!confirm("¿Borrar?")) return;
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
         rutinas[al][dia].splice(idx, 1);
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
@@ -205,59 +209,18 @@
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
         if(btn) btn.classList.add('active-day');
-
         const container = document.getElementById('lista-rutina');
         const r = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
-        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso</p>";
-        
+        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Descanso</p>";
         r.forEach((item, idx) => {
             container.innerHTML += `<div class="rutina-item"><strong>${item.nombre}</strong> <span class="badge">${item.series}</span><br>${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div><div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}<input type="number" class="peso-input" data-idx="${idx}" placeholder="Kg" value="${item.peso || ''}"></div>`;
         });
     }
 
     function toggleGif(id) { const el = document.getElementById(`gif-${id}`); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
-
-    function dibujarGrafico(al) {
-        const ctx = document.getElementById('progresoChart').getContext('2d');
-        const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        const datos = h[al] || [];
-        const labels = datos.length ? datos.slice(-10).map(d => d.fecha) : ['-'];
-        const pesos = datos.length ? datos.slice(-10).map(d => parseFloat(d.peso)) : [0];
-        if (miGrafico) miGrafico.destroy();
-        miGrafico = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Kg', data: pesos, borderColor: '#00d4ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0,212,255,0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } });
-    }
-
-    function renderHistorial(al) {
-        const container = document.getElementById('items-historial');
-        const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        const regs = h[al] || [];
-        container.innerHTML = "<strong>BITÁCORA:</strong><br>";
-        [...regs].reverse().slice(0,10).forEach(r => { container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`; });
-    }
-
-    function guardarProgresoAlumno() {
-        const u = sessionStorage.getItem('active_user');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas'));
-        let historial = JSON.parse(localStorage.getItem('gym_historial')) || {};
-        const inputs = document.querySelectorAll('.peso-input');
-        const fecha = new Date().toLocaleDateString('es-PY', {day:'2-digit', month:'2-digit'});
-        if(!historial[u]) historial[u] = [];
-        inputs.forEach(input => { const idx = input.getAttribute('data-idx'); const nP = input.value; const ej = rutinas[u][diaActualAlumno][idx]; if (nP && nP !== ej.peso) { historial[u].push({ fecha: fecha, ejercicio: ej.nombre, peso: nP }); ej.peso = nP; } });
-        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("¡Guardado!");
-        cargarDiaAlumno(diaActualAlumno);
-    }
-
-    function renderMasterUsers() {
-        const container = document.getElementById('lista-usuarios-master');
-        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        container.innerHTML = "<h4>Gestión:</h4>";
-        for (let u in users) { if (u === "pedro alfonso") continue; container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;"><span>${u.toUpperCase()}</span><div><button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px; background:var(--success); color:white; font-size:0.6rem;">ENTRAR</button><button onclick="masterDelete('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem; margin-left:4px;">BORRAR</button></div></div>`; }
-    }
-
-    function masterRegister() { const u = document.getElementById('reg-user').value.toLowerCase().trim(); const p = document.getElementById('reg-pass').value; const r = document.getElementById('reg-role').value; if(!u || !p) return; let users = JSON.parse(localStorage.getItem('gym_users')) || {}; users[u] = { pass: p, role: r, created_by: sessionStorage.getItem('active_user') }; localStorage.setItem('gym_users', JSON.stringify(users)); renderMasterUsers(); }
-    function masterDelete(u) { if(confirm(`¿Borrar a ${u}?`)) { let users = JSON.parse(localStorage.getItem('gym_users')); delete users[u]; localStorage.setItem('gym_users', JSON.stringify(users)); renderMasterUsers(); } }
+    function dibujarGrafico(al) { const ctx = document.getElementById('progresoChart').getContext('2d'); const h = JSON.parse(localStorage.getItem('gym_historial')) || {}; const d = h[al] || []; const l = d.length ? d.slice(-10).map(x => x.fecha) : ['-']; const p = d.length ? d.slice(-10).map(x => parseFloat(x.peso)) : [0]; if (miGrafico) miGrafico.destroy(); miGrafico = new Chart(ctx, { type: 'line', data: { labels: l, datasets: [{ label: 'Kg', data: p, borderColor: '#00d4ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0,212,255,0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } }); }
+    function renderHistorial(al) { const container = document.getElementById('items-historial'); const h = JSON.parse(localStorage.getItem('gym_historial')) || {}; const regs = h[al] || []; container.innerHTML = "<strong>BITÁCORA:</strong><br>"; [...regs].reverse().slice(0,10).forEach(r => { container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`; }); }
+    function guardarProgresoAlumno() { const u = sessionStorage.getItem('active_user'); let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')); let historial = JSON.parse(localStorage.getItem('gym_historial')) || {}; const inputs = document.querySelectorAll('.peso-input'); const fecha = new Date().toLocaleDateString('es-PY', {day:'2-digit', month:'2-digit'}); if(!historial[u]) historial[u] = []; inputs.forEach(input => { const idx = input.getAttribute('data-idx'); const nP = input.value; const ej = rutinas[u][diaActualAlumno][idx]; if (nP && nP !== ej.peso) { historial[u].push({ fecha: fecha, ejercicio: ej.nombre, peso: nP }); ej.peso = nP; } }); localStorage.setItem('gym_rutinas', JSON.stringify(rutinas)); localStorage.setItem('gym_historial', JSON.stringify(historial)); alert("¡Guardado!"); cargarDiaAlumno(diaActualAlumno); }
     function logout() { sessionStorage.clear(); location.reload(); }
 </script>
 </body>
