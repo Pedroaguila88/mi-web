@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v3.9</title>
+    <title>Pedro Alfonso - Coach System v4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -27,13 +27,14 @@
         .chart-wrap { background: #1a1a1a; padding: 15px; border-radius: 12px; margin-top: 10px; height: 200px; }
         .historial-box { margin-top: 10px; max-height: 120px; overflow-y: auto; background: #111; border-radius: 8px; padding: 8px; border: 1px solid #444; }
         .historial-item { font-size: 0.65rem; padding: 4px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        label { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin-top: 5px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v3.9</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v4.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <select id="auth-role">
@@ -58,35 +59,31 @@
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
-        <button class="secondary" onclick="togglePerfil('profe')">⚙️ MI PERFIL</button>
-        <div id="perfil-profe" class="hidden" style="background:#000; padding:10px; border-radius:10px; margin-bottom:10px;">
-            <input type="text" id="edit-u-profe" placeholder="Nuevo Usuario">
-            <input type="password" id="edit-p-profe" placeholder="Nueva Clave">
-            <button onclick="actualizarDatos('profe')">GUARDAR</button>
-        </div>
-        <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
         <input type="text" id="p-nombre-alumno" placeholder="Nombre del alumno">
+        
+        <label>1. Día de la Semana:</label>
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
-        <select id="p-ejercicio-lista">
-            <option value="Press de Banca Barra">Press de Banca Barra</option>
-            <option value="Personalizado">-- Otro (Sin GIF) --</option>
+
+        <label>2. Nombre del Ejercicio:</label>
+        <input type="text" id="p-ejercicio-nombre" placeholder="Ej: Press con Mancuernas">
+
+        <label>3. Seleccionar Técnica (GIF):</label>
+        <select id="p-gif-selector">
+            <option value="">-- Sin GIF --</option>
+            <option value="press_banca_barra.gif">Press de Banca Barra</option>
+            <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
         </select>
-        <input type="text" id="p-ejercicio-manual" placeholder="Ejercicio Manual" class="hidden">
-        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
-        <button onclick="asignarRutina()">ASIGNAR CON GIF</button>
+        
+        <label>4. Volumen de Trabajo:</label>
+        <input type="text" id="p-series" placeholder="Series y Reps (Ej: 4x12)">
+        
+        <button onclick="asignarRutina()">ASIGNAR RUTINA COMPLETA</button>
         <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN & GRÁFICOS</button>
         
         <div id="visor-progreso" class="hidden">
-            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
-                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
-            </div>
-            <div id="lista-ejercicios-visor" class="visor-box"></div>
+            <div id="lista-ejercicios-visor" class="card" style="background:#000;"></div>
             <div class="chart-wrap"><canvas id="progresoChart"></canvas></div>
             <div id="items-historial" class="historial-box"></div>
         </div>
@@ -96,7 +93,7 @@
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Plan</h2>
         <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
             <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
             <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
             <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
@@ -109,9 +106,11 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN DE GIFS (NOMBRE ARCHIVO EN GITHUB) ---
+    // --- LIBRERÍA MULTIMEDIA ---
+    // Aquí puedes agregar más GIFs a medida que los subas a GitHub
     const libreriaGifs = {
-        "Press de Banca Barra": "press_banca_barra.gif"
+        "press_banca_barra.gif": "Press de Banca Barra",
+        "apertura_banca_mancuerna.gif": "Apertura Banca Mancuerna"
     };
 
     let miGrafico = null;
@@ -126,10 +125,6 @@
         }
     }
     init();
-
-    document.getElementById('p-ejercicio-lista').addEventListener('change', function() {
-        document.getElementById('p-ejercicio-manual').classList.toggle('hidden', this.value !== "Personalizado");
-    });
 
     function login(u_ext, p_ext, r_ext) {
         const u = u_ext || document.getElementById('auth-user').value.toLowerCase().trim();
@@ -161,22 +156,61 @@
     function asignarRutina() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
         const dia = document.getElementById('p-dia-semana').value;
-        let ej = document.getElementById('p-ejercicio-lista').value;
+        const ejNombre = document.getElementById('p-ejercicio-nombre').value;
+        const gifSeleccionado = document.getElementById('p-gif-selector').value;
         const se = document.getElementById('p-series').value;
-        if (ej === "Personalizado") ej = document.getElementById('p-ejercicio-manual').value;
-        
+
+        if (!al || !ejNombre) return alert("El nombre del alumno y del ejercicio son obligatorios");
+
         let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
         if(!rutinas[al]) rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
 
-        const gifFile = libreriaGifs[ej] || "";
-        rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gifFile });
+        rutinas[al][dia].push({ 
+            nombre: ejNombre, 
+            series: se, 
+            peso: "", 
+            gif: gifSeleccionado 
+        });
+
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
-        alert("¡Asignado!");
+        alert("¡Ejercicio asignado con éxito!");
+        document.getElementById('p-ejercicio-nombre').value = "";
+    }
+
+    function cargarDiaAlumno(dia, btn) {
+        diaActualAlumno = dia;
+        const u = sessionStorage.getItem('active_user');
+        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
+        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
+        if(btn) btn.classList.add('active-day');
+
+        const container = document.getElementById('lista-rutina');
+        const r = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
+        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso / Cardio</p>";
+        
+        r.forEach((item, idx) => {
+            container.innerHTML += `
+            <div class="rutina-item">
+                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
+                <br>
+                ${item.gif ? `
+                <div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div>
+                <div id="gif-${idx}" class="gif-container">
+                    <img src="${item.gif}" alt="Cargando técnica...">
+                </div>` : ''}
+                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Kg levantados" value="${item.peso || ''}">
+            </div>`;
+        });
+    }
+
+    function toggleGif(id) {
+        const el = document.getElementById(`gif-${id}`);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 
     function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        if(!al) return alert("Escribe el nombre");
+        if(!al) return alert("Escribe el nombre del alumno");
         document.getElementById('visor-progreso').classList.remove('hidden');
         cambiarDiaVisor('lunes');
         setTimeout(() => { dibujarGrafico(al); renderHistorial(al); }, 100);
@@ -192,8 +226,8 @@
         const r = rutinas[al][dia] || [];
         lista.innerHTML = `<h5>${dia.toUpperCase()}</h5>`;
         r.forEach((item, idx) => {
-            lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                <span>${item.nombre} (${item.series})</span>
+            lista.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.8rem;">
+                <span>${item.nombre}</span>
                 <b>${item.peso || '-'}kg</b>
                 <button onclick="eliminarEjercicio('${al}','${dia}',${idx})" style="width:auto; padding:2px 5px; background:var(--danger); color:white; font-size:0.6rem;">X</button>
             </div>`;
@@ -205,31 +239,6 @@
         rutinas[al][dia].splice(idx, 1);
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         cambiarDiaVisor(dia);
-    }
-
-    function cargarDiaAlumno(dia, btn) {
-        diaActualAlumno = dia;
-        const u = sessionStorage.getItem('active_user');
-        let rutinas = JSON.parse(localStorage.getItem('gym_rutinas')) || {};
-        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-        const container = document.getElementById('lista-rutina');
-        const r = (rutinas[u] && rutinas[u][dia]) ? rutinas[u][dia] : [];
-        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso</p>";
-        r.forEach((item, idx) => {
-            container.innerHTML += `<div class="rutina-item">
-                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                <br>
-                ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div>
-                <div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}
-                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso" value="${item.peso || ''}">
-            </div>`;
-        });
-    }
-
-    function toggleGif(id) {
-        const el = document.getElementById(`gif-${id}`);
-        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 
     function dibujarGrafico(al) {
@@ -250,7 +259,7 @@
         const container = document.getElementById('items-historial');
         const h = JSON.parse(localStorage.getItem('gym_historial')) || {};
         const regs = h[al] || [];
-        container.innerHTML = "<strong>HISTORIAL:</strong><br>";
+        container.innerHTML = "<strong>BITÁCORA DE CARGAS:</strong><br>";
         [...regs].reverse().slice(0,10).forEach(r => {
             container.innerHTML += `<div class="historial-item"><span>${r.fecha}</span> <span>${r.ejercicio}</span> <b>${r.peso}kg</b></div>`;
         });
@@ -274,14 +283,14 @@
         });
         localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
         localStorage.setItem('gym_historial', JSON.stringify(historial));
-        alert("¡Guardado!");
+        alert("¡Entrenamiento guardado!");
         cargarDiaAlumno(diaActualAlumno);
     }
 
     function renderMasterUsers() {
         const container = document.getElementById('lista-usuarios-master');
         const users = JSON.parse(localStorage.getItem('gym_users')) || {};
-        container.innerHTML = "<h4>Gestión:</h4>";
+        container.innerHTML = "<h4>Gestión de Accesos:</h4>";
         for (let u in users) {
             if (u === "pedro alfonso") continue;
             container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;">
@@ -306,24 +315,12 @@
     }
 
     function masterDelete(u) {
-        if(confirm(`¿Borrar a ${u}?`)) {
+        if(confirm(`¿Borrar permanentemente a ${u}?`)) {
             let users = JSON.parse(localStorage.getItem('gym_users'));
             delete users[u];
             localStorage.setItem('gym_users', JSON.stringify(users));
             renderMasterUsers();
         }
-    }
-
-    function togglePerfil(role) { document.getElementById(`perfil-${role}`).classList.toggle('hidden'); }
-    function actualizarDatos(role) {
-        const nU = document.getElementById(`edit-u-${role}`).value.toLowerCase().trim();
-        const nP = document.getElementById(`edit-p-${role}`).value;
-        const vU = sessionStorage.getItem('active_user');
-        let users = JSON.parse(localStorage.getItem('gym_users'));
-        users[nU] = { ...users[vU], pass: nP };
-        if(nU !== vU) delete users[vU];
-        localStorage.setItem('gym_users', JSON.stringify(users));
-        logout();
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
