@@ -273,4 +273,38 @@
                 ej.peso = nP;
             }
         });
-        localStorage.
+        localStorage.setItem('gym_rutinas', JSON.stringify(rutinas));
+        localStorage.setItem('gym_historial', JSON.stringify(historial));
+        alert("¡Guardado!");
+        cargarDiaAlumno(diaActualAlumno);
+    }
+
+    function renderMasterUsers() {
+        const container = document.getElementById('lista-usuarios-master');
+        const users = JSON.parse(localStorage.getItem('gym_users')) || {};
+        container.innerHTML = "<h4>Gestión:</h4>";
+        for (let u in users) {
+            if (u === "pedro alfonso") continue;
+            container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px; align-items:center;">
+                <span>${u.toUpperCase()}</span>
+                <div>
+                    <button onclick="login('${u}','${users[u].pass}','${users[u].role}')" style="width:auto; padding:5px; background:var(--success); color:white; font-size:0.6rem;">ENTRAR</button>
+                    <button onclick="masterDelete('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem; margin-left:4px;">BORRAR</button>
+                </div>
+            </div>`;
+        }
+    }
+
+    function masterDelete(u) {
+        if(confirm(`¿Borrar a ${u}?`)) {
+            let users = JSON.parse(localStorage.getItem('gym_users'));
+            delete users[u];
+            localStorage.setItem('gym_users', JSON.stringify(users));
+            renderMasterUsers();
+        }
+    }
+
+    function logout() { sessionStorage.clear(); location.reload(); }
+</script>
+</body>
+</html>
