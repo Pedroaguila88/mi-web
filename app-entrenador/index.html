@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v5.4 CLOUD</title>
+    <title>Pedro Alfonso - Coach System v5.5 CLOUD</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -23,8 +23,6 @@
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
         .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
         .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; font-size: 0.85rem; }
-        .btn-edit { background: var(--accent); color: black; width: auto; padding: 3px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; border: none; }
-        .btn-del { background: var(--danger); color: white; width: auto; padding: 3px 8px; font-size: 0.65rem; border-radius: 4px; border: none; }
     </style>
 </head>
 <body>
@@ -33,7 +31,7 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v5.4</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v5.5</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button onclick="login()">ENTRAR Y SINCRONIZAR</button>
@@ -60,16 +58,12 @@
         <label>Alumno:</label>
         <select id="p-nombre-alumno"></select>
         <select id="p-dia-semana">
-            <option value="lunes">Lunes</option><option value="martes">Martes</option>
-            <option value="miercoles">Miércoles</option><option value="jueves">Jueves</option>
-            <option value="viernes">Viernes</option>
+            <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
         <input type="text" id="p-series" placeholder="Series (4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
-        
         <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN ACTUAL</button>
-        
         <div id="visor-progreso" class="hidden">
             <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
                 <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
@@ -85,7 +79,15 @@
 
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Plan</h2>
+        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">VIE</button>
+        </div>
         <div id="lista-rutina"></div>
+        <button style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR PESO EN RED</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -94,6 +96,7 @@
     const API_KEY = '$2a$10$zfsAHWU1giWch9ex7eYH2.G7XiEs2zV9/qjA1Cwj2hlV5EXTTVuI2'; 
     const BIN_ID = '69b6487cc3097a1dd527b005';
     let DATOS_GLOBALES = { users: {}, rutinas: {} };
+    let diaSeleccionadoAlumno = 'lunes';
 
     async function descargarDeLaRed() {
         try {
@@ -101,7 +104,7 @@
             const data = await res.json();
             DATOS_GLOBALES = data.record;
             document.getElementById('cloud-status').innerText = "✅ SINCRONIZADO";
-        } catch (e) { console.error(e); }
+        } catch (e) { document.getElementById('cloud-status').innerText = "❌ ERROR RED"; }
     }
 
     async function subirALaRed() {
@@ -111,8 +114,8 @@
                 headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                 body: JSON.stringify(DATOS_GLOBALES)
             });
-            document.getElementById('cloud-status').innerText = "✅ GUARDADO";
-        } catch (e) { alert("Error de red"); }
+            document.getElementById('cloud-status').innerText = "✅ RED ACTUALIZADA";
+        } catch (e) { alert("Error al subir cambios"); }
     }
 
     async function login() {
@@ -121,11 +124,12 @@
         const p = document.getElementById('auth-pass').value;
         if (u === "pedro alfonso" && p === "0994rocio") renderDashboard('dev', u);
         else if (DATOS_GLOBALES.users[u] && DATOS_GLOBALES.users[u].pass === p) renderDashboard(DATOS_GLOBALES.users[u].role, u);
-        else alert("Login fallido");
+        else alert("Credenciales incorrectas");
     }
 
     function renderDashboard(role, username) {
         document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+        sessionStorage.setItem('active_user', username);
         if (role === 'dev') {
             document.getElementById('section-dev').classList.remove('hidden');
             actualizarSelectProfes(); renderMasterUsers();
@@ -133,7 +137,41 @@
             document.getElementById('section-profe').classList.remove('hidden');
             document.getElementById('welcome-profe').innerText = `PROFE: ${username.toUpperCase()}`;
             actualizarSelectAlumnosProfe(username);
-        } else { document.getElementById('section-alumno').classList.remove('hidden'); }
+        } else {
+            document.getElementById('section-alumno').classList.remove('hidden');
+            document.getElementById('welcome-alumno').innerText = `ATLETA: ${username.toUpperCase()}`;
+            cargarDiaAlumno('lunes');
+        }
+    }
+
+    // --- LOGICA ALUMNO ---
+    function cargarDiaAlumno(dia, btn) {
+        diaSeleccionadoAlumno = dia;
+        const u = sessionStorage.getItem('active_user');
+        const cont = document.getElementById('lista-rutina');
+        const r = (DATOS_GLOBALES.rutinas[u] && DATOS_GLOBALES.rutinas[u][dia]) ? DATOS_GLOBALES.rutinas[u][dia] : [];
+        
+        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
+        if(btn) btn.classList.add('active-day');
+
+        cont.innerHTML = r.length ? "" : "<p style='text-align:center;'>Descanso</p>";
+        r.forEach((item, idx) => {
+            cont.innerHTML += `<div class="rutina-item">
+                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
+                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}">
+            </div>`;
+        });
+    }
+
+    async function guardarPesoAlumno() {
+        const u = sessionStorage.getItem('active_user');
+        const inputs = document.querySelectorAll('.peso-input');
+        inputs.forEach(input => {
+            const idx = input.getAttribute('data-idx');
+            DATOS_GLOBALES.rutinas[u][diaSeleccionadoAlumno][idx].peso = input.value;
+        });
+        await subirALaRed();
+        alert("✅ Pesos guardados en la red");
     }
 
     // --- LOGICA PROFE ---
@@ -147,53 +185,18 @@
         }
     }
 
-    function verProgreso() {
-        const visor = document.getElementById('visor-progreso');
-        visor.classList.toggle('hidden');
-        if (!visor.classList.contains('hidden')) cambiarDiaVisor('lunes');
-    }
+    function verProgreso() { document.getElementById('visor-progreso').classList.toggle('hidden'); cambiarDiaVisor('lunes'); }
 
     function cambiarDiaVisor(dia, btn) {
         const al = document.getElementById('p-nombre-alumno').value;
-        if (!al) return;
         const lista = document.getElementById('lista-ejercicios-visor');
         const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
-        
         document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
         if(btn) btn.classList.add('active-day');
-
-        lista.innerHTML = `<h4>Día: ${dia.toUpperCase()}</h4>`;
-        if (r.length === 0) lista.innerHTML += "<p>Sin ejercicios</p>";
-        
+        lista.innerHTML = r.length ? "" : "Vacío";
         r.forEach((item, idx) => {
-            lista.innerHTML += `
-            <div class="ejercicio-visor-item">
-                <span>${item.nombre} (${item.series})</span>
-                <div>
-                    <button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button>
-                    <button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button>
-                </div>
-            </div>`;
+            lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre}</span> <b>${item.peso || '0'}kg</b></div>`;
         });
-    }
-
-    async function editEj(al, dia, idx) {
-        let ej = DATOS_GLOBALES.rutinas[al][dia][idx];
-        const nN = prompt("Nombre:", ej.nombre);
-        const nS = prompt("Series:", ej.series);
-        if (nN && nS) {
-            ej.nombre = nN; ej.series = nS;
-            await subirALaRed();
-            cambiarDiaVisor(dia);
-        }
-    }
-
-    async function delEj(al, dia, idx) {
-        if(confirm("¿Borrar?")) {
-            DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1);
-            await subirALaRed();
-            cambiarDiaVisor(dia);
-        }
     }
 
     async function asignarRutina() {
@@ -201,24 +204,17 @@
         const dia = document.getElementById('p-dia-semana').value;
         const ej = document.getElementById('p-ejercicio-nombre').value;
         const se = document.getElementById('p-series').value;
-        if(!al || !ej) return alert("Datos incompletos");
         if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
         DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
         await subirALaRed();
-        alert("Asignado");
+        alert("Enviado!");
     }
 
-    // --- MASTER LOGIC ---
-    function toggleProfeSelector() {
-        const role = document.getElementById('reg-role').value;
-        document.getElementById('vinculo-profe-container').className = (role === 'alumno') ? "" : "hidden";
-    }
+    // --- MASTER ---
+    function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = (document.getElementById('reg-role').value === 'alumno') ? "" : "hidden"; }
     function actualizarSelectProfes() {
-        const sel = document.getElementById('reg-profe-asignado');
-        sel.innerHTML = "";
-        for (let u in DATOS_GLOBALES.users) {
-            if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
-        }
+        const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = "";
+        for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u}</option>`;
     }
     async function masterRegister() {
         const u = document.getElementById('reg-user').value.toLowerCase().trim();
@@ -229,16 +225,10 @@
         await subirALaRed(); renderMasterUsers();
     }
     function renderMasterUsers() {
-        const cont = document.getElementById('lista-usuarios-master');
-        cont.innerHTML = "<h4>Usuarios:</h4>";
-        for (let u in DATOS_GLOBALES.users) {
-            cont.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                <span>${u} (${DATOS_GLOBALES.users[u].role})</span>
-                <button onclick="borrarMaster('${u}')" style="width:auto; background:red; color:white;">X</button>
-            </div>`;
-        }
+        const cont = document.getElementById('lista-usuarios-master'); cont.innerHTML = "";
+        for (let u in DATOS_GLOBALES.users) cont.innerHTML += `<div>${u} (${DATOS_GLOBALES.users[u].role}) <button onclick="borrarMaster('${u}')">X</button></div>`;
     }
-    async function borrarMaster(u) { if(confirm("¿Borrar?")) { delete DATOS_GLOBALES.users[u]; await subirALaRed(); renderMasterUsers(); } }
+    async function borrarMaster(u) { delete DATOS_GLOBALES.users[u]; await subirALaRed(); renderMasterUsers(); }
     function logout() { location.reload(); }
     window.onload = descargarDeLaRed;
 </script>
