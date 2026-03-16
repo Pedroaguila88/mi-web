@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v5.1 CLOUD</title>
+    <title>Pedro Alfonso - Coach System v5.3 CLOUD</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -16,18 +16,8 @@
         input, select { background: #333; color: white; border: 1px solid #444; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
-        button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; }
-        button.active-day { background: var(--primary); color: black; border-color: var(--primary); }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
-        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
-        .gif-container img { width: 100%; display: block; }
-        .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 8px; margin-top: 10px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); font-weight: bold; }
-        .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
-        .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; }
-        .btn-edit { background: var(--accent); color: black; width: auto; padding: 3px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
-        .btn-del { background: var(--danger); color: white; width: auto; padding: 3px 8px; font-size: 0.65rem; border-radius: 4px; }
+        .user-item { display: flex; justify-content: space-between; background: #333; padding: 10px; border-radius: 8px; margin-bottom: 5px; font-size: 0.8rem; align-items: center; }
     </style>
 </head>
 <body>
@@ -36,24 +26,27 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v5.1</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v5.3</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
-        <select id="auth-role">
-            <option value="alumno">Soy Alumno</option>
-            <option value="profe">Soy Entrenador</option>
-            <option value="dev">Desarrollador (Pedro)</option>
-        </select>
         <button onclick="login()">ENTRAR Y SINCRONIZAR</button>
     </div>
 
     <div id="section-dev" class="card dev-card hidden">
-        <h2 style="color:var(--dev);">PANEL DESARROLLADOR MASTER</h2>
+        <h2 style="color:var(--dev);">PANEL MASTER PEDRO</h2>
         <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:15px;">
-            <input type="text" id="reg-user" placeholder="Usuario Nuevo">
+            <label>Nuevo Usuario:</label>
+            <input type="text" id="reg-user" placeholder="Nombre de usuario">
             <input type="password" id="reg-pass" placeholder="Contraseña">
-            <select id="reg-role"><option value="profe">Entrenador</option><option value="alumno">Alumno</option></select>
-            <button onclick="masterRegister()">CREAR USUARIO EN LA RED</button>
+            <select id="reg-role" onchange="toggleProfeSelector()">
+                <option value="profe">Entrenador</option>
+                <option value="alumno">Alumno</option>
+            </select>
+            <div id="vinculo-profe-container" class="hidden">
+                <label style="color:var(--accent); font-size:0.8rem;">Vincular a este Profe:</label>
+                <select id="reg-profe-asignado"></select>
+            </div>
+            <button onclick="masterRegister()">CREAR Y VINCULAR</button>
         </div>
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
@@ -61,119 +54,96 @@
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
-        <input type="text" id="p-nombre-alumno" placeholder="Nombre Alumno">
-        <select id="p-dia-semana">
-            <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
+        <label>Seleccionar mi alumno:</label>
+        <select id="p-nombre-alumno"></select> <select id="p-dia-semana">
+            <option value="lunes">Lunes</option><option value="martes">Martes</option>
+            <option value="miercoles">Miércoles</option><option value="jueves">Jueves</option>
+            <option value="viernes">Viernes</option>
         </select>
-        <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
-        <select id="p-gif-selector">
-            <option value="">-- Sin GIF --</option>
-            <option value="press_banca_barra.gif">Press de Banca Barra</option>
-            <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
-        </select>
-        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
-        <button onclick="asignarRutina()">ASIGNAR Y SUBIR A RED</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN / ELIMINAR / EDITAR</button>
-        
-        <div id="visor-progreso" class="hidden">
-            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
-                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
-            </div>
-            <div id="lista-ejercicios-visor" class="visor-box"></div>
-        </div>
+        <input type="text" id="p-ejercicio-nombre" placeholder="Ejercicio">
+        <input type="text" id="p-series" placeholder="Series (4x12)">
+        <button onclick="asignarRutina()">ASIGNAR A LA RED</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-alumno" class="card hidden">
-        <h2 id="welcome-alumno">Mi Plan Red</h2>
-        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">VIE</button>
-        </div>
+        <h2 id="welcome-alumno">Mi Plan</h2>
         <div id="lista-rutina"></div>
-        <button style="background:var(--success); color:white; margin-top:15px;" onclick="guardarProgresoAlumno()">✅ GUARDAR PESOS EN RED</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // CONFIGURACIÓN CLOUD
-    // ==========================================
     const API_KEY = '$2a$10$zfsAHWU1giWch9ex7eYH2.G7XiEs2zV9/qjA1Cwj2hlV5EXTTVuI2'; 
     const BIN_ID = '69b6487cc3097a1dd527b005';
-    // ==========================================
+    let DATOS_GLOBALES = { users: {}, rutinas: {} };
 
-    let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
-
+    // --- NUBE ---
     async function descargarDeLaRed() {
-        const status = document.getElementById('cloud-status');
-        status.innerText = "☁️ CONECTANDO...";
         try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': API_KEY }
-            });
+            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
             const data = await res.json();
             DATOS_GLOBALES = data.record;
-            status.innerText = "✅ CLOUD SINCRONIZADO";
-        } catch (e) {
-            status.innerText = "❌ ERROR DE CONEXIÓN";
-        }
+            document.getElementById('cloud-status').innerText = "✅ SINCRONIZADO";
+        } catch (e) { document.getElementById('cloud-status').innerText = "❌ ERROR RED"; }
     }
 
     async function subirALaRed() {
-        const status = document.getElementById('cloud-status');
-        status.innerText = "☁️ SUBIENDO CAMBIOS...";
         try {
             await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                 body: JSON.stringify(DATOS_GLOBALES)
             });
-            status.innerText = "✅ GUARDADO EN LA RED";
-        } catch (e) {
-            alert("Error al sincronizar con la red");
-        }
+            document.getElementById('cloud-status').innerText = "✅ CAMBIOS EN LA RED";
+        } catch (e) { alert("Error al subir"); }
     }
 
+    // --- AUTH ---
     async function login() {
         await descargarDeLaRed();
         const u = document.getElementById('auth-user').value.toLowerCase().trim();
         const p = document.getElementById('auth-pass').value;
-        const r = document.getElementById('auth-role').value;
 
-        // Si es Pedro, entra al panel dev sin importar el rol del select
         if (u === "pedro alfonso" && p === "0994rocio") {
             sessionStorage.setItem('active_user', u);
-            sessionStorage.setItem('user_role', 'dev');
             renderDashboard('dev', u);
         } else if (DATOS_GLOBALES.users[u] && DATOS_GLOBALES.users[u].pass === p) {
             sessionStorage.setItem('active_user', u);
-            sessionStorage.setItem('user_role', DATOS_GLOBALES.users[u].role);
             renderDashboard(DATOS_GLOBALES.users[u].role, u);
-        } else { alert("Datos incorrectos o usuario no existe en la red"); }
+        } else { alert("Usuario o clave incorrectos"); }
     }
 
     function renderDashboard(role, username) {
         document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-        
-        if (username === "pedro alfonso") {
+        if (role === 'dev') {
             document.getElementById('section-dev').classList.remove('hidden');
+            actualizarSelectProfes();
             renderMasterUsers();
         } else if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
             document.getElementById('welcome-profe').innerText = `PROFE: ${username.toUpperCase()}`;
+            actualizarSelectAlumnosProfe(username);
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
             document.getElementById('welcome-alumno').innerText = `ATLETA: ${username.toUpperCase()}`;
-            cargarDiaAlumno('lunes');
+        }
+    }
+
+    // --- MASTER FUNCTIONS ---
+    function toggleProfeSelector() {
+        const role = document.getElementById('reg-role').value;
+        const container = document.getElementById('vinculo-profe-container');
+        role === 'alumno' ? container.classList.remove('hidden') : container.classList.add('hidden');
+    }
+
+    function actualizarSelectProfes() {
+        const select = document.getElementById('reg-profe-asignado');
+        select.innerHTML = "";
+        for (let u in DATOS_GLOBALES.users) {
+            if (DATOS_GLOBALES.users[u].role === 'profe') {
+                select.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+            }
         }
     }
 
@@ -181,23 +151,61 @@
         const u = document.getElementById('reg-user').value.toLowerCase().trim();
         const p = document.getElementById('reg-pass').value;
         const r = document.getElementById('reg-role').value;
-        if(!u || !p) return alert("Completa los datos");
-        
-        DATOS_GLOBALES.users[u] = { pass: p, role: r };
+        const profe = document.getElementById('reg-profe-asignado').value;
+
+        if (!u || !p) return alert("Faltan datos");
+
+        DATOS_GLOBALES.users[u] = { 
+            pass: p, 
+            role: r, 
+            profe_asignado: r === 'alumno' ? profe : null 
+        };
+
         await subirALaRed();
         renderMasterUsers();
-        alert("Usuario creado en la nube");
+        alert("Usuario creado y vinculado con éxito");
     }
 
     function renderMasterUsers() {
         const container = document.getElementById('lista-usuarios-master');
-        container.innerHTML = "<h4>Usuarios en la Red:</h4>";
+        container.innerHTML = "<h4>Gestión de Vínculos:</h4>";
         for (let u in DATOS_GLOBALES.users) {
-            container.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#333; padding:8px; border-radius:8px;">
-                <span>${u.toUpperCase()} (${DATOS_GLOBALES.users[u].role})</span>
+            const user = DATOS_GLOBALES.users[u];
+            const vinculo = user.profe_asignado ? ` (Profe: ${user.profe_asignado})` : "";
+            container.innerHTML += `<div class="user-item">
+                <span>${u.toUpperCase()} - ${user.role}${vinculo}</span>
                 <button onclick="borrarUsuario('${u}')" style="width:auto; padding:5px; background:var(--danger); color:white; font-size:0.6rem;">BORRAR</button>
             </div>`;
         }
+    }
+
+    // --- PROFE FUNCTIONS ---
+    function actualizarSelectAlumnosProfe(nombreProfe) {
+        const select = document.getElementById('p-nombre-alumno');
+        select.innerHTML = "";
+        let hayAlumnos = false;
+        for (let u in DATOS_GLOBALES.users) {
+            if (DATOS_GLOBALES.users[u].profe_asignado === nombreProfe) {
+                select.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+                hayAlumnos = true;
+            }
+        }
+        if (!hayAlumnos) select.innerHTML = "<option>Sin alumnos vinculados</option>";
+    }
+
+    async function asignarRutina() {
+        const al = document.getElementById('p-nombre-alumno').value;
+        const dia = document.getElementById('p-dia-semana').value;
+        const ej = document.getElementById('p-ejercicio-nombre').value;
+        const se = document.getElementById('p-series').value;
+
+        if (!al || al === "Sin alumnos vinculados") return alert("No tienes alumnos seleccionados");
+
+        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+        DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
+        
+        await subirALaRed();
+        alert("Rutina enviada al alumno");
     }
 
     async function borrarUsuario(u) {
@@ -208,92 +216,8 @@
         }
     }
 
-    async function asignarRutina() {
-        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        const dia = document.getElementById('p-dia-semana').value;
-        const ej = document.getElementById('p-ejercicio-nombre').value;
-        const gif = document.getElementById('p-gif-selector').value;
-        const se = document.getElementById('p-series').value;
-
-        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif });
-        
-        await subirALaRed();
-        alert("¡Asignado y sincronizado!");
-    }
-
-    function cambiarDiaVisor(dia, btn) {
-        const al = document.getElementById('p-nombre-alumno').value.toLowerCase().trim();
-        const lista = document.getElementById('lista-ejercicios-visor');
-        const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
-        
-        lista.innerHTML = `<h5>${dia.toUpperCase()}</h5>`;
-        r.forEach((item, idx) => {
-            lista.innerHTML += `<div class="ejercicio-visor-item">
-                <span>${item.nombre} (${item.series})</span>
-                <div>
-                    <button onclick="actualizarEjercicio('${al}','${dia}',${idx})" class="btn-edit">✏️</button>
-                    <button onclick="borrarEjercicio('${al}','${dia}',${idx})" class="btn-del">X</button>
-                </div>
-            </div>`;
-        });
-    }
-
-    async function actualizarEjercicio(al, dia, idx) {
-        let ej = DATOS_GLOBALES.rutinas[al][dia][idx];
-        const nN = prompt("Nuevo nombre:", ej.nombre);
-        const nS = prompt("Nuevas series:", ej.series);
-        if (nN && nS) {
-            ej.nombre = nN; ej.series = nS;
-            await subirALaRed();
-            cambiarDiaVisor(dia);
-        }
-    }
-
-    async function borrarEjercicio(al, dia, idx) {
-        if(confirm("¿Borrar?")) {
-            DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1);
-            await subirALaRed();
-            cambiarDiaVisor(dia);
-        }
-    }
-
-    function cargarDiaAlumno(dia, btn) {
-        const u = sessionStorage.getItem('active_user');
-        const container = document.getElementById('lista-rutina');
-        const r = (DATOS_GLOBALES.rutinas[u] && DATOS_GLOBALES.rutinas[u][dia]) ? DATOS_GLOBALES.rutinas[u][dia] : [];
-        
-        container.innerHTML = r.length ? "" : "<p style='text-align:center;'>Día de Descanso</p>";
-        r.forEach((item, idx) => {
-            container.innerHTML += `<div class="rutina-item">
-                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
-                <br>
-                ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(${idx})">📹 VER TÉCNICA</div>
-                <div id="gif-${idx}" class="gif-container"><img src="${item.gif}"></div>` : ''}
-                <input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso actual" value="${item.peso || ''}">
-            </div>`;
-        });
-    }
-
-    function toggleGif(id) {
-        const el = document.getElementById(`gif-${id}`);
-        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-    }
-
-    async function guardarProgresoAlumno() {
-        const u = sessionStorage.getItem('active_user');
-        const inputs = document.querySelectorAll('.peso-input');
-        
-        inputs.forEach(input => {
-            const idx = input.getAttribute('data-idx');
-            DATOS_GLOBALES.rutinas[u][diaActualAlumno][idx].peso = input.value;
-        });
-        
-        await subirALaRed();
-        alert("✅ Entrenamiento sincronizado con el Profe");
-    }
-
     function logout() { sessionStorage.clear(); location.reload(); }
+    window.onload = descargarDeLaRed;
 </script>
 </body>
 </html>
