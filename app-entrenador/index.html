@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v5.5 CLOUD</title>
+    <title>Pedro Alfonso - Coach System v5.7 FULL</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
-        .dev-card { border-top-color: var(--dev); }
         .status-cloud { font-size: 0.7rem; text-align: right; color: var(--accent); font-weight: bold; margin-bottom: 10px; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
         input, select { background: #333; color: white; border: 1px solid #444; }
@@ -21,8 +20,15 @@
         .hidden { display: none; }
         .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
+        .gif-container img { width: 100%; display: block; }
+        .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 6px; margin-top: 5px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); }
         .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
         .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; font-size: 0.85rem; }
+        .btn-edit { background: var(--accent); color: black; width: auto; padding: 3px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; border: none; }
+        .btn-del { background: var(--danger); color: white; width: auto; padding: 3px 8px; font-size: 0.65rem; border-radius: 4px; border: none; }
+        .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 200px; }
+        .historial-box { margin-top: 10px; max-height: 150px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.7rem; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -31,39 +37,44 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v5.5</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v5.7</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button onclick="login()">ENTRAR Y SINCRONIZAR</button>
     </div>
 
-    <div id="section-dev" class="card dev-card hidden">
-        <h2 style="color:var(--dev);">PANEL MASTER PEDRO</h2>
+    <div id="section-dev" class="card hidden" style="border-top-color: var(--dev);">
+        <h2 style="color:var(--dev);">PANEL MASTER</h2>
         <input type="text" id="reg-user" placeholder="Nuevo Usuario">
         <input type="password" id="reg-pass" placeholder="Contraseña">
         <select id="reg-role" onchange="toggleProfeSelector()">
-            <option value="profe">Entrenador</option>
-            <option value="alumno">Alumno</option>
+            <option value="profe">Entrenador</option><option value="alumno">Alumno</option>
         </select>
-        <div id="vinculo-profe-container" class="hidden">
-            <select id="reg-profe-asignado"></select>
-        </div>
-        <button onclick="masterRegister()">CREAR EN LA NUBE</button>
-        <div id="lista-usuarios-master" style="margin-top:20px;"></div>
+        <div id="vinculo-profe-container" class="hidden"><select id="reg-profe-asignado"></select></div>
+        <button onclick="masterRegister()">CREAR USUARIO</button>
+        <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
-        <label>Alumno:</label>
-        <select id="p-nombre-alumno"></select>
+        <label>Seleccionar Alumno:</label>
+        <select id="p-nombre-alumno" onchange="if(!document.getElementById('visor-progreso').classList.contains('hidden')) verProgreso()"></select>
+        
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
-        <input type="text" id="p-series" placeholder="Series (4x12)">
+        <select id="p-gif-selector">
+            <option value="">-- Seleccionar Técnica (GIF) --</option>
+            <option value="press_banca_barra.gif">Press de Banca Barra</option>
+            <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
+        </select>
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN ACTUAL</button>
+        
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN & GRÁFICOS</button>
+        
         <div id="visor-progreso" class="hidden">
             <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
                 <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
@@ -73,6 +84,8 @@
                 <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
+            <div class="chart-wrap"><canvas id="progresoChart"></canvas></div>
+            <div id="items-historial" class="historial-box"></div>
         </div>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -87,7 +100,7 @@
             <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">VIE</button>
         </div>
         <div id="lista-rutina"></div>
-        <button style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR PESO EN RED</button>
+        <button style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR PESOS EN RED</button>
         <button class="secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -95,8 +108,10 @@
 <script>
     const API_KEY = '$2a$10$zfsAHWU1giWch9ex7eYH2.G7XiEs2zV9/qjA1Cwj2hlV5EXTTVuI2'; 
     const BIN_ID = '69b6487cc3097a1dd527b005';
-    let DATOS_GLOBALES = { users: {}, rutinas: {} };
-    let diaSeleccionadoAlumno = 'lunes';
+    let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
+    let diaActualAlumno = 'lunes';
+    let diaActualVisor = 'lunes';
+    let miGrafico = null;
 
     async function descargarDeLaRed() {
         try {
@@ -114,8 +129,8 @@
                 headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                 body: JSON.stringify(DATOS_GLOBALES)
             });
-            document.getElementById('cloud-status').innerText = "✅ RED ACTUALIZADA";
-        } catch (e) { alert("Error al subir cambios"); }
+            document.getElementById('cloud-status').innerText = "✅ GUARDADO";
+        } catch (e) { alert("Error al sincronizar"); }
     }
 
     async function login() {
@@ -124,7 +139,7 @@
         const p = document.getElementById('auth-pass').value;
         if (u === "pedro alfonso" && p === "0994rocio") renderDashboard('dev', u);
         else if (DATOS_GLOBALES.users[u] && DATOS_GLOBALES.users[u].pass === p) renderDashboard(DATOS_GLOBALES.users[u].role, u);
-        else alert("Credenciales incorrectas");
+        else alert("Acceso denegado");
     }
 
     function renderDashboard(role, username) {
@@ -135,29 +150,98 @@
             actualizarSelectProfes(); renderMasterUsers();
         } else if (role === 'profe') {
             document.getElementById('section-profe').classList.remove('hidden');
-            document.getElementById('welcome-profe').innerText = `PROFE: ${username.toUpperCase()}`;
             actualizarSelectAlumnosProfe(username);
         } else {
             document.getElementById('section-alumno').classList.remove('hidden');
-            document.getElementById('welcome-alumno').innerText = `ATLETA: ${username.toUpperCase()}`;
             cargarDiaAlumno('lunes');
         }
     }
 
-    // --- LOGICA ALUMNO ---
+    // --- PROFE LOGIC ---
+    function actualizarSelectAlumnosProfe(profe) {
+        const sel = document.getElementById('p-nombre-alumno');
+        sel.innerHTML = "";
+        for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+    }
+
+    function verProgreso() {
+        const al = document.getElementById('p-nombre-alumno').value;
+        if(!al) return alert("Selecciona un alumno");
+        document.getElementById('visor-progreso').classList.toggle('hidden');
+        cambiarDiaVisor('lunes');
+        dibujarGrafico(al);
+        renderHistorial(al);
+    }
+
+    function cambiarDiaVisor(dia, btn) {
+        diaActualVisor = dia;
+        const al = document.getElementById('p-nombre-alumno').value;
+        const lista = document.getElementById('lista-ejercicios-visor');
+        const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
+        if(btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
+        
+        lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`;
+        r.forEach((item, idx) => {
+            lista.innerHTML += `<div class="ejercicio-visor-item">
+                <span>${item.nombre} (${item.series})</span>
+                <div>
+                    <button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button>
+                    <button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    async function editEj(al, dia, idx) {
+        let ej = DATOS_GLOBALES.rutinas[al][dia][idx];
+        const nN = prompt("Nombre:", ej.nombre);
+        const nS = prompt("Series:", ej.series);
+        if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); }
+    }
+
+    async function delEj(al, dia, idx) {
+        if(confirm("¿Borrar?")) { DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1); await subirALaRed(); cambiarDiaVisor(dia); }
+    }
+
+    async function asignarRutina() {
+        const al = document.getElementById('p-nombre-alumno').value;
+        const dia = document.getElementById('p-dia-semana').value;
+        const ej = document.getElementById('p-ejercicio-nombre').value;
+        const gif = document.getElementById('p-gif-selector').value;
+        const se = document.getElementById('p-series').value;
+        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+        DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif });
+        await subirALaRed(); alert("¡Asignado!");
+    }
+
+    function dibujarGrafico(al) {
+        const ctx = document.getElementById('progresoChart').getContext('2d');
+        const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[al] ? DATOS_GLOBALES.historial[al] : [];
+        const labels = h.slice(-10).map(x => x.fecha);
+        const data = h.slice(-10).map(x => parseFloat(x.peso));
+        if (miGrafico) miGrafico.destroy();
+        miGrafico = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Kg', data: data, borderColor: '#00d4ff', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+    }
+
+    function renderHistorial(al) {
+        const cont = document.getElementById('items-historial');
+        const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[al] ? DATOS_GLOBALES.historial[al] : [];
+        cont.innerHTML = "<strong>Últimos Registros:</strong><br>";
+        [...h].reverse().slice(0,10).forEach(r => { cont.innerHTML += `<div>${r.fecha} - ${r.ejercicio}: ${r.peso}kg</div>`; });
+    }
+
+    // --- ALUMNO LOGIC ---
     function cargarDiaAlumno(dia, btn) {
-        diaSeleccionadoAlumno = dia;
+        diaActualAlumno = dia;
         const u = sessionStorage.getItem('active_user');
         const cont = document.getElementById('lista-rutina');
         const r = (DATOS_GLOBALES.rutinas[u] && DATOS_GLOBALES.rutinas[u][dia]) ? DATOS_GLOBALES.rutinas[u][dia] : [];
-        
-        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-
-        cont.innerHTML = r.length ? "" : "<p style='text-align:center;'>Descanso</p>";
+        if(btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
+        cont.innerHTML = r.length ? "" : "Descanso";
         r.forEach((item, idx) => {
             cont.innerHTML += `<div class="rutina-item">
-                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span>
+                <strong>${item.nombre}</strong> <span class="badge">${item.series}</span><br>
+                ${item.gif ? `<div class="btn-ver-gif" onclick="this.nextElementSibling.style.display='block'">📹 VER</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
                 <input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}">
             </div>`;
         });
@@ -166,51 +250,23 @@
     async function guardarPesoAlumno() {
         const u = sessionStorage.getItem('active_user');
         const inputs = document.querySelectorAll('.peso-input');
+        if(!DATOS_GLOBALES.historial) DATOS_GLOBALES.historial = {};
+        if(!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
+        const fecha = new Date().toLocaleDateString('es-PY', {day:'2-digit', month:'2-digit'});
+
         inputs.forEach(input => {
             const idx = input.getAttribute('data-idx');
-            DATOS_GLOBALES.rutinas[u][diaSeleccionadoAlumno][idx].peso = input.value;
-        });
-        await subirALaRed();
-        alert("✅ Pesos guardados en la red");
-    }
-
-    // --- LOGICA PROFE ---
-    function actualizarSelectAlumnosProfe(profe) {
-        const sel = document.getElementById('p-nombre-alumno');
-        sel.innerHTML = "";
-        for (let u in DATOS_GLOBALES.users) {
-            if (DATOS_GLOBALES.users[u].profe_asignado === profe) {
-                sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+            const nuevoPeso = input.value;
+            const ej = DATOS_GLOBALES.rutinas[u][diaActualAlumno][idx];
+            if(nuevoPeso && nuevoPeso !== ej.peso) {
+                DATOS_GLOBALES.historial[u].push({ fecha: fecha, ejercicio: ej.nombre, peso: nuevoPeso });
+                ej.peso = nuevoPeso;
             }
-        }
-    }
-
-    function verProgreso() { document.getElementById('visor-progreso').classList.toggle('hidden'); cambiarDiaVisor('lunes'); }
-
-    function cambiarDiaVisor(dia, btn) {
-        const al = document.getElementById('p-nombre-alumno').value;
-        const lista = document.getElementById('lista-ejercicios-visor');
-        const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
-        document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
-        if(btn) btn.classList.add('active-day');
-        lista.innerHTML = r.length ? "" : "Vacío";
-        r.forEach((item, idx) => {
-            lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre}</span> <b>${item.peso || '0'}kg</b></div>`;
         });
+        await subirALaRed(); alert("¡Pesos guardados!");
     }
 
-    async function asignarRutina() {
-        const al = document.getElementById('p-nombre-alumno').value;
-        const dia = document.getElementById('p-dia-semana').value;
-        const ej = document.getElementById('p-ejercicio-nombre').value;
-        const se = document.getElementById('p-series').value;
-        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "" });
-        await subirALaRed();
-        alert("Enviado!");
-    }
-
-    // --- MASTER ---
+    // --- MASTER & SYNC ---
     function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = (document.getElementById('reg-role').value === 'alumno') ? "" : "hidden"; }
     function actualizarSelectProfes() {
         const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = "";
@@ -225,11 +281,11 @@
         await subirALaRed(); renderMasterUsers();
     }
     function renderMasterUsers() {
-        const cont = document.getElementById('lista-usuarios-master'); cont.innerHTML = "";
-        for (let u in DATOS_GLOBALES.users) cont.innerHTML += `<div>${u} (${DATOS_GLOBALES.users[u].role}) <button onclick="borrarMaster('${u}')">X</button></div>`;
+        const cont = document.getElementById('lista-usuarios-master'); cont.innerHTML = "<h4>Usuarios:</h4>";
+        for (let u in DATOS_GLOBALES.users) cont.innerHTML += `<div>${u} (${DATOS_GLOBALES.users[u].role}) <button onclick="deleteUser('${u}')">X</button></div>`;
     }
-    async function borrarMaster(u) { delete DATOS_GLOBALES.users[u]; await subirALaRed(); renderMasterUsers(); }
-    function logout() { location.reload(); }
+    async function deleteUser(u) { if(confirm("¿Borrar?")) { delete DATOS_GLOBALES.users[u]; await subirALaRed(); renderMasterUsers(); } }
+    function logout() { sessionStorage.clear(); location.reload(); }
     window.onload = descargarDeLaRed;
 </script>
 </body>
