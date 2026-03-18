@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v5.9.5</title>
+    <title>Pedro Alfonso - Coach System v5.9.6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -30,11 +30,9 @@
         .btn-edit-user { background: var(--accent); color: black; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; margin-right: 5px; }
         .btn-del { background: var(--danger); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; }
         .btn-log-as { background: var(--success); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
-        .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 200px; }
-        .historial-box { margin-top: 10px; max-height: 150px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.7rem; border: 1px solid #333; }
+        .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
+        .historial-box { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.75rem; border: 1px solid #333; }
         .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
-        .user-info { margin-bottom: 8px; font-size: 0.9rem; }
-        .user-actions { display: flex; justify-content: flex-end; }
     </style>
 </head>
 <body>
@@ -43,7 +41,7 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v5.9.5</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v5.9.6</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button onclick="login()">ENTRAR Y SINCRONIZAR</button>
@@ -78,9 +76,9 @@
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso()">GESTIONAR PLAN & GRÁFICOS</button>
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
         
-        <div id="visor-progreso" class="hidden">
+        <div id="visor-progreso-profe" class="hidden">
             <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
                 <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
                 <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
@@ -89,8 +87,8 @@
                 <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
-            <div class="chart-wrap"><canvas id="progresoChart"></canvas></div>
-            <div id="items-historial" class="historial-box"></div>
+            <div class="chart-wrap"><canvas id="chartProfe"></canvas></div>
+            <div id="historial-profe" class="historial-box"></div>
         </div>
         <div id="profe-exit-zone"></div>
     </div>
@@ -106,6 +104,13 @@
         </div>
         <div id="lista-rutina"></div>
         <button style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR EN RED</button>
+        
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
+        <div id="visor-progreso-alumno" class="hidden">
+            <div class="chart-wrap"><canvas id="chartAlumno"></canvas></div>
+            <div id="historial-alumno" class="historial-box"></div>
+        </div>
+
         <div id="alumno-exit-zone"></div>
     </div>
 </div>
@@ -116,10 +121,10 @@
     let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
     let diaActualAlumno = 'lunes';
     let diaActualVisor = 'lunes';
-    let miGrafico = null;
+    let graficoProfe = null;
+    let graficoAlumno = null;
     let esMasterSession = false;
 
-    // --- FUNCIONES NUCLEO ---
     async function descargarDeLaRed() {
         try {
             const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
@@ -176,102 +181,63 @@
     function volverAlMaster() { renderDashboard('dev', 'pedro alfonso'); }
     function loginAs(user) { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
 
-    // --- MASTER FUNCTIONS (EDITAR USUARIO) ---
-    async function editUser(oldU) {
-        const newU = prompt("Nuevo nombre de usuario:", oldU).toLowerCase().trim();
-        const newP = prompt("Nueva contraseña:", DATOS_GLOBALES.users[oldU].pass);
+    // --- PROGRESO (DUAL: PROFE Y ALUMNO) ---
+    async function verProgreso(tipo) {
+        const user = tipo === 'profe' ? document.getElementById('p-nombre-alumno').value : sessionStorage.getItem('active_user');
+        if(!user) return;
+
+        const idVisor = tipo === 'profe' ? 'visor-progreso-profe' : 'visor-progreso-alumno';
+        const visor = document.getElementById(idVisor);
         
-        if (newU && newP) {
-            if (newU !== oldU) {
-                // Migrar datos al nuevo nombre (Refactorización de base de datos)
-                DATOS_GLOBALES.users[newU] = { ...DATOS_GLOBALES.users[oldU], pass: newP };
-                if (DATOS_GLOBALES.rutinas[oldU]) { DATOS_GLOBALES.rutinas[newU] = DATOS_GLOBALES.rutinas[oldU]; delete DATOS_GLOBALES.rutinas[oldU]; }
-                if (DATOS_GLOBALES.historial[oldU]) { DATOS_GLOBALES.historial[newU] = DATOS_GLOBALES.historial[oldU]; delete DATOS_GLOBALES.historial[oldU]; }
-                delete DATOS_GLOBALES.users[oldU];
-            } else {
-                DATOS_GLOBALES.users[oldU].pass = newP;
-            }
-            await subirALaRed();
-            renderMasterUsers();
-            alert("Usuario actualizado correctamente");
+        if(visor.classList.contains('hidden')) {
+            document.getElementById('cloud-status').innerText = "⏳ ACTUALIZANDO...";
+            await descargarDeLaRed();
         }
-    }
-
-    function renderMasterUsers() {
-        const cont = document.getElementById('lista-usuarios-master'); cont.innerHTML = "<h4>Gestión de Cuentas:</h4>";
-        for (let u in DATOS_GLOBALES.users) {
-            cont.innerHTML += `<div class="user-item-master">
-                <div class="user-info"><b>${u.toUpperCase()}</b> (${DATOS_GLOBALES.users[u].role})<br><small>Pass: ${DATOS_GLOBALES.users[u].pass}</small></div>
-                <div class="user-actions">
-                    <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
-                    <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR ⚙️</button>
-                    <button class="btn-del" onclick="deleteUser('${u}')">X</button>
-                </div>
-            </div>`;
-        }
-    }
-
-    // --- EL RESTO DE FUNCIONES (PROFE/ALUMNO) SE MANTIENEN IGUAL ---
-    function actualizarSelectAlumnosProfe(profe) {
-        const sel = document.getElementById('p-nombre-alumno'); sel.innerHTML = "";
-        for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
-    }
-    async function verProgreso() {
-        const al = document.getElementById('p-nombre-alumno').value;
-        if(!al) return;
-        const visor = document.getElementById('visor-progreso');
-        if(visor.classList.contains('hidden')) await descargarDeLaRed();
+        
         visor.classList.toggle('hidden');
-        if(!visor.classList.contains('hidden')) { cambiarDiaVisor('lunes'); dibujarGrafico(al); renderHistorial(al); }
+        if(!visor.classList.contains('hidden')) {
+            if(tipo === 'profe') cambiarDiaVisor('lunes');
+            actualizarGraficoEHistorial(user, tipo);
+        }
     }
-    function cambiarDiaVisor(dia, btn) {
-        diaActualVisor = dia;
-        const al = document.getElementById('p-nombre-alumno').value;
-        const lista = document.getElementById('lista-ejercicios-visor');
-        const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
-        if(btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
-        lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`;
-        r.forEach((item, idx) => {
-            lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre} - <b>${item.peso || 0}kg</b></span><div><button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button><button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button></div></div>`;
-        });
-    }
-    async function asignarRutina() {
-        const al = document.getElementById('p-nombre-alumno').value;
-        const dia = document.getElementById('p-dia-semana').value;
-        const ej = document.getElementById('p-ejercicio-nombre').value;
-        const gif = document.getElementById('p-gif-selector').value;
-        const se = document.getElementById('p-series').value;
-        if(!ej) return;
-        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
-        DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif });
-        await subirALaRed(); document.getElementById('p-ejercicio-nombre').value = ""; alert("Asignado!");
-    }
-    function dibujarGrafico(al) {
-        const ctx = document.getElementById('progresoChart').getContext('2d');
-        const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[al] ? DATOS_GLOBALES.historial[al] : [];
+
+    function actualizarGraficoEHistorial(user, tipo) {
+        const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
+        const histId = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
+        
+        // Dibujar Gráfico
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[user] ? DATOS_GLOBALES.historial[user] : [];
         const labels = h.slice(-10).map(x => x.fecha);
-        const data = h.slice(-10).map(x => parseFloat(x.peso));
-        if (miGrafico) miGrafico.destroy();
-        miGrafico = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Kg', data: data, borderColor: '#d4ff00', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        const data = h.slice(-10).map(x => parseFloat(x.weight || x.peso)); // Soporta ambos nombres de campo
+        
+        if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
+        if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
+        
+        const config = { type: 'line', data: { labels, datasets: [{ label: 'Kg levantados', data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212, 255, 0, 0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } };
+        
+        if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
+        else graficoAlumno = new Chart(ctx, config);
+
+        // Render Historial
+        const cont = document.getElementById(histId);
+        cont.innerHTML = "<strong>Últimos movimientos:</strong><br>";
+        [...h].reverse().slice(0,10).forEach(r => { cont.innerHTML += `<div style="border-bottom:1px solid #333; padding:2px 0;">${r.fecha} - ${r.ejercicio}: <span style="color:var(--primary)">${r.peso || r.weight}kg</span></div>`; });
     }
-    function renderHistorial(al) {
-        const cont = document.getElementById('items-historial');
-        const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[al] ? DATOS_GLOBALES.historial[al] : [];
-        cont.innerHTML = "<strong>Historial:</strong><br>";
-        [...h].reverse().slice(0,10).forEach(r => { cont.innerHTML += `<div>${r.fecha} - ${r.ejercicio}: ${r.peso}kg</div>`; });
-    }
+
+    // --- LOGICA ALUMNO ---
     function cargarDiaAlumno(dia, btn) {
         diaActualAlumno = dia;
         const u = sessionStorage.getItem('active_user');
         const cont = document.getElementById('lista-rutina');
         const r = (DATOS_GLOBALES.rutinas[u] && DATOS_GLOBALES.rutinas[u][dia]) ? DATOS_GLOBALES.rutinas[u][dia] : [];
         if(btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
-        cont.innerHTML = r.length ? "" : "Descanso";
+        cont.innerHTML = r.length ? "" : "<p style='text-align:center; padding:20px; color:gray;'>Hoy descanso.</p>";
         r.forEach((item, idx) => {
             cont.innerHTML += `<div class="rutina-item"><strong>${item.nombre.toUpperCase()}</strong> <span class="badge">${item.series}</span><br>${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}<input type="number" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}"></div>`;
         });
     }
-    function toggleGif(btn) { const box = btn.nextElementSibling; const vis = box.style.display === 'block'; box.style.display = vis ? 'none' : 'block'; btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR'; }
+
     async function guardarPesoAlumno() {
         const u = sessionStorage.getItem('active_user');
         const inputs = document.querySelectorAll('.peso-input');
@@ -289,24 +255,26 @@
         });
         if(det) await subirALaRed();
         await descargarDeLaRed();
-        cargarDiaAlumno(diaActualAlumno); alert("Sincronizado!");
+        cargarDiaAlumno(diaActualAlumno);
+        // Si el visor de progreso está abierto, actualizarlo también
+        if(!document.getElementById('visor-progreso-alumno').classList.contains('hidden')) actualizarGraficoEHistorial(u, 'alumno');
+        alert("¡Sincronizado!");
     }
+
+    // --- FUNCIONES RESTANTES ---
+    function toggleGif(btn) { const box = btn.nextElementSibling; const vis = box.style.display === 'block'; box.style.display = vis ? 'none' : 'block'; btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR'; }
     function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = (document.getElementById('reg-role').value === 'alumno') ? "" : "hidden"; }
-    function actualizarSelectProfes() {
-        const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = "";
-        for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
-    }
-    async function masterRegister() {
-        const u = document.getElementById('reg-user').value.toLowerCase().trim();
-        const p = document.getElementById('reg-pass').value;
-        const r = document.getElementById('reg-role').value;
-        const pr = document.getElementById('reg-profe-asignado').value;
-        if(!u || !p) return alert("Faltan datos");
-        DATOS_GLOBALES.users[u] = { pass: p, role: r, profe_asignado: r === 'alumno' ? pr : null };
-        await subirALaRed(); renderMasterUsers();
-    }
+    function actualizarSelectProfes() { const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = ""; for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
+    function actualizarSelectAlumnosProfe(profe) { const sel = document.getElementById('p-nombre-alumno'); sel.innerHTML = ""; for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
+    async function masterRegister() { const u = document.getElementById('reg-user').value.toLowerCase().trim(); const p = document.getElementById('reg-pass').value; const r = document.getElementById('reg-role').value; const pr = document.getElementById('reg-profe-asignado').value; if(!u || !p) return alert("Faltan datos"); DATOS_GLOBALES.users[u] = { pass: p, role: r, profe_asignado: r === 'alumno' ? pr : null }; await subirALaRed(); renderMasterUsers(); }
+    async function editUser(oldU) { const newU = prompt("Nuevo usuario:", oldU).toLowerCase().trim(); const newP = prompt("Nueva pass:", DATOS_GLOBALES.users[oldU].pass); if (newU && newP) { if (newU !== oldU) { DATOS_GLOBALES.users[newU] = { ...DATOS_GLOBALES.users[oldU], pass: newP }; if (DATOS_GLOBALES.rutinas[oldU]) { DATOS_GLOBALES.rutinas[newU] = DATOS_GLOBALES.rutinas[oldU]; delete DATOS_GLOBALES.rutinas[oldU]; } if (DATOS_GLOBALES.historial[oldU]) { DATOS_GLOBALES.historial[newU] = DATOS_GLOBALES.historial[oldU]; delete DATOS_GLOBALES.historial[oldU]; } delete DATOS_GLOBALES.users[oldU]; } else { DATOS_GLOBALES.users[oldU].pass = newP; } await subirALaRed(); renderMasterUsers(); } }
+    function renderMasterUsers() { const cont = document.getElementById('lista-usuarios-master'); cont.innerHTML = "<h4>Cuentas:</h4>"; for (let u in DATOS_GLOBALES.users) { cont.innerHTML += `<div class="user-item-master"><div class="user-info"><b>${u.toUpperCase()}</b> (${DATOS_GLOBALES.users[u].role})<br><small>Pass: ${DATOS_GLOBALES.users[u].pass}</small></div><div class="user-actions"><button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button><button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button><button class="btn-del" onclick="deleteUser('${u}')">X</button></div></div>`; } }
     async function deleteUser(u) { if(confirm(`¿Borrar a ${u}?`)) { delete DATOS_GLOBALES.users[u]; await subirALaRed(); renderMasterUsers(); } }
     function logout() { esMasterSession = false; sessionStorage.clear(); location.reload(); }
+    function cambiarDiaVisor(dia, btn) { diaActualVisor = dia; const al = document.getElementById('p-nombre-alumno').value; const lista = document.getElementById('lista-ejercicios-visor'); const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : []; if(btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); } lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`; r.forEach((item, idx) => { lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre} - <b>${item.peso || 0}kg</b></span><div><button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button><button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button></div></div>`; }); }
+    async function editEj(al, dia, idx) { let ej = DATOS_GLOBALES.rutinas[al][dia][idx]; const nN = prompt("Nombre:", ej.nombre); const nS = prompt("Series:", ej.series); if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); } }
+    async function delEj(al, dia, idx) { if(confirm("¿Borrar?")) { DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1); await subirALaRed(); cambiarDiaVisor(dia); } }
+    async function asignarRutina() { const al = document.getElementById('p-nombre-alumno').value; const dia = document.getElementById('p-dia-semana').value; const ej = document.getElementById('p-ejercicio-nombre').value; const gif = document.getElementById('p-gif-selector').value; const se = document.getElementById('p-series').value; if(!ej) return; if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] }; DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif }); await subirALaRed(); document.getElementById('p-ejercicio-nombre').value = ""; alert("Asignado!"); }
     window.onload = descargarDeLaRed;
 </script>
 </body>
