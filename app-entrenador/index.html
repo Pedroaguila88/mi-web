@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v5.9.1</title>
+    <title>Pedro Alfonso - Coach System v5.9.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
@@ -13,7 +13,8 @@
         .status-cloud { font-size: 0.7rem; text-align: right; color: var(--accent); font-weight: bold; margin-bottom: 10px; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
         input, select { background: #333; color: white; border: 1px solid #444; }
-        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        button:active { transform: scale(0.98); brightness(1.2); }
         button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
         button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; margin-bottom: 5px; }
         button.active-day { background: var(--primary); color: black; border-color: var(--primary); }
@@ -37,7 +38,7 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
-        <h1>🏋️‍♂️ COACH SYSTEM v5.9</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v5.9.2</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button onclick="login()">ENTRAR Y SINCRONIZAR</button>
@@ -66,7 +67,7 @@
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
         <select id="p-gif-selector">
-            <option value="">-- Sin Técnica (GIF) --</option>
+            <option value="">-- Sin GIF --</option>
             <option value="press_banca_barra.gif">Press de Banca Barra</option>
             <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
         </select>
@@ -91,7 +92,7 @@
     </div>
 
     <div id="section-alumno" class="card hidden">
-        <h2 id="welcome-alumno">Mi Plan de Entrenamiento</h2>
+        <h2 id="welcome-alumno">Mi Rutina</h2>
         <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
             <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
             <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
@@ -113,6 +114,7 @@
     let diaActualVisor = 'lunes';
     let miGrafico = null;
 
+    // --- FUNCIONES NUCLEO ---
     async function descargarDeLaRed() {
         try {
             const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { 'X-Master-Key': API_KEY } });
@@ -129,8 +131,8 @@
                 headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                 body: JSON.stringify(DATOS_GLOBALES)
             });
-            document.getElementById('cloud-status').innerText = "✅ GUARDADO EN NUBE";
-        } catch (e) { alert("Fallo al subir datos"); }
+            document.getElementById('cloud-status').innerText = "✅ CAMBIOS GUARDADOS";
+        } catch (e) { alert("Error al conectar con la nube"); }
     }
 
     async function login() {
@@ -139,7 +141,7 @@
         const p = document.getElementById('auth-pass').value;
         if (u === "pedro alfonso" && p === "0994rocio") renderDashboard('dev', u);
         else if (DATOS_GLOBALES.users[u] && DATOS_GLOBALES.users[u].pass === p) renderDashboard(DATOS_GLOBALES.users[u].role, u);
-        else alert("Acceso denegado");
+        else alert("Usuario o contraseña incorrectos");
     }
 
     function renderDashboard(role, username) {
@@ -157,23 +159,20 @@
         }
     }
 
-    // --- PROFE LOGIC ---
+    // --- LOGICA PROFE ---
     function actualizarSelectAlumnosProfe(profe) {
-        const sel = document.getElementById('p-nombre-alumno');
-        sel.innerHTML = "";
+        const sel = document.getElementById('p-nombre-alumno'); sel.innerHTML = "";
         for (let u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
     }
 
     async function verProgreso() {
         const al = document.getElementById('p-nombre-alumno').value;
         if(!al) return alert("Selecciona un alumno");
-        
         const visor = document.getElementById('visor-progreso');
         
-        // --- LA MAGIA: ACTUALIZACIÓN INSTANTÁNEA ---
         if(visor.classList.contains('hidden')) {
-            document.getElementById('cloud-status').innerText = "⏳ ACTUALIZANDO DATOS...";
-            await descargarDeLaRed(); // Descarga lo que el alumno acaba de subir
+            document.getElementById('cloud-status').innerText = "⏳ DESCARGANDO DATOS FRESCOS...";
+            await descargarDeLaRed(); // Trae lo que el alumno acaba de entrenar
         }
         
         visor.classList.toggle('hidden');
@@ -190,9 +189,7 @@
         const lista = document.getElementById('lista-ejercicios-visor');
         const r = (DATOS_GLOBALES.rutinas[al] && DATOS_GLOBALES.rutinas[al][dia]) ? DATOS_GLOBALES.rutinas[al][dia] : [];
         if(btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
-        
         lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`;
-        if(r.length === 0) lista.innerHTML += "<p style='color:gray; font-size:0.8rem;'>Vacío.</p>";
         r.forEach((item, idx) => {
             lista.innerHTML += `<div class="ejercicio-visor-item">
                 <span>${item.nombre} - <b style="color:var(--primary)">${item.peso || 0}kg</b></span>
@@ -221,12 +218,12 @@
         const ej = document.getElementById('p-ejercicio-nombre').value;
         const gif = document.getElementById('p-gif-selector').value;
         const se = document.getElementById('p-series').value;
-        if(!ej) return alert("Nombre de ejercicio requerido");
+        if(!ej) return alert("Nombre requerido");
         if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
         DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif: gif });
         await subirALaRed();
         document.getElementById('p-ejercicio-nombre').value = "";
-        alert("¡Asignado!");
+        alert("¡Ejercicio asignado!");
     }
 
     function dibujarGrafico(al) {
@@ -235,31 +232,24 @@
         const labels = h.slice(-10).map(x => x.fecha);
         const data = h.slice(-10).map(x => parseFloat(x.peso));
         if (miGrafico) miGrafico.destroy();
-        miGrafico = new Chart(ctx, { 
-            type: 'line', 
-            data: { 
-                labels: labels, 
-                datasets: [{ label: 'Kg', data: data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212, 255, 0, 0.1)' }] 
-            }, 
-            options: { responsive: true, maintainAspectRatio: false } 
-        });
+        miGrafico = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Kg', data: data, borderColor: '#d4ff00', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
 
     function renderHistorial(al) {
         const cont = document.getElementById('items-historial');
         const h = DATOS_GLOBALES.historial && DATOS_GLOBALES.historial[al] ? DATOS_GLOBALES.historial[al] : [];
-        cont.innerHTML = "<strong>Historial reciente:</strong><br>";
-        [...h].reverse().slice(0,10).forEach(r => { cont.innerHTML += `<div style="border-bottom:1px solid #333; padding:2px 0;">${r.fecha} - ${r.ejercicio}: <span style="color:var(--primary)">${r.peso}kg</span></div>`; });
+        cont.innerHTML = "<strong>Historial:</strong><br>";
+        [...h].reverse().slice(0,10).forEach(r => { cont.innerHTML += `<div style="border-bottom:1px solid #333;">${r.fecha} - ${r.ejercicio}: ${r.peso}kg</div>`; });
     }
 
-    // --- ALUMNO LOGIC ---
+    // --- LOGICA ALUMNO ---
     function cargarDiaAlumno(dia, btn) {
         diaActualAlumno = dia;
         const u = sessionStorage.getItem('active_user');
         const cont = document.getElementById('lista-rutina');
         const r = (DATOS_GLOBALES.rutinas[u] && DATOS_GLOBALES.rutinas[u][dia]) ? DATOS_GLOBALES.rutinas[u][dia] : [];
         if(btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
-        cont.innerHTML = r.length ? "" : "<p style='text-align:center; padding:20px; color:gray;'>Hoy no hay rutina asignada.</p>";
+        cont.innerHTML = r.length ? "" : "<p style='text-align:center; padding:20px; color:gray;'>Descanso.</p>";
         r.forEach((item, idx) => {
             cont.innerHTML += `<div class="rutina-item">
                 <strong>${item.nombre.toUpperCase()}</strong> <span class="badge">${item.series}</span><br>
@@ -294,14 +284,20 @@
                 detectado = true;
             }
         });
+
+        document.getElementById('cloud-status').innerText = "⏳ SINCRONIZANDO...";
+        
         if(detectado) {
-            await subirALaRed(); alert("¡Pesos guardados en la red!");
-        } else {
-            alert("No hay cambios para guardar.");
+            await subirALaRed(); // Sube los pesos nuevos
         }
+        
+        // --- LA MAGIA: DESCARGA BIDIRECCIONAL ---
+        await descargarDeLaRed(); // Baja lo que el Profe haya cambiado
+        cargarDiaAlumno(diaActualAlumno); // Refresca la lista
+        alert("✅ Entrenamiento sincronizado con el Profe.");
     }
 
-    // --- MASTER & LOGOUT ---
+    // --- PANEL MASTER ---
     function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = (document.getElementById('reg-role').value === 'alumno') ? "" : "hidden"; }
     function actualizarSelectProfes() {
         const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = "";
@@ -312,7 +308,7 @@
         const p = document.getElementById('reg-pass').value;
         const r = document.getElementById('reg-role').value;
         const pr = document.getElementById('reg-profe-asignado').value;
-        if(!u || !p) return alert("Completar datos");
+        if(!u || !p) return alert("Faltan datos");
         DATOS_GLOBALES.users[u] = { pass: p, role: r, profe_asignado: r === 'alumno' ? pr : null };
         await subirALaRed(); renderMasterUsers();
     }
