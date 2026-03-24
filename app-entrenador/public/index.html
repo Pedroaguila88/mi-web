@@ -1,155 +1,364 @@
-// ============================================
-//  COACH SYSTEM - Backend Proxy Seguro
-//  Instalar dependencias: npm install
-//  Correr: node server.js
-// ============================================
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pedro Alfonso - Coach System v6.0.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
+        .status-cloud { font-size: 0.7rem; text-align: right; color: var(--accent); font-weight: bold; margin-bottom: 10px; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
+        input, select { background: #333; color: white; border: 1px solid #444; }
+        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        button:active:not(:disabled) { transform: scale(0.96); opacity: 0.8; }
+        button.secondary { background: #444; color: white; margin-top: 10px; font-size: 0.8rem; }
+        button.btn-master-back { background: var(--dev); color: white; margin-top: 15px; font-size: 0.85rem; border: 2px solid white; }
+        button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; margin-bottom: 5px; }
+        button.active-day { background: var(--primary); color: black; border-color: var(--primary); }
+        .hidden { display: none; }
+        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
+        .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
+        .gif-container img { width: 100%; display: block; }
+        .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 6px; margin-top: 5px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); }
+        .visor-box { background: #000; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
+        .ejercicio-visor-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding: 8px 0; font-size: 0.85rem; }
+        .btn-edit-user { background: var(--accent); color: black; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; margin-right: 5px; }
+        .btn-del { background: var(--danger); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; }
+        .btn-log-as { background: var(--success); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
+        .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
+        .historial-box { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.75rem; border: 1px solid #333; }
+        .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
+        /* Toast de notificación */
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid var(--primary); }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
 
-const express  = require('express');
-const bcrypt   = require('bcrypt');
-const fetch    = require('node-fetch');
-require('dotenv').config();
+<div id="toast"></div>
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+<div class="container">
+    <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
+    
+    <div id="section-auth" class="card">
+        <h1>🏋️‍♂️ COACH SYSTEM v6.0.0</h1>
+        <input type="text" id="auth-user" placeholder="Usuario">
+        <input type="password" id="auth-pass" placeholder="Contraseña">
+        <button id="btn-login" onclick="login()">ENTRAR Y SINCRONIZAR</button>
+    </div>
 
-const API_KEY = process.env.JSONBIN_API_KEY;   // viene del .env, NUNCA del cliente
-const BIN_ID  = process.env.JSONBIN_BIN_ID;
+    <div id="section-dev" class="card hidden" style="border-top-color: var(--dev);">
+        <h2 style="color:var(--dev);">PANEL MASTER</h2>
+        <input type="text" id="reg-user" placeholder="Nuevo Usuario">
+        <input type="password" id="reg-pass" placeholder="Contraseña">
+        <select id="reg-role" onchange="toggleProfeSelector()">
+            <option value="profe">Entrenador</option><option value="alumno">Alumno</option>
+        </select>
+        <div id="vinculo-profe-container" class="hidden">
+            <select id="reg-profe-asignado"></select>
+        </div>
+        <button onclick="masterRegister()">CREAR USUARIO</button>
+        <div id="lista-usuarios-master"></div>
+        <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
+    </div>
 
-app.use(express.json());
-app.use(express.static('public'));             // servir el index.html desde /public
+    <div id="section-profe" class="card hidden">
+        <h2 id="welcome-profe">Panel Profe</h2>
+        <select id="p-nombre-alumno"></select>
+        <select id="p-dia-semana">
+            <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
+        </select>
+        <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
+        <select id="p-gif-selector">
+            <option value="">-- Sin Técnica (GIF) --</option>
+            <option value="press_banca_barra.gif">Press de Banca Barra</option>
+            <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
+            <option value="Patada posterior en polea.gif">Patada posterior en polea</option>
+        </select>
+        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
+        <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
+        <div id="visor-progreso-profe" class="hidden">
+            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
+                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIE</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
+            </div>
+            <div id="lista-ejercicios-visor" class="visor-box"></div>
+            <div class="chart-wrap"><canvas id="chartProfe"></canvas></div>
+            <div id="historial-profe" class="historial-box"></div>
+        </div>
+        <div id="profe-exit-zone"></div>
+    </div>
 
-// ── Helpers JSONBin ──────────────────────────────────────────────
-async function leerBin() {
-    const res  = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': API_KEY }
-    });
-    const data = await res.json();
-    return data.record || { users: {}, rutinas: {}, historial: {} };
-}
+    <div id="section-alumno" class="card hidden">
+        <h2 id="welcome-alumno">Mi Rutina</h2>
+        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">VIE</button>
+        </div>
+        <div id="lista-rutina"></div>
+        <button id="btn-guardar" style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR EN RED</button>
+        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
+        <div id="visor-progreso-alumno" class="hidden">
+            <div class="chart-wrap"><canvas id="chartAlumno"></canvas></div>
+            <div id="historial-alumno" class="historial-box"></div>
+        </div>
+        <div id="alumno-exit-zone"></div>
+    </div>
+</div>
 
-async function escribirBin(datos) {
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-        body:    JSON.stringify(datos)
-    });
-}
+<script>
+    // ── Estado local (SIN API KEY, SIN PASSWORDS) ──────────────────
+    let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
+    let SESSION = { usuario: null, role: null };
+    let diaActualAlumno = 'lunes';
+    let diaActualVisor  = 'lunes';
+    let graficoProfe    = null;
+    let graficoAlumno   = null;
+    let esMasterSession = false;
 
-// ── RUTAS ────────────────────────────────────────────────────────
-
-// LOGIN: verifica credenciales con bcrypt
-app.post('/api/login', async (req, res) => {
-    try {
-        const { usuario, password } = req.body;
-        const u = usuario.toLowerCase().trim();
-
-        // Credencial master (también hasheada en .env)
-        if (u === process.env.MASTER_USER) {
-            const ok = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
-            if (ok) return res.json({ ok: true, role: 'dev', usuario: u });
-            return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-        }
-
-        const datos = await leerBin();
-        const cuenta = datos.users[u];
-        if (!cuenta) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-
-        const match = await bcrypt.compare(password, cuenta.passHash);
-        if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-
-        // Devuelve solo lo que el cliente necesita, NUNCA el hash
-        res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ ok: false, msg: 'Error interno' });
+    // ── Toast (reemplaza los alert) ────────────────────────────────
+    function toast(msg, color = 'var(--primary)') {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.borderColor = color;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
     }
-});
 
-// GET DATOS: solo rutinas e historial (sin contraseñas)
-app.get('/api/datos', async (req, res) => {
-    try {
-        const datos = await leerBin();
-        // Filtra contraseñas antes de enviar al cliente
-        const usersSeguros = {};
-        for (const u in datos.users) {
-            const { passHash, ...resto } = datos.users[u];
-            usersSeguros[u] = resto;
-        }
-        res.json({ users: usersSeguros, rutinas: datos.rutinas, historial: datos.historial });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al leer datos' });
+    // ── Helpers de carga ──────────────────────────────────────────
+    function setLoading(btnId, loading) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.disabled = loading;
+        if (loading) btn.dataset.original = btn.innerText, btn.innerText = '⏳ ESPERA...';
+        else btn.innerText = btn.dataset.original || btn.innerText;
     }
-});
 
-// GUARDAR DATOS: recibe cambios del cliente y los persiste
-app.put('/api/datos', async (req, res) => {
-    try {
-        const datosActuales = await leerBin();
-        const { rutinas, historial } = req.body;
-        // Solo actualiza rutinas e historial, NUNCA users desde el cliente
-        if (rutinas)   datosActuales.rutinas   = rutinas;
-        if (historial) datosActuales.historial  = historial;
-        await escribirBin(datosActuales);
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al guardar' });
+    // ── Comunicación con el backend (proxy seguro) ─────────────────
+    async function descargarDeLaRed() {
+        try {
+            setStatus('⏳ SINCRONIZANDO...');
+            const res = await fetch('/api/datos');
+            DATOS_GLOBALES = await res.json();
+            setStatus('✅ SINCRONIZADO');
+        } catch (e) { setStatus('❌ ERROR RED'); }
     }
-});
 
-// CREAR USUARIO (solo desde panel master)
-app.post('/api/usuarios', async (req, res) => {
-    try {
-        const { usuario, password, role, profe_asignado } = req.body;
-        const u = usuario.toLowerCase().trim();
-        const passHash = await bcrypt.hash(password, 10); // hashea antes de guardar
-        const datos = await leerBin();
-        datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null };
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al crear usuario' });
+    async function subirALaRed() {
+        try {
+            setStatus('⏳ GUARDANDO...');
+            await fetch('/api/datos', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
+            });
+            setStatus('✅ GUARDADO');
+        } catch (e) { toast('Error al guardar', 'var(--danger)'); }
     }
-});
 
-// EDITAR USUARIO
-app.put('/api/usuarios/:user', async (req, res) => {
-    try {
-        const oldU = req.params.user;
-        const { nuevoUsuario, nuevaPassword } = req.body;
-        const newU = nuevoUsuario.toLowerCase().trim();
-        const datos = await leerBin();
-        const cuenta = datos.users[oldU];
-        if (!cuenta) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+    function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
 
-        const passHash = await bcrypt.hash(nuevaPassword, 10);
+    // ── Login: ahora va al servidor ────────────────────────────────
+    async function login() {
+        setLoading('btn-login', true);
+        try {
+            const u = document.getElementById('auth-user').value.toLowerCase().trim();
+            const p = document.getElementById('auth-pass').value;
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: u, password: p })
+            });
+            const data = await res.json();
+            if (!data.ok) { toast('Acceso denegado ❌', 'var(--danger)'); return; }
+            SESSION = { usuario: data.usuario, role: data.role };
+            esMasterSession = data.role === 'dev';
+            await descargarDeLaRed();
+            renderDashboard(data.role, data.usuario);
+        } catch (e) { toast('Error de conexión', 'var(--danger)'); }
+        finally { setLoading('btn-login', false); }
+    }
 
-        if (newU !== oldU) {
-            datos.users[newU] = { ...cuenta, passHash };
-            if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
-            if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
-            delete datos.users[oldU];
+    function renderDashboard(role, username) {
+        document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+        sessionStorage.setItem('active_user', username);
+        if (role === 'dev') {
+            document.getElementById('section-dev').classList.remove('hidden');
+            actualizarSelectProfes(); renderMasterUsers();
+        } else if (role === 'profe') {
+            document.getElementById('section-profe').classList.remove('hidden');
+            document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
+            actualizarSelectAlumnosProfe(username);
+            renderExitButtons('profe-exit-zone');
         } else {
-            datos.users[oldU].passHash = passHash;
+            document.getElementById('section-alumno').classList.remove('hidden');
+            document.getElementById('welcome-alumno').innerText = `Plan de ${username.toUpperCase()}`;
+            cargarDiaAlumno('lunes');
+            renderExitButtons('alumno-exit-zone');
         }
-
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al editar usuario' });
     }
-});
 
-// ELIMINAR USUARIO
-app.delete('/api/usuarios/:user', async (req, res) => {
-    try {
-        const u = req.params.user;
-        const datos = await leerBin();
-        delete datos.users[u];
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al eliminar usuario' });
+    function renderExitButtons(containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = esMasterSession
+            ? `<button class="btn-master-back" onclick="volverAlMaster()">🔙 VOLVER AL PANEL MASTER</button>`
+            : `<button class="secondary" onclick="logout()">Cerrar Sesión</button>`;
     }
-});
 
-app.listen(PORT, () => console.log(`✅ Coach System corriendo en http://localhost:${PORT}`));
+    function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
+    function loginAs(user) { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
+
+    // ── Progreso ───────────────────────────────────────────────────
+    async function verProgreso(tipo) {
+        const user = tipo === 'profe' ? document.getElementById('p-nombre-alumno').value : sessionStorage.getItem('active_user');
+        if (!user) return;
+        const idVisor = tipo === 'profe' ? 'visor-progreso-profe' : 'visor-progreso-alumno';
+        const visor   = document.getElementById(idVisor);
+        if (visor.classList.contains('hidden')) await descargarDeLaRed();
+        visor.classList.toggle('hidden');
+        if (!visor.classList.contains('hidden')) {
+            if (tipo === 'profe') cambiarDiaVisor('lunes');
+            actualizarGraficoEHistorial(user, tipo);
+        }
+    }
+
+    function actualizarGraficoEHistorial(user, tipo) {
+        const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
+        const histId   = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const h   = DATOS_GLOBALES.historial?.[user] || [];
+        const labels = h.slice(-10).map(x => x.fecha);
+        const data   = h.slice(-10).map(x => parseFloat(x.peso || x.weight));
+        if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
+        if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
+        const config = { type: 'line', data: { labels, datasets: [{ label: 'Kg levantados', data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212,255,0,0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } };
+        if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
+        else graficoAlumno = new Chart(ctx, config);
+        const cont = document.getElementById(histId);
+        cont.innerHTML = "<strong>Últimos movimientos:</strong><br>";
+        [...h].reverse().slice(0, 10).forEach(r => {
+            cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:2px 0">${r.fecha} - ${r.ejercicio}: <span style="color:var(--primary)">${r.peso || r.weight}kg</span></div>`;
+        });
+    }
+
+    // ── Lógica alumno ──────────────────────────────────────────────
+    function cargarDiaAlumno(dia, btn) {
+        diaActualAlumno = dia;
+        const u    = sessionStorage.getItem('active_user');
+        const cont = document.getElementById('lista-rutina');
+        const r    = DATOS_GLOBALES.rutinas?.[u]?.[dia] || [];
+        if (btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
+        cont.innerHTML = r.length ? "" : "<p style='text-align:center;padding:20px;color:gray;'>Hoy descanso.</p>";
+        r.forEach((item, idx) => {
+            // Validación: solo acepta números positivos
+            cont.innerHTML += `<div class="rutina-item"><strong>${item.nombre.toUpperCase()}</strong> <span class="badge">${item.series}</span><br>
+            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
+            <input type="number" min="0" max="999" step="0.5" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}"></div>`;
+        });
+    }
+
+    async function guardarPesoAlumno() {
+        setLoading('btn-guardar', true);
+        try {
+            const u      = sessionStorage.getItem('active_user');
+            const inputs = document.querySelectorAll('.peso-input');
+            const fecha  = new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit' });
+            let det = false;
+            inputs.forEach(input => {
+                const idx      = input.getAttribute('data-idx');
+                const nuevoPeso = input.value;
+                const ej        = DATOS_GLOBALES.rutinas[u][diaActualAlumno][idx];
+                if (nuevoPeso && nuevoPeso !== ej.peso) {
+                    if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
+                    DATOS_GLOBALES.historial[u].push({ fecha, ejercicio: ej.nombre, peso: nuevoPeso });
+                    ej.peso = nuevoPeso; det = true;
+                }
+            });
+            if (det) await subirALaRed();
+            await descargarDeLaRed();
+            cargarDiaAlumno(diaActualAlumno);
+            if (!document.getElementById('visor-progreso-alumno').classList.contains('hidden')) actualizarGraficoEHistorial(u, 'alumno');
+            toast('¡Sincronizado! ✅');
+        } finally { setLoading('btn-guardar', false); }
+    }
+
+    // ── Panel master ───────────────────────────────────────────────
+    async function masterRegister() {
+        const u  = document.getElementById('reg-user').value.toLowerCase().trim();
+        const p  = document.getElementById('reg-pass').value;
+        const r  = document.getElementById('reg-role').value;
+        const pr = document.getElementById('reg-profe-asignado').value;
+        if (!u || !p) return toast('Faltan datos', 'var(--danger)');
+        // El hash lo hace el servidor
+        const res = await fetch('/api/usuarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr })
+        });
+        const data = await res.json();
+        if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario creado ✅'); }
+        else toast('Error al crear usuario', 'var(--danger)');
+    }
+
+    async function editUser(oldU) {
+        const newU = prompt("Nuevo usuario:", oldU)?.toLowerCase().trim();
+        const newP = prompt("Nueva contraseña:");
+        if (!newU || !newP) return;
+        const res = await fetch(`/api/usuarios/${encodeURIComponent(oldU)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
+        });
+        const data = await res.json();
+        if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
+    }
+
+    async function deleteUser(u) {
+        if (!confirm(`¿Borrar a ${u}?`)) return;
+        await fetch(`/api/usuarios/${encodeURIComponent(u)}`, { method: 'DELETE' });
+        await descargarDeLaRed(); renderMasterUsers(); toast('Usuario eliminado');
+    }
+
+    function renderMasterUsers() {
+        const cont = document.getElementById('lista-usuarios-master');
+        cont.innerHTML = "<h4>Cuentas:</h4>";
+        for (const u in DATOS_GLOBALES.users) {
+            // NOTA: el servidor ya NO envía passHash al cliente
+            cont.innerHTML += `<div class="user-item-master">
+                <div><b>${u.toUpperCase()}</b> (${DATOS_GLOBALES.users[u].role})</div>
+                <div style="margin-top:6px">
+                    <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
+                    <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
+                    <button class="btn-del" onclick="deleteUser('${u}')">X</button>
+                </div></div>`;
+        }
+    }
+
+    // ── Resto de funciones ─────────────────────────────────────────
+    function toggleGif(btn) { const box = btn.nextElementSibling; const vis = box.style.display === 'block'; box.style.display = vis ? 'none' : 'block'; btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR'; }
+    function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = document.getElementById('reg-role').value === 'alumno' ? "" : "hidden"; }
+    function actualizarSelectProfes() { const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = ""; for (const u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
+    function actualizarSelectAlumnosProfe(profe) { const sel = document.getElementById('p-nombre-alumno'); sel.innerHTML = ""; for (const u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
+    function logout() { esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
+    function cambiarDiaVisor(dia, btn) { diaActualVisor = dia; const al = document.getElementById('p-nombre-alumno').value; const lista = document.getElementById('lista-ejercicios-visor'); const r = DATOS_GLOBALES.rutinas?.[al]?.[dia] || []; if (btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); } lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`; r.forEach((item, idx) => { lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre} - <b>${item.peso || 0}kg</b></span><div><button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button><button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button></div></div>`; }); }
+    async function editEj(al, dia, idx) { const ej = DATOS_GLOBALES.rutinas[al][dia][idx]; const nN = prompt("Nombre:", ej.nombre); const nS = prompt("Series:", ej.series); if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); } }
+    async function delEj(al, dia, idx) { if (confirm("¿Borrar?")) { DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1); await subirALaRed(); cambiarDiaVisor(dia); } }
+    async function asignarRutina() { const al = document.getElementById('p-nombre-alumno').value; const dia = document.getElementById('p-dia-semana').value; const ej = document.getElementById('p-ejercicio-nombre').value; const gif = document.getElementById('p-gif-selector').value; const se = document.getElementById('p-series').value; if (!ej) return; if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] }; DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif }); await subirALaRed(); document.getElementById('p-ejercicio-nombre').value = ""; toast('Ejercicio asignado ✅'); }
+
+    window.onload = descargarDeLaRed;
+</script>
+</body>
+</html>
