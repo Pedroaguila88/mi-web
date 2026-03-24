@@ -1,0 +1,155 @@
+// ============================================
+//  COACH SYSTEM - Backend Proxy Seguro
+//  Instalar dependencias: npm install
+//  Correr: node server.js
+// ============================================
+
+const express  = require('express');
+const bcrypt   = require('bcrypt');
+const fetch    = require('node-fetch');
+require('dotenv').config();
+
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+const API_KEY = process.env.JSONBIN_API_KEY;   // viene del .env, NUNCA del cliente
+const BIN_ID  = process.env.JSONBIN_BIN_ID;
+
+app.use(express.json());
+app.use(express.static('public'));             // servir el index.html desde /public
+
+// ── Helpers JSONBin ──────────────────────────────────────────────
+async function leerBin() {
+    const res  = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+    });
+    const data = await res.json();
+    return data.record || { users: {}, rutinas: {}, historial: {} };
+}
+
+async function escribirBin(datos) {
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+        body:    JSON.stringify(datos)
+    });
+}
+
+// ── RUTAS ────────────────────────────────────────────────────────
+
+// LOGIN: verifica credenciales con bcrypt
+app.post('/api/login', async (req, res) => {
+    try {
+        const { usuario, password } = req.body;
+        const u = usuario.toLowerCase().trim();
+
+        // Credencial master (también hasheada en .env)
+        if (u === process.env.MASTER_USER) {
+            const ok = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
+            if (ok) return res.json({ ok: true, role: 'dev', usuario: u });
+            return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
+        }
+
+        const datos = await leerBin();
+        const cuenta = datos.users[u];
+        if (!cuenta) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
+
+        const match = await bcrypt.compare(password, cuenta.passHash);
+        if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
+
+        // Devuelve solo lo que el cliente necesita, NUNCA el hash
+        res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ ok: false, msg: 'Error interno' });
+    }
+});
+
+// GET DATOS: solo rutinas e historial (sin contraseñas)
+app.get('/api/datos', async (req, res) => {
+    try {
+        const datos = await leerBin();
+        // Filtra contraseñas antes de enviar al cliente
+        const usersSeguros = {};
+        for (const u in datos.users) {
+            const { passHash, ...resto } = datos.users[u];
+            usersSeguros[u] = resto;
+        }
+        res.json({ users: usersSeguros, rutinas: datos.rutinas, historial: datos.historial });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al leer datos' });
+    }
+});
+
+// GUARDAR DATOS: recibe cambios del cliente y los persiste
+app.put('/api/datos', async (req, res) => {
+    try {
+        const datosActuales = await leerBin();
+        const { rutinas, historial } = req.body;
+        // Solo actualiza rutinas e historial, NUNCA users desde el cliente
+        if (rutinas)   datosActuales.rutinas   = rutinas;
+        if (historial) datosActuales.historial  = historial;
+        await escribirBin(datosActuales);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al guardar' });
+    }
+});
+
+// CREAR USUARIO (solo desde panel master)
+app.post('/api/usuarios', async (req, res) => {
+    try {
+        const { usuario, password, role, profe_asignado } = req.body;
+        const u = usuario.toLowerCase().trim();
+        const passHash = await bcrypt.hash(password, 10); // hashea antes de guardar
+        const datos = await leerBin();
+        datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null };
+        await escribirBin(datos);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al crear usuario' });
+    }
+});
+
+// EDITAR USUARIO
+app.put('/api/usuarios/:user', async (req, res) => {
+    try {
+        const oldU = req.params.user;
+        const { nuevoUsuario, nuevaPassword } = req.body;
+        const newU = nuevoUsuario.toLowerCase().trim();
+        const datos = await leerBin();
+        const cuenta = datos.users[oldU];
+        if (!cuenta) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+
+        const passHash = await bcrypt.hash(nuevaPassword, 10);
+
+        if (newU !== oldU) {
+            datos.users[newU] = { ...cuenta, passHash };
+            if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
+            if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
+            delete datos.users[oldU];
+        } else {
+            datos.users[oldU].passHash = passHash;
+        }
+
+        await escribirBin(datos);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al editar usuario' });
+    }
+});
+
+// ELIMINAR USUARIO
+app.delete('/api/usuarios/:user', async (req, res) => {
+    try {
+        const u = req.params.user;
+        const datos = await leerBin();
+        delete datos.users[u];
+        await escribirBin(datos);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al eliminar usuario' });
+    }
+});
+
+app.listen(PORT, () => console.log(`✅ Coach System corriendo en http://localhost:${PORT}`));
