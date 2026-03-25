@@ -34,7 +34,6 @@
         .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
         .historial-box { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.75rem; border: 1px solid #333; }
         .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
-        /* Toast de notificación */
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid var(--primary); }
         #toast.show { opacity: 1; }
     </style>
@@ -120,7 +119,8 @@
 </div>
 
 <script>
-    // ── Estado local (SIN API KEY, SIN PASSWORDS) ──────────────────
+    // ── Estado local (SIN API KEY EN EL CLIENTE) ──────────────────
+    const API_URL = 'https://mi-web-79w7.onrender.com';
     let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
     let SESSION = { usuario: null, role: null };
     let diaActualAlumno = 'lunes';
@@ -129,7 +129,6 @@
     let graficoAlumno   = null;
     let esMasterSession = false;
 
-    // ── Toast (reemplaza los alert) ────────────────────────────────
     function toast(msg, color = 'var(--primary)') {
         const t = document.getElementById('toast');
         t.innerText = msg;
@@ -138,7 +137,6 @@
         setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // ── Helpers de carga ──────────────────────────────────────────
     function setLoading(btnId, loading) {
         const btn = document.getElementById(btnId);
         if (!btn) return;
@@ -147,8 +145,6 @@
         else btn.innerText = btn.dataset.original || btn.innerText;
     }
 
-    // ── Comunicación con el backend (proxy seguro) ─────────────────
-    const API_URL = 'https://mi-web-79w7.onrender.com';
     async function descargarDeLaRed() {
         try {
             setStatus('⏳ SINCRONIZANDO...');
@@ -161,10 +157,10 @@
     async function subirALaRed() {
         try {
             setStatus('⏳ GUARDANDO...');
-            await fetch(${API_URL}/api/datos`, {
+            await fetch(`${API_URL}/api/datos`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.str`ingify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
+                body: JSON.stringify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
             });
             setStatus('✅ GUARDADO');
         } catch (e) { toast('Error al guardar', 'var(--danger)'); }
@@ -172,7 +168,6 @@
 
     function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
 
-    // ── Login: ahora va al servidor ────────────────────────────────
     async function login() {
         setLoading('btn-login', true);
         try {
@@ -222,7 +217,6 @@
     function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
     function loginAs(user) { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
 
-    // ── Progreso ───────────────────────────────────────────────────
     async function verProgreso(tipo) {
         const user = tipo === 'profe' ? document.getElementById('p-nombre-alumno').value : sessionStorage.getItem('active_user');
         if (!user) return;
@@ -255,7 +249,6 @@
         });
     }
 
-    // ── Lógica alumno ──────────────────────────────────────────────
     function cargarDiaAlumno(dia, btn) {
         diaActualAlumno = dia;
         const u    = sessionStorage.getItem('active_user');
@@ -264,7 +257,6 @@
         if (btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
         cont.innerHTML = r.length ? "" : "<p style='text-align:center;padding:20px;color:gray;'>Hoy descanso.</p>";
         r.forEach((item, idx) => {
-            // Validación: solo acepta números positivos
             cont.innerHTML += `<div class="rutina-item"><strong>${item.nombre.toUpperCase()}</strong> <span class="badge">${item.series}</span><br>
             ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
             <input type="number" min="0" max="999" step="0.5" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}"></div>`;
@@ -296,15 +288,13 @@
         } finally { setLoading('btn-guardar', false); }
     }
 
-    // ── Panel master ───────────────────────────────────────────────
     async function masterRegister() {
         const u  = document.getElementById('reg-user').value.toLowerCase().trim();
         const p  = document.getElementById('reg-pass').value;
         const r  = document.getElementById('reg-role').value;
         const pr = document.getElementById('reg-profe-asignado').value;
         if (!u || !p) return toast('Faltan datos', 'var(--danger)');
-        // El hash lo hace el servidor
-        const res = await fetch('/api/usuarios', {
+        const res = await fetch(`${API_URL}/api/usuarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr })
@@ -318,7 +308,7 @@
         const newU = prompt("Nuevo usuario:", oldU)?.toLowerCase().trim();
         const newP = prompt("Nueva contraseña:");
         if (!newU || !newP) return;
-        const res = await fetch(`/api/usuarios/${encodeURIComponent(oldU)}`, {
+        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
@@ -329,7 +319,7 @@
 
     async function deleteUser(u) {
         if (!confirm(`¿Borrar a ${u}?`)) return;
-        await fetch(`/api/usuarios/${encodeURIComponent(u)}`, { method: 'DELETE' });
+        await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, { method: 'DELETE' });
         await descargarDeLaRed(); renderMasterUsers(); toast('Usuario eliminado');
     }
 
@@ -337,7 +327,6 @@
         const cont = document.getElementById('lista-usuarios-master');
         cont.innerHTML = "<h4>Cuentas:</h4>";
         for (const u in DATOS_GLOBALES.users) {
-            // NOTA: el servidor ya NO envía passHash al cliente
             cont.innerHTML += `<div class="user-item-master">
                 <div><b>${u.toUpperCase()}</b> (${DATOS_GLOBALES.users[u].role})</div>
                 <div style="margin-top:6px">
@@ -348,7 +337,6 @@
         }
     }
 
-    // ── Resto de funciones ─────────────────────────────────────────
     function toggleGif(btn) { const box = btn.nextElementSibling; const vis = box.style.display === 'block'; box.style.display = vis ? 'none' : 'block'; btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR'; }
     function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = document.getElementById('reg-role').value === 'alumno' ? "" : "hidden"; }
     function actualizarSelectProfes() { const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = ""; for (const u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
