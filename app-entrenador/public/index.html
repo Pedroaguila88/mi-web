@@ -152,7 +152,7 @@
     async function descargarDeLaRed() {
         try {
             setStatus('⏳ SINCRONIZANDO...');
-            const res = await fetch(${API_URL}/api/datos);
+            const res = await fetch(`${API_URL}/api/datos`);
             DATOS_GLOBALES = await res.json();
             setStatus('✅ SINCRONIZADO');
         } catch (e) { setStatus('❌ ERROR RED'); }
@@ -161,10 +161,10 @@
     async function subirALaRed() {
         try {
             setStatus('⏳ GUARDANDO...');
-            await fetch(${API_URL}/api/datos, {
+            await fetch(${API_URL}/api/datos`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
+                body: JSON.str`ingify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
             });
             setStatus('✅ GUARDADO');
         } catch (e) { toast('Error al guardar', 'var(--danger)'); }
@@ -178,7 +178,7 @@
         try {
             const u = document.getElementById('auth-user').value.toLowerCase().trim();
             const p = document.getElementById('auth-pass').value;
-            const res = await fetch('/api/login', {
+            const res = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usuario: u, password: p })
