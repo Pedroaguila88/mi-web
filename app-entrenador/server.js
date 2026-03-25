@@ -5,6 +5,7 @@
 // ============================================
 
 const express  = require('express');
+const cors     = require('cors'); // <-- AGREGADO PARA EL ERROR DE RED
 const bcrypt   = require('bcrypt');
 const fetch    = require('node-fetch');
 require('dotenv').config();
@@ -15,6 +16,8 @@ const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.JSONBIN_API_KEY;   // viene del .env, NUNCA del cliente
 const BIN_ID  = process.env.JSONBIN_BIN_ID;
 
+// -- MIDDLEWARES --
+app.use(cors()); // <-- ESTA LÍNEA ES LA QUE QUITA EL "ERROR RED"
 app.use(express.json());
 app.use(express.static('public'));             // servir el index.html desde /public
 
@@ -152,4 +155,4 @@ app.delete('/api/usuarios/:user', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`✅ Coach System corriendo en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Coach System corriendo en puerto ${PORT}`));
