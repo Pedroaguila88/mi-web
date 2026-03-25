@@ -148,10 +148,11 @@
     }
 
     // ── Comunicación con el backend (proxy seguro) ─────────────────
+    const API_URL = 'https://mi-web-79w7.onrender.com';
     async function descargarDeLaRed() {
         try {
             setStatus('⏳ SINCRONIZANDO...');
-            const res = await fetch('/api/datos');
+            const res = await fetch(${API_URL}/api/datos);
             DATOS_GLOBALES = await res.json();
             setStatus('✅ SINCRONIZADO');
         } catch (e) { setStatus('❌ ERROR RED'); }
@@ -160,7 +161,7 @@
     async function subirALaRed() {
         try {
             setStatus('⏳ GUARDANDO...');
-            await fetch('/api/datos', {
+            await fetch(${API_URL}/api/datos, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
