@@ -3,16 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v6.0.0</title>
+    <title>Pedro Alfonso - Coach System v7.0.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #d4ff00; --bg: #111; --card: #222; --text: #eee; --accent: #00d4ff; --danger: #ff4444; --success: #28a745; --dev: #ff00ff; }
+        :root {
+            --primary: #d4ff00;
+            --bg: #111;
+            --card: #1a1a1a;
+            --card2: #222;
+            --text: #eee;
+            --accent: #00d4ff;
+            --danger: #ff4444;
+            --success: #28a745;
+            --dev: #ff00ff;
+            --warning: #ff9900;
+        }
+        * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
+        .card { background: var(--card2); padding: 20px; border-radius: 15px; border-top: 4px solid var(--primary); margin-bottom: 15px; }
         .status-cloud { font-size: 0.7rem; text-align: right; color: var(--accent); font-weight: bold; margin-bottom: 10px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
-        input, select { background: #333; color: white; border: 1px solid #444; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 1rem; }
+        input, select, textarea { background: #333; color: white; border: 1px solid #444; }
+        textarea { resize: vertical; min-height: 60px; font-family: inherit; }
         button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         button:active:not(:disabled) { transform: scale(0.96); opacity: 0.8; }
@@ -21,8 +34,9 @@
         button.btn-day { background: #333; color: white; width: auto; padding: 8px 12px; font-size: 0.7rem; margin-right: 5px; border: 1px solid #444; margin-bottom: 5px; }
         button.active-day { background: var(--primary); color: black; border-color: var(--primary); }
         .hidden { display: none; }
-        .rutina-item { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--primary); }
+        .rutina-item { background: var(--card); padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 4px solid var(--primary); }
         .badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .badge-record { background: #ff9900; color: black; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-left: 4px; }
         .gif-container { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid #444; display: none; }
         .gif-container img { width: 100%; display: block; }
         .btn-ver-gif { background: #333; color: var(--accent); font-size: 0.7rem; padding: 6px; margin-top: 5px; width: auto; display: inline-block; cursor: pointer; border-radius: 5px; border: 1px solid var(--accent); }
@@ -31,45 +45,126 @@
         .btn-edit-user { background: var(--accent); color: black; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; margin-right: 5px; }
         .btn-del { background: var(--danger); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; }
         .btn-log-as { background: var(--success); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
-        .chart-wrap { background: #1a1a1a; padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
+        .chart-wrap { background: var(--card); padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
         .historial-box { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.75rem; border: 1px solid #333; }
         .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
-        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid var(--primary); }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid var(--primary); max-width: 90vw; text-align: center; }
         #toast.show { opacity: 1; }
-        .foto-perfil {
-            display: block;
-            margin: 0 auto 15px auto;
-            width: 110px;
-            height: 140px;
-            border-radius: 50%;
-            border: 3px solid var(--primary);
-            object-fit: cover;
-            object-position: center top;
-            box-shadow: 0 0 15px rgba(212,255,0,0.3);
-        }
+
+        /* === FOTO PERFIL LOGIN === */
+        .foto-perfil { display: block; margin: 0 auto 15px auto; width: 110px; height: 140px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; object-position: center top; box-shadow: 0 0 15px rgba(212,255,0,0.3); }
+
+        /* === STATS DEL ALUMNO === */
+        .stats-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .stat-box { flex: 1; min-width: 80px; background: var(--card); border-radius: 10px; padding: 10px; text-align: center; border: 1px solid #333; }
+        .stat-box .stat-val { font-size: 1.4rem; font-weight: bold; color: var(--primary); line-height: 1; }
+        .stat-box .stat-lbl { font-size: 0.6rem; color: #888; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* === BARRA DE PROGRESO === */
+        .progress-wrap { margin: 10px 0; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 5px; }
+        .progress-bar { background: #333; border-radius: 10px; height: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #00d4ff); border-radius: 10px; transition: width 0.5s ease; }
+
+        /* === RACHA === */
+        .racha-display { display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 10px; padding: 10px 15px; margin-bottom: 12px; border: 1px solid #333; }
+        .racha-fire { font-size: 1.5rem; }
+        .racha-num { font-size: 1.6rem; font-weight: bold; color: var(--warning); }
+        .racha-txt { font-size: 0.75rem; color: #888; }
+
+        /* === MENSAJE DEL PROFE === */
+        .mensaje-profe { background: linear-gradient(135deg, #1a2a1a, #1a1a2a); border: 1px solid #2a4a2a; border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; font-size: 0.85rem; font-style: italic; color: #ccc; position: relative; }
+        .mensaje-profe::before { content: '💬'; position: absolute; top: -10px; left: 12px; font-size: 1.2rem; background: var(--card2); padding: 0 4px; }
+
+        /* === BADGES === */
+        .badges-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .badge-item { background: var(--card); border-radius: 8px; padding: 6px 10px; font-size: 0.7rem; border: 1px solid #333; display: flex; align-items: center; gap: 5px; transition: all 0.3s; }
+        .badge-item.desbloqueado { border-color: var(--primary); background: #1a2a00; color: var(--primary); }
+        .badge-item.bloqueado { opacity: 0.4; filter: grayscale(1); }
+
+        /* === RÉCORD PERSONAL === */
+        .record-tag { font-size: 0.65rem; background: var(--warning); color: black; padding: 1px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; animation: pulse 1s ease-in-out 3; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+        /* === TIMER DE DESCANSO === */
+        #timer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .timer-circle { width: 180px; height: 180px; border-radius: 50%; border: 6px solid var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+        .timer-num { font-size: 3rem; font-weight: bold; color: var(--primary); line-height: 1; }
+        .timer-lbl { font-size: 0.8rem; color: #888; }
+        .timer-ring { position: absolute; top: -6px; left: -6px; width: 180px; height: 180px; }
+        .timer-progress { stroke: var(--accent); stroke-width: 6; fill: none; stroke-dasharray: 534; stroke-dashoffset: 0; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 1s linear; }
+        .timer-btns { display: flex; gap: 10px; }
+        .timer-btns button { width: auto; padding: 12px 24px; }
+
+        /* === RPE === */
+        .rpe-wrap { margin-top: 8px; }
+        .rpe-label { font-size: 0.7rem; color: #888; margin-bottom: 4px; }
+        .rpe-stars { display: flex; gap: 4px; flex-wrap: wrap; }
+        .rpe-btn { width: auto; padding: 4px 8px; font-size: 0.7rem; background: #333; color: white; border: 1px solid #444; border-radius: 5px; margin: 0; transition: 0.2s; }
+        .rpe-btn.active { background: var(--danger); border-color: var(--danger); color: white; }
+        .rpe-btn:hover { background: #555; }
+
+        /* === NOTAS === */
+        .notas-wrap { margin-top: 8px; }
+        .nota-input { background: #2a2a2a; border: 1px solid #444; color: #ccc; font-size: 0.8rem; padding: 8px; border-radius: 6px; width: 100%; min-height: 50px; margin: 0; }
+
+        /* === VOLUMEN SEMANAL === */
+        .volumen-box { background: var(--card); border-radius: 10px; padding: 12px; margin-top: 10px; border: 1px solid #333; }
+        .volumen-num { font-size: 2rem; font-weight: bold; color: var(--accent); }
+        .volumen-sub { font-size: 0.7rem; color: #888; }
+
+        /* === PANEL MASTER MENSAJE === */
+        .master-msg-box { background: #1a1a2a; border: 1px solid #333; border-radius: 10px; padding: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
+<div id="timer-overlay" class="hidden">
+    <div style="color:#888;font-size:0.8rem;margin-bottom:10px;">DESCANSO</div>
+    <div class="timer-circle">
+        <svg class="timer-ring" viewBox="0 0 180 180">
+            <circle class="timer-progress" id="timer-ring-svg" cx="90" cy="90" r="85"/>
+        </svg>
+        <div class="timer-num" id="timer-num">60</div>
+        <div class="timer-lbl">segundos</div>
+    </div>
+    <div class="timer-btns">
+        <button onclick="skipTimer()" class="secondary" style="width:auto">SALTAR ⏭️</button>
+        <button onclick="addTime(30)" style="background:#333;color:white;width:auto">+30s</button>
+    </div>
+    <div style="font-size:0.75rem;color:#555;margin-top:15px;">Toca SALTAR cuando estés listo</div>
+</div>
 
 <div class="container">
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
-    
+
+    <!-- LOGIN -->
     <div id="section-auth" class="card">
         <img src="pedro.jpeg" class="foto-perfil" alt="Pedro Alfonso Coach">
-        <h1>🏋️‍♂️ COACH SYSTEM v6.0.0</h1>
+        <h1>🏋️‍♂️ COACH SYSTEM v7.0.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button id="btn-login" onclick="login()">ENTRAR Y SINCRONIZAR</button>
     </div>
 
+    <!-- PANEL MASTER/DEV -->
     <div id="section-dev" class="card hidden" style="border-top-color: var(--dev);">
         <h2 style="color:var(--dev);">PANEL MASTER</h2>
+
+        <!-- Mensaje motivacional -->
+        <div class="master-msg-box">
+            <h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--accent);">💬 Mensaje para todos los alumnos</h4>
+            <textarea id="master-mensaje" placeholder="Escribí un mensaje motivacional para tus alumnos..."></textarea>
+            <button onclick="guardarMensajeMaster()" style="margin-top:5px;">PUBLICAR MENSAJE</button>
+        </div>
+
+        <hr style="border-color:#333;margin:15px 0;">
         <input type="text" id="reg-user" placeholder="Nuevo Usuario">
         <input type="password" id="reg-pass" placeholder="Contraseña">
         <select id="reg-role" onchange="toggleProfeSelector()">
-            <option value="profe">Entrenador</option><option value="alumno">Alumno</option>
+            <option value="profe">Entrenador</option>
+            <option value="alumno">Alumno</option>
         </select>
         <div id="vinculo-profe-container" class="hidden">
             <select id="reg-profe-asignado"></select>
@@ -79,11 +174,16 @@
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
     </div>
 
+    <!-- PANEL PROFE -->
     <div id="section-profe" class="card hidden">
         <h2 id="welcome-profe">Panel Profe</h2>
         <select id="p-nombre-alumno"></select>
         <select id="p-dia-semana">
-            <option value="lunes">Lunes</option><option value="martes">Martes</option><option value="miercoles">Miércoles</option><option value="jueves">Jueves</option><option value="viernes">Viernes</option>
+            <option value="lunes">Lunes</option>
+            <option value="martes">Martes</option>
+            <option value="miercoles">Miércoles</option>
+            <option value="jueves">Jueves</option>
+            <option value="viernes">Viernes</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
         <select id="p-gif-selector">
@@ -94,14 +194,14 @@
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
+        <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
         <div id="visor-progreso-profe" class="hidden">
-            <div id="dias-selector-profe" style="display:flex; overflow-x:auto; padding:10px 0;">
-                <button class="btn-day" onclick="cambiarDiaVisor('lunes', this)">LUN</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('martes', this)">MAR</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('miercoles', this)">MIE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('jueves', this)">JUE</button>
-                <button class="btn-day" onclick="cambiarDiaVisor('viernes', this)">VIE</button>
+            <div id="dias-selector-profe" style="display:flex;overflow-x:auto;padding:10px 0;">
+                <button class="btn-day" onclick="cambiarDiaVisor('lunes',this)">LUN</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('martes',this)">MAR</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('miercoles',this)">MIE</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('jueves',this)">JUE</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('viernes',this)">VIE</button>
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
             <div class="chart-wrap"><canvas id="chartProfe"></canvas></div>
@@ -110,267 +210,747 @@
         <div id="profe-exit-zone"></div>
     </div>
 
+    <!-- PANEL ALUMNO -->
     <div id="section-alumno" class="card hidden">
         <h2 id="welcome-alumno">Mi Rutina</h2>
-        <div id="dias-selector-alumno" style="display:flex; overflow-x:auto; padding-bottom:10px;">
-            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes', this)">LUN</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('martes', this)">MAR</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('miercoles', this)">MIE</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('jueves', this)">JUE</button>
-            <button class="btn-day" onclick="cargarDiaAlumno('viernes', this)">VIE</button>
+
+        <!-- Mensaje del profe -->
+        <div id="mensaje-profe-box" class="mensaje-profe hidden"></div>
+
+        <!-- Stats row -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-val" id="stat-racha">0</div>
+                <div class="stat-lbl">🔥 Racha</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="stat-completado">0%</div>
+                <div class="stat-lbl">✅ Hoy</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="stat-volumen">0</div>
+                <div class="stat-lbl">📊 kg/sem</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="stat-sesiones">0</div>
+                <div class="stat-lbl">🏋️ Sesiones</div>
+            </div>
         </div>
+
+        <!-- Barra de progreso del día -->
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>Progreso de hoy</span>
+                <span id="progress-txt">0 / 0 ejercicios</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- Días selector -->
+        <div id="dias-selector-alumno" style="display:flex;overflow-x:auto;padding-bottom:10px;margin-top:10px;">
+            <button class="btn-day active-day" onclick="cargarDiaAlumno('lunes',this)">LUN</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('martes',this)">MAR</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('miercoles',this)">MIE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('jueves',this)">JUE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('viernes',this)">VIE</button>
+        </div>
+
         <div id="lista-rutina"></div>
-        <button id="btn-guardar" style="background:var(--success); color:white; margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR EN RED</button>
-        <button class="secondary" style="background:var(--accent); color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
+
+        <!-- Botones acción -->
+        <button id="btn-guardar" style="background:var(--success);color:white;margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR SESIÓN</button>
+        <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
+
+        <!-- Badges -->
+        <div style="margin-top:15px;">
+            <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">🏅 MIS LOGROS</div>
+            <div class="badges-wrap" id="badges-container"></div>
+        </div>
+
+        <!-- Progreso -->
         <div id="visor-progreso-alumno" class="hidden">
             <div class="chart-wrap"><canvas id="chartAlumno"></canvas></div>
+            <div class="volumen-box">
+                <div style="font-size:0.75rem;color:#888;margin-bottom:5px;">📊 VOLUMEN SEMANAL TOTAL</div>
+                <div class="volumen-num" id="volumen-semanal-num">0 kg</div>
+                <div class="volumen-sub">Suma de todos los pesos registrados esta semana</div>
+            </div>
             <div id="historial-alumno" class="historial-box"></div>
         </div>
+
         <div id="alumno-exit-zone"></div>
     </div>
 </div>
 
 <script>
-    // ── Estado local (SIN API KEY EN EL CLIENTE) ──────────────────
-    const API_URL = 'https://mi-web-79w7.onrender.com';
-    let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {} };
-    let SESSION = { usuario: null, role: null };
-    let diaActualAlumno = 'lunes';
-    let diaActualVisor  = 'lunes';
-    let graficoProfe    = null;
-    let graficoAlumno   = null;
-    let esMasterSession = false;
+// ══════════════════════════════════════════════
+//  COACH SYSTEM v7.0.0 — Estado global
+// ══════════════════════════════════════════════
+const API_URL = 'https://mi-web-79w7.onrender.com';
+let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {} };
+let SESSION = { usuario: null, role: null };
+let diaActualAlumno = 'lunes';
+let diaActualVisor  = 'lunes';
+let graficoProfe    = null;
+let graficoAlumno   = null;
+let esMasterSession = false;
 
-    function toast(msg, color = 'var(--primary)', duracion = 2500) {
-        const t = document.getElementById('toast');
-        t.innerText = msg;
-        t.style.borderColor = color;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), duracion);
-    }
+// ── Timer ────────────────────────────────────
+let timerInterval   = null;
+let timerSegundos   = 60;
+let timerTotal      = 60;
 
-    function setLoading(btnId, loading) {
-        const btn = document.getElementById(btnId);
-        if (!btn) return;
-        btn.disabled = loading;
-        if (loading) btn.dataset.original = btn.innerText, btn.innerText = '⏳ ESPERA...';
-        else btn.innerText = btn.dataset.original || btn.innerText;
-    }
+// ── DEFINICIÓN DE BADGES ─────────────────────
+const BADGES_DEF = [
+    { id: 'primer_entreno',  emoji: '🎯', nombre: 'Primer entreno',   desc: 'Completá tu primera sesión' },
+    { id: 'racha_3',         emoji: '🔥', nombre: 'Racha 3 días',     desc: '3 días seguidos entrenando' },
+    { id: 'racha_7',         emoji: '⚡', nombre: 'Racha 7 días',     desc: '7 días seguidos entrenando' },
+    { id: 'racha_30',        emoji: '👑', nombre: 'Máquina',          desc: '30 días seguidos entrenando' },
+    { id: 'record_personal', emoji: '🏆', nombre: 'Récord personal',  desc: 'Superaste tu marca en un ejercicio' },
+    { id: 'sesiones_10',     emoji: '💪', nombre: '10 Sesiones',      desc: 'Completaste 10 sesiones' },
+    { id: 'sesiones_50',     emoji: '🦾', nombre: '50 Sesiones',      desc: 'Completaste 50 sesiones' },
+    { id: 'volumen_1000',    emoji: '🔩', nombre: '1000 kg',          desc: 'Moviste 1000 kg en total' },
+];
 
-    async function descargarDeLaRed() {
-        try {
-            setStatus('⏳ SINCRONIZANDO...');
-            const res = await fetch(`${API_URL}/api/datos`);
-            DATOS_GLOBALES = await res.json();
-            setStatus('✅ SINCRONIZADO');
-        } catch (e) { setStatus('❌ ERROR RED'); }
-    }
+// ══════════════════════════════════════════════
+//  UTILIDADES
+// ══════════════════════════════════════════════
+function toast(msg, color = 'var(--primary)', dur = 2500) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.borderColor = color;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+}
 
-    async function subirALaRed() {
-        try {
-            setStatus('⏳ GUARDANDO...');
-            await fetch(`${API_URL}/api/datos`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rutinas: DATOS_GLOBALES.rutinas, historial: DATOS_GLOBALES.historial })
-            });
-            setStatus('✅ GUARDADO');
-        } catch (e) { toast('Error al guardar', 'var(--danger)'); }
-    }
+function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.disabled = loading;
+    if (loading) { btn.dataset.original = btn.innerText; btn.innerText = '⏳ ESPERA...'; }
+    else { btn.innerText = btn.dataset.original || btn.innerText; }
+}
 
-    function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
+function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
 
-    // ── LOGIN CON TIMEOUT DE 60 SEGUNDOS (fix servidor dormido) ──
-    async function login() {
-        setLoading('btn-login', true);
-        toast('⏳ Conectando... puede tardar hasta 60 seg', 'var(--accent)', 60000);
-        try {
-            const u = document.getElementById('auth-user').value.toLowerCase().trim();
-            const p = document.getElementById('auth-pass').value;
+function getFechaHoy() {
+    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+}
 
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 60000);
+function getFechaDisplay() {
+    return new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit' });
+}
 
-            const res = await fetch(`${API_URL}/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario: u, password: p }),
-                signal: controller.signal
-            });
-            clearTimeout(timeout);
-
-            const data = await res.json();
-            if (!data.ok) { toast('Acceso denegado ❌', 'var(--danger)'); return; }
-            SESSION = { usuario: data.usuario, role: data.role };
-            esMasterSession = data.role === 'dev';
-            await descargarDeLaRed();
-            renderDashboard(data.role, data.usuario);
-        } catch (e) {
-            if (e.name === 'AbortError') toast('Timeout - intentá de nuevo ⏱️', 'var(--danger)');
-            else toast('Error de conexión', 'var(--danger)');
-        } finally { setLoading('btn-login', false); }
-    }
-
-    function renderDashboard(role, username) {
-        document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-        sessionStorage.setItem('active_user', username);
-        if (role === 'dev') {
-            document.getElementById('section-dev').classList.remove('hidden');
-            actualizarSelectProfes(); renderMasterUsers();
-        } else if (role === 'profe') {
-            document.getElementById('section-profe').classList.remove('hidden');
-            document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
-            actualizarSelectAlumnosProfe(username);
-            renderExitButtons('profe-exit-zone');
-        } else {
-            document.getElementById('section-alumno').classList.remove('hidden');
-            document.getElementById('welcome-alumno').innerText = `Plan de ${username.toUpperCase()}`;
-            cargarDiaAlumno('lunes');
-            renderExitButtons('alumno-exit-zone');
-        }
-    }
-
-    function renderExitButtons(containerId) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = esMasterSession
-            ? `<button class="btn-master-back" onclick="volverAlMaster()">🔙 VOLVER AL PANEL MASTER</button>`
-            : `<button class="secondary" onclick="logout()">Cerrar Sesión</button>`;
-    }
-
-    function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
-    function loginAs(user) { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
-
-    async function verProgreso(tipo) {
-        const user = tipo === 'profe' ? document.getElementById('p-nombre-alumno').value : sessionStorage.getItem('active_user');
-        if (!user) return;
-        const idVisor = tipo === 'profe' ? 'visor-progreso-profe' : 'visor-progreso-alumno';
-        const visor   = document.getElementById(idVisor);
-        if (visor.classList.contains('hidden')) await descargarDeLaRed();
-        visor.classList.toggle('hidden');
-        if (!visor.classList.contains('hidden')) {
-            if (tipo === 'profe') cambiarDiaVisor('lunes');
-            actualizarGraficoEHistorial(user, tipo);
-        }
-    }
-
-    function actualizarGraficoEHistorial(user, tipo) {
-        const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
-        const histId   = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        const h   = DATOS_GLOBALES.historial?.[user] || [];
-        const labels = h.slice(-10).map(x => x.fecha);
-        const data   = h.slice(-10).map(x => parseFloat(x.peso || x.weight));
-        if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
-        if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
-        const config = { type: 'line', data: { labels, datasets: [{ label: 'Kg levantados', data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212,255,0,0.1)' }] }, options: { responsive: true, maintainAspectRatio: false } };
-        if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
-        else graficoAlumno = new Chart(ctx, config);
-        const cont = document.getElementById(histId);
-        cont.innerHTML = "<strong>Últimos movimientos:</strong><br>";
-        [...h].reverse().slice(0, 10).forEach(r => {
-            cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:2px 0">${r.fecha} - ${r.ejercicio}: <span style="color:var(--primary)">${r.peso || r.weight}kg</span></div>`;
-        });
-    }
-
-    function cargarDiaAlumno(dia, btn) {
-        diaActualAlumno = dia;
-        const u    = sessionStorage.getItem('active_user');
-        const cont = document.getElementById('lista-rutina');
-        const r    = DATOS_GLOBALES.rutinas?.[u]?.[dia] || [];
-        if (btn) { document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); }
-        cont.innerHTML = r.length ? "" : "<p style='text-align:center;padding:20px;color:gray;'>Hoy descanso.</p>";
-        r.forEach((item, idx) => {
-            cont.innerHTML += `<div class="rutina-item"><strong>${item.nombre.toUpperCase()}</strong> <span class="badge">${item.series}</span><br>
-            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
-            <input type="number" min="0" max="999" step="0.5" class="peso-input" data-idx="${idx}" placeholder="Peso Kg" value="${item.peso || ''}"></div>`;
-        });
-    }
-
-    async function guardarPesoAlumno() {
-        setLoading('btn-guardar', true);
-        try {
-            const u      = sessionStorage.getItem('active_user');
-            const inputs = document.querySelectorAll('.peso-input');
-            const fecha  = new Date().toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit' });
-            let det = false;
-            inputs.forEach(input => {
-                const idx      = input.getAttribute('data-idx');
-                const nuevoPeso = input.value;
-                const ej        = DATOS_GLOBALES.rutinas[u][diaActualAlumno][idx];
-                if (nuevoPeso && nuevoPeso !== ej.peso) {
-                    if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
-                    DATOS_GLOBALES.historial[u].push({ fecha, ejercicio: ej.nombre, peso: nuevoPeso });
-                    ej.peso = nuevoPeso; det = true;
-                }
-            });
-            if (det) await subirALaRed();
-            await descargarDeLaRed();
-            cargarDiaAlumno(diaActualAlumno);
-            if (!document.getElementById('visor-progreso-alumno').classList.contains('hidden')) actualizarGraficoEHistorial(u, 'alumno');
-            toast('¡Sincronizado! ✅');
-        } finally { setLoading('btn-guardar', false); }
-    }
-
-    async function masterRegister() {
-        const u  = document.getElementById('reg-user').value.toLowerCase().trim();
-        const p  = document.getElementById('reg-pass').value;
-        const r  = document.getElementById('reg-role').value;
-        const pr = document.getElementById('reg-profe-asignado').value;
-        if (!u || !p) return toast('Faltan datos', 'var(--danger)');
-        const res = await fetch(`${API_URL}/api/usuarios`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr })
-        });
+// ══════════════════════════════════════════════
+//  RED — SYNC
+// ══════════════════════════════════════════════
+async function descargarDeLaRed() {
+    try {
+        setStatus('⏳ SINCRONIZANDO...');
+        const res = await fetch(`${API_URL}/api/datos`);
         const data = await res.json();
-        if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario creado ✅'); }
-        else toast('Error al crear usuario', 'var(--danger)');
-    }
+        // Preservar campos extra que el server no conoce si vienen vacíos
+        DATOS_GLOBALES.users    = data.users    || {};
+        DATOS_GLOBALES.rutinas  = data.rutinas  || {};
+        DATOS_GLOBALES.historial = data.historial || {};
+        DATOS_GLOBALES.mensajeMaster = data.mensajeMaster || '';
+        DATOS_GLOBALES.recordes      = data.recordes      || {};
+        setStatus('✅ SINCRONIZADO');
+    } catch (e) { setStatus('❌ ERROR RED'); }
+}
 
-    async function editUser(oldU) {
-        const newU = prompt("Nuevo usuario:", oldU)?.toLowerCase().trim();
-        const newP = prompt("Nueva contraseña:");
-        if (!newU || !newP) return;
-        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
+async function subirALaRed() {
+    try {
+        setStatus('⏳ GUARDANDO...');
+        await fetch(`${API_URL}/api/datos`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
+            body: JSON.stringify({
+                rutinas:       DATOS_GLOBALES.rutinas,
+                historial:     DATOS_GLOBALES.historial,
+                mensajeMaster: DATOS_GLOBALES.mensajeMaster,
+                recordes:      DATOS_GLOBALES.recordes
+            })
         });
+        setStatus('✅ GUARDADO');
+    } catch (e) { toast('Error al guardar', 'var(--danger)'); }
+}
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+async function login() {
+    setLoading('btn-login', true);
+    toast('⏳ Conectando... puede tardar hasta 60 seg', 'var(--accent)', 60000);
+    try {
+        const u = document.getElementById('auth-user').value.toLowerCase().trim();
+        const p = document.getElementById('auth-pass').value;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000);
+        const res = await fetch(`${API_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: u, password: p }),
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
         const data = await res.json();
-        if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
+        if (!data.ok) { toast('Acceso denegado ❌', 'var(--danger)'); return; }
+        SESSION = { usuario: data.usuario, role: data.role };
+        esMasterSession = data.role === 'dev';
+        await descargarDeLaRed();
+        renderDashboard(data.role, data.usuario);
+    } catch (e) {
+        if (e.name === 'AbortError') toast('Timeout — intentá de nuevo ⏱️', 'var(--danger)');
+        else toast('Error de conexión', 'var(--danger)');
+    } finally { setLoading('btn-login', false); }
+}
+
+// ══════════════════════════════════════════════
+//  DASHBOARD ROUTING
+// ══════════════════════════════════════════════
+function renderDashboard(role, username) {
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    sessionStorage.setItem('active_user', username);
+    if (role === 'dev') {
+        document.getElementById('section-dev').classList.remove('hidden');
+        actualizarSelectProfes();
+        renderMasterUsers();
+        // Cargar mensaje actual en el textarea
+        document.getElementById('master-mensaje').value = DATOS_GLOBALES.mensajeMaster || '';
+    } else if (role === 'profe') {
+        document.getElementById('section-profe').classList.remove('hidden');
+        document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
+        actualizarSelectAlumnosProfe(username);
+        renderExitButtons('profe-exit-zone');
+    } else {
+        document.getElementById('section-alumno').classList.remove('hidden');
+        document.getElementById('welcome-alumno').innerText = `Plan de ${username.toUpperCase()}`;
+        renderMensajeProfe();
+        renderStatsAlumno(username);
+        cargarDiaAlumno('lunes');
+        renderBadges(username);
+        renderExitButtons('alumno-exit-zone');
+    }
+}
+
+function renderExitButtons(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = esMasterSession
+        ? `<button class="btn-master-back" onclick="volverAlMaster()">🔙 VOLVER AL PANEL MASTER</button>`
+        : `<button class="secondary" onclick="logout()">Cerrar Sesión</button>`;
+}
+
+function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
+function loginAs(user)     { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
+function logout()          { esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
+
+// ══════════════════════════════════════════════
+//  MENSAJE DEL PROFE
+// ══════════════════════════════════════════════
+function renderMensajeProfe() {
+    const box = document.getElementById('mensaje-profe-box');
+    const msg = DATOS_GLOBALES.mensajeMaster;
+    if (msg && msg.trim()) {
+        box.innerText = `"${msg}"`;
+        box.classList.remove('hidden');
+    } else {
+        box.classList.add('hidden');
+    }
+}
+
+async function guardarMensajeMaster() {
+    const msg = document.getElementById('master-mensaje').value.trim();
+    DATOS_GLOBALES.mensajeMaster = msg;
+    await subirALaRed();
+    toast('Mensaje publicado ✅');
+}
+
+// ══════════════════════════════════════════════
+//  STATS & RACHA
+// ══════════════════════════════════════════════
+function calcularRacha(username) {
+    const h = DATOS_GLOBALES.historial?.[username] || [];
+    if (!h.length) return 0;
+    // Obtener fechas únicas de sesiones (formato YYYY-MM-DD)
+    const fechas = [...new Set(h.filter(r => r.fecha_iso).map(r => r.fecha_iso))].sort().reverse();
+    if (!fechas.length) return 0;
+    let racha = 0;
+    let fechaCheck = new Date();
+    fechaCheck.setHours(0,0,0,0);
+    for (let i = 0; i < fechas.length; i++) {
+        const f = new Date(fechas[i]);
+        f.setHours(0,0,0,0);
+        const diff = Math.round((fechaCheck - f) / 86400000);
+        if (diff === 0 || diff === 1) { racha++; fechaCheck = f; }
+        else break;
+    }
+    return racha;
+}
+
+function calcularSesiones(username) {
+    const h = DATOS_GLOBALES.historial?.[username] || [];
+    const fechas = [...new Set(h.filter(r => r.fecha_iso).map(r => r.fecha_iso))];
+    return fechas.length;
+}
+
+function calcularVolumenSemana(username) {
+    const h = DATOS_GLOBALES.historial?.[username] || [];
+    const hoy = new Date();
+    const inicioSemana = new Date(hoy);
+    inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+    inicioSemana.setHours(0,0,0,0);
+    let total = 0;
+    h.forEach(r => {
+        if (!r.fecha_iso) return;
+        const f = new Date(r.fecha_iso);
+        if (f >= inicioSemana) total += parseFloat(r.peso || 0);
+    });
+    return Math.round(total);
+}
+
+function renderStatsAlumno(username) {
+    const racha    = calcularRacha(username);
+    const sesiones = calcularSesiones(username);
+    const volumen  = calcularVolumenSemana(username);
+    document.getElementById('stat-racha').innerText    = racha;
+    document.getElementById('stat-sesiones').innerText = sesiones;
+    document.getElementById('stat-volumen').innerText  = volumen;
+}
+
+// ══════════════════════════════════════════════
+//  PROGRESO DEL DÍA
+// ══════════════════════════════════════════════
+function actualizarProgreso() {
+    const u = sessionStorage.getItem('active_user');
+    const r = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
+    const total = r.length;
+    const completos = r.filter(e => e.peso && parseFloat(e.peso) > 0).length;
+    const pct = total > 0 ? Math.round((completos / total) * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-txt').innerText = `${completos} / ${total} ejercicios`;
+    document.getElementById('stat-completado').innerText = pct + '%';
+}
+
+// ══════════════════════════════════════════════
+//  BADGES / LOGROS
+// ══════════════════════════════════════════════
+function getBadgesDesbloqueados(username) {
+    const h        = DATOS_GLOBALES.historial?.[username] || [];
+    const racha    = calcularRacha(username);
+    const sesiones = calcularSesiones(username);
+    const recordes = DATOS_GLOBALES.recordes?.[username] || {};
+    const volTotal  = h.reduce((a, r) => a + parseFloat(r.peso || 0), 0);
+    const desbloqueados = new Set(DATOS_GLOBALES.users?.[username]?.badges || []);
+
+    if (sesiones >= 1)   desbloqueados.add('primer_entreno');
+    if (racha >= 3)      desbloqueados.add('racha_3');
+    if (racha >= 7)      desbloqueados.add('racha_7');
+    if (racha >= 30)     desbloqueados.add('racha_30');
+    if (Object.keys(recordes).length > 0) desbloqueados.add('record_personal');
+    if (sesiones >= 10)  desbloqueados.add('sesiones_10');
+    if (sesiones >= 50)  desbloqueados.add('sesiones_50');
+    if (volTotal >= 1000) desbloqueados.add('volumen_1000');
+
+    return desbloqueados;
+}
+
+function renderBadges(username) {
+    const cont = document.getElementById('badges-container');
+    const desbloqueados = getBadgesDesbloqueados(username);
+    cont.innerHTML = '';
+    BADGES_DEF.forEach(b => {
+        const ok = desbloqueados.has(b.id);
+        cont.innerHTML += `<div class="badge-item ${ok ? 'desbloqueado' : 'bloqueado'}" title="${b.desc}">
+            <span>${b.emoji}</span>
+            <span style="font-size:0.65rem;">${b.nombre}</span>
+        </div>`;
+    });
+}
+
+// ══════════════════════════════════════════════
+//  CARGAR DÍA ALUMNO
+// ══════════════════════════════════════════════
+function cargarDiaAlumno(dia, btn) {
+    diaActualAlumno = dia;
+    const u    = sessionStorage.getItem('active_user');
+    const cont = document.getElementById('lista-rutina');
+    const r    = DATOS_GLOBALES.rutinas?.[u]?.[dia] || [];
+    const recordes = DATOS_GLOBALES.recordes?.[u] || {};
+
+    if (btn) {
+        document.querySelectorAll('#dias-selector-alumno .btn-day').forEach(b => b.classList.remove('active-day'));
+        btn.classList.add('active-day');
     }
 
-    async function deleteUser(u) {
-        if (!confirm(`¿Borrar a ${u}?`)) return;
-        await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, { method: 'DELETE' });
-        await descargarDeLaRed(); renderMasterUsers(); toast('Usuario eliminado');
+    if (!r.length) {
+        cont.innerHTML = "<p style='text-align:center;padding:20px;color:gray;'>🛋️ Hoy descansás.</p>";
+        actualizarProgreso();
+        return;
     }
 
-    function renderMasterUsers() {
-        const cont = document.getElementById('lista-usuarios-master');
-        cont.innerHTML = "<h4>Cuentas:</h4>";
-        for (const u in DATOS_GLOBALES.users) {
-            cont.innerHTML += `<div class="user-item-master">
-                <div><b>${u.toUpperCase()}</b> (${DATOS_GLOBALES.users[u].role})</div>
-                <div style="margin-top:6px">
-                    <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
-                    <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
-                    <button class="btn-del" onclick="deleteUser('${u}')">X</button>
-                </div></div>`;
+    cont.innerHTML = '';
+    r.forEach((item, idx) => {
+        const recordActual = recordes[item.nombre] || 0;
+        const esRecord = item.peso && parseFloat(item.peso) > 0 && parseFloat(item.peso) >= recordActual;
+        const rpeActual = item.rpe || 0;
+        const notaActual = item.nota || '';
+
+        // Construir estrellas RPE
+        let rpeHTML = '<div class="rpe-wrap"><div class="rpe-label">😓 Esfuerzo percibido (RPE)</div><div class="rpe-stars">';
+        for (let i = 1; i <= 10; i++) {
+            rpeHTML += `<button class="rpe-btn ${rpeActual == i ? 'active' : ''}" onclick="setRPE(${idx}, ${i}, this)">${i}</button>`;
         }
+        rpeHTML += '</div></div>';
+
+        cont.innerHTML += `<div class="rutina-item" id="ej-${idx}">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;">
+                <strong>${item.nombre.toUpperCase()}</strong>
+                <span class="badge">${item.series}</span>
+                ${recordActual > 0 ? `<span style="font-size:0.65rem;color:#888;">🏆 Récord: ${recordActual}kg</span>` : ''}
+            </div>
+            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+                <input type="number" min="0" max="999" step="0.5" class="peso-input" data-idx="${idx}" data-nombre="${item.nombre}" placeholder="Peso Kg" value="${item.peso || ''}" style="flex:1;margin:0;" oninput="onPesoChange(this)">
+                <button onclick="iniciarTimer(60)" style="width:auto;padding:8px 12px;background:#333;color:var(--primary);font-size:0.75rem;margin:0;">⏱️</button>
+            </div>
+            ${rpeHTML}
+            <div class="notas-wrap">
+                <textarea class="nota-input" data-idx="${idx}" placeholder="📝 Nota (sensaciones, ajustes...)">${notaActual}</textarea>
+            </div>
+        </div>`;
+    });
+
+    actualizarProgreso();
+}
+
+function onPesoChange(input) {
+    actualizarProgreso();
+}
+
+function setRPE(idx, valor, btn) {
+    // Deseleccionar todos los botones de este ejercicio
+    const ejDiv = document.getElementById(`ej-${idx}`);
+    ejDiv.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Guardar en memoria temporal
+    const u = sessionStorage.getItem('active_user');
+    if (DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno]?.[idx]) {
+        DATOS_GLOBALES.rutinas[u][diaActualAlumno][idx].rpe = valor;
     }
+}
 
-    function toggleGif(btn) { const box = btn.nextElementSibling; const vis = box.style.display === 'block'; box.style.display = vis ? 'none' : 'block'; btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR'; }
-    function toggleProfeSelector() { document.getElementById('vinculo-profe-container').className = document.getElementById('reg-role').value === 'alumno' ? "" : "hidden"; }
-    function actualizarSelectProfes() { const sel = document.getElementById('reg-profe-asignado'); sel.innerHTML = ""; for (const u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
-    function actualizarSelectAlumnosProfe(profe) { const sel = document.getElementById('p-nombre-alumno'); sel.innerHTML = ""; for (const u in DATOS_GLOBALES.users) if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`; }
-    function logout() { esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
-    function cambiarDiaVisor(dia, btn) { diaActualVisor = dia; const al = document.getElementById('p-nombre-alumno').value; const lista = document.getElementById('lista-ejercicios-visor'); const r = DATOS_GLOBALES.rutinas?.[al]?.[dia] || []; if (btn) { document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day')); btn.classList.add('active-day'); } lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`; r.forEach((item, idx) => { lista.innerHTML += `<div class="ejercicio-visor-item"><span>${item.nombre} - <b>${item.peso || 0}kg</b></span><div><button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit">✏️</button><button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button></div></div>`; }); }
-    async function editEj(al, dia, idx) { const ej = DATOS_GLOBALES.rutinas[al][dia][idx]; const nN = prompt("Nombre:", ej.nombre); const nS = prompt("Series:", ej.series); if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); } }
-    async function delEj(al, dia, idx) { if (confirm("¿Borrar?")) { DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1); await subirALaRed(); cambiarDiaVisor(dia); } }
-    async function asignarRutina() { const al = document.getElementById('p-nombre-alumno').value; const dia = document.getElementById('p-dia-semana').value; const ej = document.getElementById('p-ejercicio-nombre').value; const gif = document.getElementById('p-gif-selector').value; const se = document.getElementById('p-series').value; if (!ej) return; if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] }; DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: "", gif }); await subirALaRed(); document.getElementById('p-ejercicio-nombre').value = ""; toast('Ejercicio asignado ✅'); }
+// ══════════════════════════════════════════════
+//  GUARDAR SESIÓN ALUMNO
+// ══════════════════════════════════════════════
+async function guardarPesoAlumno() {
+    setLoading('btn-guardar', true);
+    try {
+        const u       = sessionStorage.getItem('active_user');
+        const inputs  = document.querySelectorAll('.peso-input');
+        const notas   = document.querySelectorAll('.nota-input');
+        const fechaIso = getFechaHoy();
+        const fechaDisplay = getFechaDisplay();
+        let huboCambios = false;
+        let nuevoRecord = false;
 
-    window.onload = descargarDeLaRed;
+        if (!DATOS_GLOBALES.recordes[u]) DATOS_GLOBALES.recordes[u] = {};
+        if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
+
+        inputs.forEach(input => {
+            const idx       = input.getAttribute('data-idx');
+            const nombre    = input.getAttribute('data-nombre');
+            const nuevoPeso = parseFloat(input.value);
+            const ej        = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno]?.[idx];
+            if (!ej) return;
+
+            // Guardar nota
+            const notaEl = document.querySelector(`.nota-input[data-idx="${idx}"]`);
+            if (notaEl) ej.nota = notaEl.value;
+
+            if (!isNaN(nuevoPeso) && nuevoPeso > 0 && nuevoPeso != parseFloat(ej.peso || 0)) {
+                // Verificar récord personal
+                const recordAnterior = DATOS_GLOBALES.recordes[u][nombre] || 0;
+                if (nuevoPeso > recordAnterior) {
+                    DATOS_GLOBALES.recordes[u][nombre] = nuevoPeso;
+                    nuevoRecord = true;
+                }
+                // Agregar al historial
+                DATOS_GLOBALES.historial[u].push({
+                    fecha:    fechaDisplay,
+                    fecha_iso: fechaIso,
+                    ejercicio: nombre,
+                    peso:     nuevoPeso,
+                    rpe:      ej.rpe || 0
+                });
+                ej.peso = nuevoPeso;
+                huboCambios = true;
+            }
+        });
+
+        if (huboCambios) {
+            await subirALaRed();
+            await descargarDeLaRed();
+            cargarDiaAlumno(diaActualAlumno);
+            renderStatsAlumno(u);
+            renderBadges(u);
+            actualizarProgreso();
+
+            if (nuevoRecord) {
+                toast('🏆 ¡NUEVO RÉCORD PERSONAL! ¡Brutal!', 'var(--warning)', 3500);
+                // Desbloquear badge si corresponde
+                if (getBadgesDesbloqueados(u).has('record_personal')) renderBadges(u);
+            } else {
+                toast('¡Sesión guardada! 💪', 'var(--success)');
+            }
+        } else {
+            toast('Sin cambios que guardar', '#888');
+        }
+    } finally {
+        setLoading('btn-guardar', false);
+    }
+}
+
+// ══════════════════════════════════════════════
+//  TIMER DE DESCANSO
+// ══════════════════════════════════════════════
+function iniciarTimer(segundos) {
+    timerSegundos = segundos;
+    timerTotal    = segundos;
+    document.getElementById('timer-overlay').classList.remove('hidden');
+    actualizarDisplayTimer();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timerSegundos--;
+        actualizarDisplayTimer();
+        if (timerSegundos <= 0) {
+            clearInterval(timerInterval);
+            // Vibrar si disponible
+            if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+            toast('⏱️ ¡Descanso terminado!', 'var(--primary)');
+            setTimeout(() => cerrarTimer(), 800);
+        }
+    }, 1000);
+}
+
+function actualizarDisplayTimer() {
+    document.getElementById('timer-num').innerText = timerSegundos;
+    const pct = timerSegundos / timerTotal;
+    const circunferencia = 2 * Math.PI * 85;
+    const offset = circunferencia * (1 - pct);
+    document.getElementById('timer-ring-svg').style.strokeDashoffset = offset;
+    // Color según tiempo restante
+    const color = timerSegundos > 20 ? 'var(--accent)' : timerSegundos > 10 ? 'var(--warning)' : 'var(--danger)';
+    document.getElementById('timer-ring-svg').style.stroke = color;
+}
+
+function skipTimer()  { clearInterval(timerInterval); cerrarTimer(); }
+function cerrarTimer() { document.getElementById('timer-overlay').classList.add('hidden'); }
+function addTime(s)   { timerSegundos += s; timerTotal += s; actualizarDisplayTimer(); }
+
+// ══════════════════════════════════════════════
+//  PROGRESO & GRÁFICOS
+// ══════════════════════════════════════════════
+async function verProgreso(tipo) {
+    const user = tipo === 'profe'
+        ? document.getElementById('p-nombre-alumno').value
+        : sessionStorage.getItem('active_user');
+    if (!user) return;
+    const idVisor = tipo === 'profe' ? 'visor-progreso-profe' : 'visor-progreso-alumno';
+    const visor   = document.getElementById(idVisor);
+    if (visor.classList.contains('hidden')) await descargarDeLaRed();
+    visor.classList.toggle('hidden');
+    if (!visor.classList.contains('hidden')) {
+        if (tipo === 'profe') cambiarDiaVisor('lunes');
+        actualizarGraficoEHistorial(user, tipo);
+        if (tipo === 'alumno') actualizarVolumenSemanal(user);
+    }
+}
+
+function actualizarVolumenSemanal(username) {
+    const vol = calcularVolumenSemana(username);
+    document.getElementById('volumen-semanal-num').innerText = vol + ' kg';
+}
+
+function actualizarGraficoEHistorial(user, tipo) {
+    const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
+    const histId   = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const h   = DATOS_GLOBALES.historial?.[user] || [];
+    const labels = h.slice(-10).map(x => x.fecha);
+    const data   = h.slice(-10).map(x => parseFloat(x.peso || 0));
+    if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
+    if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
+    const config = {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Kg registrados', data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212,255,0,0.08)' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#eee' } } }, scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } } }
+    };
+    if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
+    else graficoAlumno = new Chart(ctx, config);
+
+    const cont = document.getElementById(histId);
+    cont.innerHTML = '<strong>Últimos movimientos:</strong><br>';
+    [...h].reverse().slice(0, 15).forEach(r => {
+        const rpeTag = r.rpe ? `<span style="color:#ff9900;font-size:0.65rem;"> RPE:${r.rpe}</span>` : '';
+        cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:3px 0;font-size:0.75rem;">${r.fecha} — ${r.ejercicio}: <span style="color:var(--primary)">${r.peso}kg</span>${rpeTag}</div>`;
+    });
+}
+
+// ══════════════════════════════════════════════
+//  PANEL MASTER — USUARIOS
+// ══════════════════════════════════════════════
+async function masterRegister() {
+    const u  = document.getElementById('reg-user').value.toLowerCase().trim();
+    const p  = document.getElementById('reg-pass').value;
+    const r  = document.getElementById('reg-role').value;
+    const pr = document.getElementById('reg-profe-asignado').value;
+    if (!u || !p) return toast('Faltan datos', 'var(--danger)');
+    const res = await fetch(`${API_URL}/api/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr })
+    });
+    const data = await res.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario creado ✅'); }
+    else toast('Error al crear usuario', 'var(--danger)');
+}
+
+async function editUser(oldU) {
+    const newU = prompt('Nuevo usuario:', oldU)?.toLowerCase().trim();
+    const newP = prompt('Nueva contraseña:');
+    if (!newU || !newP) return;
+    const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
+    });
+    const data = await res.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
+}
+
+async function deleteUser(u) {
+    if (!confirm(`¿Borrar a ${u}?`)) return;
+    await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, { method: 'DELETE' });
+    await descargarDeLaRed(); renderMasterUsers(); toast('Usuario eliminado');
+}
+
+function renderMasterUsers() {
+    const cont = document.getElementById('lista-usuarios-master');
+    cont.innerHTML = '<h4>Cuentas:</h4>';
+    for (const u in DATOS_GLOBALES.users) {
+        const racha = calcularRacha(u);
+        const sesiones = calcularSesiones(u);
+        cont.innerHTML += `<div class="user-item-master">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+                <b>${u.toUpperCase()}</b>
+                <span style="font-size:0.65rem;color:#888;">${DATOS_GLOBALES.users[u].role}</span>
+            </div>
+            ${DATOS_GLOBALES.users[u].role === 'alumno' ? `<div style="font-size:0.7rem;color:#888;margin:3px 0;">🔥 ${racha} días · 🏋️ ${sesiones} sesiones</div>` : ''}
+            <div style="margin-top:6px;">
+                <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
+                <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
+                <button class="btn-del" onclick="deleteUser('${u}')">X</button>
+            </div>
+        </div>`;
+    }
+}
+
+// ══════════════════════════════════════════════
+//  PANEL PROFE — RUTINAS
+// ══════════════════════════════════════════════
+async function asignarRutina() {
+    const al  = document.getElementById('p-nombre-alumno').value;
+    const dia = document.getElementById('p-dia-semana').value;
+    const ej  = document.getElementById('p-ejercicio-nombre').value;
+    const gif = document.getElementById('p-gif-selector').value;
+    const se  = document.getElementById('p-series').value;
+    if (!ej) return;
+    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+    DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: '', gif, rpe: 0, nota: '' });
+    await subirALaRed();
+    document.getElementById('p-ejercicio-nombre').value = '';
+    toast('Ejercicio asignado ✅');
+}
+
+function cambiarDiaVisor(dia, btn) {
+    diaActualVisor = dia;
+    const al    = document.getElementById('p-nombre-alumno').value;
+    const lista = document.getElementById('lista-ejercicios-visor');
+    const r     = DATOS_GLOBALES.rutinas?.[al]?.[dia] || [];
+    const recordes = DATOS_GLOBALES.recordes?.[al] || {};
+    if (btn) {
+        document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
+        btn.classList.add('active-day');
+    }
+    lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`;
+    r.forEach((item, idx) => {
+        const rec = recordes[item.nombre] || 0;
+        lista.innerHTML += `<div class="ejercicio-visor-item">
+            <span>${item.nombre} — <b>${item.peso || 0}kg</b>${rec > 0 ? `<span style="font-size:0.65rem;color:var(--warning);margin-left:4px;">🏆${rec}kg</span>` : ''}
+            ${item.nota ? `<br><span style="font-size:0.65rem;color:#888;font-style:italic;">"${item.nota}"</span>` : ''}
+            ${item.rpe ? `<span style="font-size:0.65rem;color:#ff9900;margin-left:4px;">RPE:${item.rpe}</span>` : ''}
+            </span>
+            <div>
+                <button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit-user">✏️</button>
+                <button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button>
+            </div>
+        </div>`;
+    });
+}
+
+async function editEj(al, dia, idx) {
+    const ej = DATOS_GLOBALES.rutinas[al][dia][idx];
+    const nN = prompt('Nombre:', ej.nombre);
+    const nS = prompt('Series:', ej.series);
+    if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); }
+}
+
+async function delEj(al, dia, idx) {
+    if (confirm('¿Borrar?')) {
+        DATOS_GLOBALES.rutinas[al][dia].splice(idx, 1);
+        await subirALaRed();
+        cambiarDiaVisor(dia);
+    }
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function toggleGif(btn) {
+    const box = btn.nextElementSibling;
+    const vis = box.style.display === 'block';
+    box.style.display = vis ? 'none' : 'block';
+    btn.innerText = vis ? '📹 TÉCNICA' : '❌ CERRAR';
+}
+
+function toggleProfeSelector() {
+    const val = document.getElementById('reg-role').value;
+    document.getElementById('vinculo-profe-container').className = val === 'alumno' ? '' : 'hidden';
+}
+
+function actualizarSelectProfes() {
+    const sel = document.getElementById('reg-profe-asignado');
+    sel.innerHTML = '';
+    for (const u in DATOS_GLOBALES.users) {
+        if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+    }
+}
+
+function actualizarSelectAlumnosProfe(profe) {
+    const sel = document.getElementById('p-nombre-alumno');
+    sel.innerHTML = '';
+    for (const u in DATOS_GLOBALES.users) {
+        if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+    }
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.onload = descargarDeLaRed;
 </script>
 </body>
 </html>
