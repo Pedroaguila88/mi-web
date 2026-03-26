@@ -120,7 +120,7 @@
 <body>
 
 <div id="toast"></div>
-<div id="timer-overlay" class="hidden">
+<div id="timer-overlay" class="hidden" style="display:none!important">
     <div style="color:#888;font-size:0.8rem;margin-bottom:10px;">DESCANSO</div>
     <div class="timer-circle">
         <svg class="timer-ring" viewBox="0 0 180 180">
@@ -719,7 +719,9 @@ async function guardarPesoAlumno() {
 function iniciarTimer(segundos) {
     timerSegundos = segundos;
     timerTotal    = segundos;
-    document.getElementById('timer-overlay').classList.remove('hidden');
+    const ov = document.getElementById('timer-overlay');
+    ov.style.removeProperty('display');
+    ov.classList.remove('hidden');
     actualizarDisplayTimer();
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -747,7 +749,11 @@ function actualizarDisplayTimer() {
 }
 
 function skipTimer()  { clearInterval(timerInterval); cerrarTimer(); }
-function cerrarTimer() { document.getElementById('timer-overlay').classList.add('hidden'); }
+function cerrarTimer() {
+    const ov = document.getElementById('timer-overlay');
+    ov.classList.add('hidden');
+    ov.style.display = 'none';
+}
 function addTime(s)   { timerSegundos += s; timerTotal += s; actualizarDisplayTimer(); }
 
 // ══════════════════════════════════════════════
