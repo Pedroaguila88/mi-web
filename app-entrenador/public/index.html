@@ -129,12 +129,12 @@
     let graficoAlumno   = null;
     let esMasterSession = false;
 
-    function toast(msg, color = 'var(--primary)') {
+    function toast(msg, color = 'var(--primary)', duracion = 2500) {
         const t = document.getElementById('toast');
         t.innerText = msg;
         t.style.borderColor = color;
         t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
+        setTimeout(() => t.classList.remove('show'), duracion);
     }
 
     function setLoading(btnId, loading) {
@@ -168,24 +168,35 @@
 
     function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
 
+    // ── LOGIN CON TIMEOUT DE 60 SEGUNDOS (fix servidor dormido) ──
     async function login() {
         setLoading('btn-login', true);
+        toast('⏳ Conectando... puede tardar hasta 60 seg', 'var(--accent)', 60000);
         try {
             const u = document.getElementById('auth-user').value.toLowerCase().trim();
             const p = document.getElementById('auth-pass').value;
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 60000);
+
             const res = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario: u, password: p })
+                body: JSON.stringify({ usuario: u, password: p }),
+                signal: controller.signal
             });
+            clearTimeout(timeout);
+
             const data = await res.json();
             if (!data.ok) { toast('Acceso denegado ❌', 'var(--danger)'); return; }
             SESSION = { usuario: data.usuario, role: data.role };
             esMasterSession = data.role === 'dev';
             await descargarDeLaRed();
             renderDashboard(data.role, data.usuario);
-        } catch (e) { toast('Error de conexión', 'var(--danger)'); }
-        finally { setLoading('btn-login', false); }
+        } catch (e) {
+            if (e.name === 'AbortError') toast('Timeout - intentá de nuevo ⏱️', 'var(--danger)');
+            else toast('Error de conexión', 'var(--danger)');
+        } finally { setLoading('btn-login', false); }
     }
 
     function renderDashboard(role, username) {
