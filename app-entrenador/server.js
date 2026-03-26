@@ -1,11 +1,11 @@
 // ============================================
-//  COACH SYSTEM - Backend Proxy Seguro
+//  COACH SYSTEM v7.0.0 - Backend Proxy Seguro
 //  Instalar dependencias: npm install
 //  Correr: node server.js
 // ============================================
 
 const express  = require('express');
-const cors     = require('cors'); // <-- AGREGADO PARA EL ERROR DE RED
+const cors     = require('cors');
 const bcrypt   = require('bcrypt');
 const fetch    = require('node-fetch');
 require('dotenv').config();
@@ -13,13 +13,13 @@ require('dotenv').config();
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-const API_KEY = process.env.JSONBIN_API_KEY;   // viene del .env, NUNCA del cliente
+const API_KEY = process.env.JSONBIN_API_KEY;
 const BIN_ID  = process.env.JSONBIN_BIN_ID;
 
 // -- MIDDLEWARES --
-app.use(cors()); // <-- ESTA LÍNEA ES LA QUE QUITA EL "ERROR RED"
+app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));             // servir el index.html desde /public
+app.use(express.static('public'));
 
 // ── Helpers JSONBin ──────────────────────────────────────────────
 async function leerBin() {
@@ -27,7 +27,7 @@ async function leerBin() {
         headers: { 'X-Master-Key': API_KEY }
     });
     const data = await res.json();
-    return data.record || { users: {}, rutinas: {}, historial: {} };
+    return data.record || { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {} };
 }
 
 async function escribirBin(datos) {
@@ -40,13 +40,12 @@ async function escribirBin(datos) {
 
 // ── RUTAS ────────────────────────────────────────────────────────
 
-// LOGIN: verifica credenciales con bcrypt
+// LOGIN
 app.post('/api/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
         const u = usuario.toLowerCase().trim();
 
-        // Credencial master (también hasheada en .env)
         if (u === process.env.MASTER_USER) {
             const ok = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
             if (ok) return res.json({ ok: true, role: 'dev', usuario: u });
@@ -60,7 +59,6 @@ app.post('/api/login', async (req, res) => {
         const match = await bcrypt.compare(password, cuenta.passHash);
         if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
 
-        // Devuelve solo lo que el cliente necesita, NUNCA el hash
         res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
     } catch (e) {
         console.error(e);
@@ -68,30 +66,36 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// GET DATOS: solo rutinas e historial (sin contraseñas)
+// GET DATOS — sin contraseñas, con nuevos campos
 app.get('/api/datos', async (req, res) => {
     try {
         const datos = await leerBin();
-        // Filtra contraseñas antes de enviar al cliente
         const usersSeguros = {};
         for (const u in datos.users) {
             const { passHash, ...resto } = datos.users[u];
             usersSeguros[u] = resto;
         }
-        res.json({ users: usersSeguros, rutinas: datos.rutinas, historial: datos.historial });
+        res.json({
+            users:         usersSeguros,
+            rutinas:       datos.rutinas       || {},
+            historial:     datos.historial     || {},
+            mensajeMaster: datos.mensajeMaster || '',
+            recordes:      datos.recordes      || {}
+        });
     } catch (e) {
         res.status(500).json({ ok: false, msg: 'Error al leer datos' });
     }
 });
 
-// GUARDAR DATOS: recibe cambios del cliente y los persiste
+// PUT DATOS — actualiza rutinas, historial, mensaje y récords
 app.put('/api/datos', async (req, res) => {
     try {
         const datosActuales = await leerBin();
-        const { rutinas, historial } = req.body;
-        // Solo actualiza rutinas e historial, NUNCA users desde el cliente
-        if (rutinas)   datosActuales.rutinas   = rutinas;
-        if (historial) datosActuales.historial  = historial;
+        const { rutinas, historial, mensajeMaster, recordes } = req.body;
+        if (rutinas       !== undefined) datosActuales.rutinas       = rutinas;
+        if (historial     !== undefined) datosActuales.historial      = historial;
+        if (mensajeMaster !== undefined) datosActuales.mensajeMaster  = mensajeMaster;
+        if (recordes      !== undefined) datosActuales.recordes       = recordes;
         await escribirBin(datosActuales);
         res.json({ ok: true });
     } catch (e) {
@@ -99,12 +103,12 @@ app.put('/api/datos', async (req, res) => {
     }
 });
 
-// CREAR USUARIO (solo desde panel master)
+// CREAR USUARIO
 app.post('/api/usuarios', async (req, res) => {
     try {
         const { usuario, password, role, profe_asignado } = req.body;
         const u = usuario.toLowerCase().trim();
-        const passHash = await bcrypt.hash(password, 10); // hashea antes de guardar
+        const passHash = await bcrypt.hash(password, 10);
         const datos = await leerBin();
         datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null };
         await escribirBin(datos);
@@ -130,6 +134,7 @@ app.put('/api/usuarios/:user', async (req, res) => {
             datos.users[newU] = { ...cuenta, passHash };
             if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
             if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
+            if (datos.recordes[oldU])  { datos.recordes[newU]  = datos.recordes[oldU];  delete datos.recordes[oldU]; }
             delete datos.users[oldU];
         } else {
             datos.users[oldU].passHash = passHash;
@@ -148,6 +153,7 @@ app.delete('/api/usuarios/:user', async (req, res) => {
         const u = req.params.user;
         const datos = await leerBin();
         delete datos.users[u];
+        delete datos.recordes[u];
         await escribirBin(datos);
         res.json({ ok: true });
     } catch (e) {
@@ -155,4 +161,4 @@ app.delete('/api/usuarios/:user', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`✅ Coach System corriendo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Coach System v7.0.0 corriendo en puerto ${PORT}`));
