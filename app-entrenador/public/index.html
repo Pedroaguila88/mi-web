@@ -36,6 +36,19 @@
         .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border: 1px solid var(--primary); }
         #toast.show { opacity: 1; }
+        .foto-perfil {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 90px;
+            height: 110px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            object-fit: cover;
+            object-position: center top;
+            box-shadow: 0 0 15px rgba(212,255,0,0.3);
+        }
+        #section-auth { position: relative; }
     </style>
 </head>
 <body>
@@ -46,6 +59,7 @@
     <div id="cloud-status" class="status-cloud">☁️ ESTADO: DESCONECTADO</div>
     
     <div id="section-auth" class="card">
+        <img src="pedro.jpeg" class="foto-perfil" alt="Pedro Alfonso Coach">
         <h1>🏋️‍♂️ COACH SYSTEM v6.0.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
@@ -79,13 +93,6 @@
             <option value="press_banca_barra.gif">Press de Banca Barra</option>
             <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
             <option value="Patada posterior en polea.gif">Patada posterior en polea</option>
-            <option value="elevación_frontal_mancuernas_deltoides.gif">elevación_frontal_mancuernas_deltoides</option>
-            <option value="elevacion_frontal_disco_deltoides.gif">elevacion_frontal_disco_deltoides</option>
-            <option value="press_lineal_mancuernas_deltoides.gif">press_lineal_mancuernas_deltoides</option>
-            <option value="vuelo_lateral_mancuernas_deltoides.gif">vuelo_lateral_mancuernas_deltoides</option>
-            <option value="jalón_posterior_polea_deltoides.gif">jalón_posterior_polea_deltoides</option>
-            <option value="elev_lat_polea_deltoides.gif">elev_lat_polea_deltoides</option>
-            <option value="elev_lat_pol_unila_deltoides.gif">elev_lat_pol_unila_deltoides</option>
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
