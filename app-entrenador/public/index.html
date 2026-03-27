@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pedro Alfonso - Coach System v7.0.0</title>
+    <title>Coach System — Aguila Corp</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d4ff00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Aguila Corp">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -191,18 +197,6 @@
             <option value="press_banca_barra.gif">Press de Banca Barra</option>
             <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
             <option value="Patada posterior en polea.gif">Patada posterior en polea</option>
-            <option value="elevación_unilateral_gluteos.gif">elevación_unilateral_gluteos</option>
-            <option value="bulgara_mancuernas_gluteos.gif">bulgara_mancuernas_gluteos</option>
-            <option value="sentadilla_sumo_mancuernas_gluteos.gif">sentadilla_sumo_mancuernas_gluteos</option>
-            <option value="sila de aducción.gif">sila de aducción</option>
-            <option value="elevación_lateral_polea_gluteos.gif">elevación_lateral_polea_gluteos</option>
-            <option value="Elevacion de pelvis con barra.gif">Elevacion de pelvis con barra</option>
-            <option value="unilateral_mancuerna_isquiotibiales.jpg">unilateral_mancuerna_isquiotibiales</option>
-            <option value="buenos_dias_barra.jpg">buenos_dias_barra</option>
-            <option value="peso_muerto_con barra.gif">peso_muerto_con barra</option>
-            <option value="unilateral_maquina_isquiotibiales.gif">unilateral_maquina_isquiotibiales</option>
-            <option value="Camilla de extension de iIsquios.gif">Camilla de extension de iIsquios</option>
-            <option value="Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral con Mancuerna bocaabajo en banco Plano l</option>
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
@@ -969,6 +963,13 @@ function actualizarSelectAlumnosProfe(profe) {
 //  INIT
 // ══════════════════════════════════════════════
 window.onload = descargarDeLaRed;
+
+// Registrar Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('✅ PWA lista'))
+        .catch(e => console.log('SW error:', e));
+}
 </script>
 </body>
 </html>
