@@ -2,20 +2,21 @@
   "name": "Coach System — Aguila Corp",
   "short_name": "Aguila Corp",
   "description": "Tu sistema de entrenamiento personalizado por Pedro Alfonso",
-  "start_url": "/",
+  "start_url": "/mi-web/app-entrenador/public/",
+  "scope": "/mi-web/app-entrenador/public/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#d4ff00",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/mi-web/app-entrenador/public/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/mi-web/app-entrenador/public/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
