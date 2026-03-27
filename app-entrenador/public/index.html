@@ -966,7 +966,7 @@ window.onload = descargarDeLaRed;
 
 // Registrar Service Worker (PWA)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('/mi-web/app-entrenador/public/sw.js')
         .then(() => console.log('✅ PWA lista'))
         .catch(e => console.log('SW error:', e));
 }
