@@ -106,11 +106,11 @@ app.put('/api/datos', async (req, res) => {
 // CREAR USUARIO
 app.post('/api/usuarios', async (req, res) => {
     try {
-        const { usuario, password, role, profe_asignado } = req.body;
+        const { usuario, password, role, profe_asignado, foto } = req.body;
         const u = usuario.toLowerCase().trim();
         const passHash = await bcrypt.hash(password, 10);
         const datos = await leerBin();
-        datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null };
+        datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null, foto: foto || null };
         await escribirBin(datos);
         res.json({ ok: true });
     } catch (e) {
