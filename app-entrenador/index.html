@@ -152,6 +152,7 @@
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button id="btn-login" onclick="login()">ENTRAR Y SINCRONIZAR</button>
+        <button id="btn-instalar" onclick="instalarApp()" style="display:none;background:#333;color:var(--primary);border:1px solid var(--primary);margin-top:5px;font-size:0.85rem;">📲 INSTALAR APP EN EL CELU</button>
     </div>
 
     <!-- PANEL MASTER/DEV -->
@@ -964,9 +965,41 @@ function actualizarSelectAlumnosProfe(profe) {
 // ══════════════════════════════════════════════
 window.onload = descargarDeLaRed;
 
+// ══════════════════════════════════════════════
+//  PWA — INSTALAR APP
+// ══════════════════════════════════════════════
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('btn-instalar');
+    if (btn) btn.style.display = 'block';
+});
+
+async function instalarApp() {
+    if (!deferredPrompt) {
+        toast('Usá el menú ⋮ del navegador para instalar', 'var(--accent)', 3000);
+        return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        toast('¡App instalada! 🎉', 'var(--success)', 3000);
+        document.getElementById('btn-instalar').style.display = 'none';
+    }
+    deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('btn-instalar');
+    if (btn) btn.style.display = 'none';
+    deferredPrompt = null;
+});
+
 // Registrar Service Worker (PWA)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('/mi-web/app-entrenador/public/sw.js')
         .then(() => console.log('✅ PWA lista'))
         .catch(e => console.log('SW error:', e));
 }
