@@ -128,6 +128,11 @@
         .user-avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover; object-position: center top; flex-shrink: 0; box-shadow: 0 0 10px rgba(212,255,0,0.2); }
         .user-avatar-placeholder { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: #333; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
         .user-header h2 { margin: 0; font-size: 1.1rem; }
+
+        /* === MODAL EDITAR EJERCICIO === */
+        #modal-edit-ej { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 1001; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { background: var(--card2); border-radius: 15px; border-top: 4px solid var(--accent); padding: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-box h3 { margin: 0 0 15px; color: var(--accent); font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -147,6 +152,60 @@
         <button onclick="addTime(30)" style="background:#333;color:white;width:auto">+30s</button>
     </div>
     <div style="font-size:0.75rem;color:#555;margin-top:15px;">Toca SALTAR cuando estés listo</div>
+</div>
+
+<!-- MODAL EDITAR EJERCICIO -->
+<div id="modal-edit-ej" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:1001;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal-box">
+        <h3>✏️ EDITAR EJERCICIO</h3>
+        <input type="text" id="modal-nombre" placeholder="Nombre del ejercicio">
+        <input type="text" id="modal-series" placeholder="Series (ej: 4x12)">
+        <label style="font-size:0.75rem;color:#888;margin-top:5px;display:block;">📹 Técnica / GIF</label>
+        <select id="modal-gif">
+            <option value="">-- Sin Técnica --</option>
+            <optgroup label="🏋️ Pecho / Espalda">
+                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
+                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
+                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
+                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
+                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
+                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
+                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
+                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
+            </optgroup>
+            <optgroup label="🦵 Piernas / Glúteos">
+                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas Glúteos</option>
+                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo Mancuernas</option>
+                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla con Mancuernas</option>
+                <option value="gifs/sentadilla en la smite.gif">Sentadilla en Smith</option>
+                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Extensiones Cuádriceps</option>
+                <option value="gifs/elevación_unilateral_gluteos.gif">Elevación Unilateral Glúteos</option>
+                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elevación Lateral Polea Glúteos</option>
+                <option value="gifs/sila de aducción.gif">Silla de Aducción</option>
+                <option value="gifs/Patada posterior en polea.gif">Patada Posterior en Polea</option>
+                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Extensión Isquios</option>
+                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral Mancuerna</option>
+                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Mancuerna Isquiotibiales</option>
+                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Unilateral Máquina Isquiotibiales</option>
+                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
+                <option value="gifs/Elevacion de pelvis con barra.jpg">Elevación de Pelvis con Barra</option>
+                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas Desplazamiento</option>
+            </optgroup>
+            <optgroup label="💪 Deltoides / Hombros">
+                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
+                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
+                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
+                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
+            </optgroup>
+            <optgroup label="🦶 Pantorrilla">
+                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla Step</option>
+            </optgroup>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:5px;">
+            <button onclick="guardarEditEj()" style="flex:1;">💾 GUARDAR</button>
+            <button onclick="cerrarModalEj()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+        </div>
+    </div>
 </div>
 
 <div class="container">
@@ -1033,11 +1092,40 @@ function cambiarDiaVisor(dia, btn) {
     });
 }
 
-async function editEj(al, dia, idx) {
+// Variables para el modal de editar ejercicio
+let _editEjAl = null, _editEjDia = null, _editEjIdx = null;
+
+function editEj(al, dia, idx) {
     const ej = DATOS_GLOBALES.rutinas[al][dia][idx];
-    const nN = prompt('Nombre:', ej.nombre);
-    const nS = prompt('Series:', ej.series);
-    if (nN && nS) { ej.nombre = nN; ej.series = nS; await subirALaRed(); cambiarDiaVisor(dia); }
+    _editEjAl = al; _editEjDia = dia; _editEjIdx = idx;
+    document.getElementById('modal-nombre').value = ej.nombre || '';
+    document.getElementById('modal-series').value = ej.series || '';
+    // Seleccionar el gif actual en el select
+    const sel = document.getElementById('modal-gif');
+    sel.value = ej.gif || '';
+    // Mostrar modal
+    const modal = document.getElementById('modal-edit-ej');
+    modal.style.display = 'flex';
+}
+
+async function guardarEditEj() {
+    const nN  = document.getElementById('modal-nombre').value.trim();
+    const nS  = document.getElementById('modal-series').value.trim();
+    const nGif = document.getElementById('modal-gif').value;
+    if (!nN || !nS) { toast('Completá nombre y series', 'var(--danger)'); return; }
+    const ej = DATOS_GLOBALES.rutinas[_editEjAl][_editEjDia][_editEjIdx];
+    ej.nombre = nN;
+    ej.series = nS;
+    ej.gif    = nGif;
+    await subirALaRed();
+    cerrarModalEj();
+    cambiarDiaVisor(_editEjDia);
+    toast('Ejercicio actualizado ✅');
+}
+
+function cerrarModalEj() {
+    document.getElementById('modal-edit-ej').style.display = 'none';
+    _editEjAl = null; _editEjDia = null; _editEjIdx = null;
 }
 
 async function delEj(al, dia, idx) {
