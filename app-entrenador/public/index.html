@@ -271,6 +271,8 @@
             <option value="miercoles">Miércoles</option>
             <option value="jueves">Jueves</option>
             <option value="viernes">Viernes</option>
+            <option value="sabado">Sábado</option>
+            <option value="domingo">Domingo</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
         <select id="p-gif-selector">
@@ -328,6 +330,8 @@
                 <button class="btn-day" onclick="cambiarDiaVisor('miercoles',this)">MIE</button>
                 <button class="btn-day" onclick="cambiarDiaVisor('jueves',this)">JUE</button>
                 <button class="btn-day" onclick="cambiarDiaVisor('viernes',this)">VIE</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('sabado',this)">SAB</button>
+                <button class="btn-day" onclick="cambiarDiaVisor('domingo',this)">DOM</button>
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
             <div class="chart-wrap"><canvas id="chartProfe"></canvas></div>
@@ -384,6 +388,8 @@
             <button class="btn-day" onclick="cargarDiaAlumno('miercoles',this)">MIE</button>
             <button class="btn-day" onclick="cargarDiaAlumno('jueves',this)">JUE</button>
             <button class="btn-day" onclick="cargarDiaAlumno('viernes',this)">VIE</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('sabado',this)">SAB</button>
+            <button class="btn-day" onclick="cargarDiaAlumno('domingo',this)">DOM</button>
         </div>
 
         <div id="lista-rutina"></div>
@@ -1069,7 +1075,7 @@ async function asignarRutina() {
     const gif = document.getElementById('p-gif-selector').value;
     const se  = document.getElementById('p-series').value;
     if (!ej) return;
-    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[] };
+    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
     DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: '', gif, rpe: 0, nota: '' });
     await subirALaRed();
     document.getElementById('p-ejercicio-nombre').value = '';
