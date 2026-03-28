@@ -128,7 +128,10 @@ app.put('/api/usuarios/:user', async (req, res) => {
         const cuenta = datos.users[oldU];
         if (!cuenta) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
 
-        const passHash = await bcrypt.hash(nuevaPassword, 10);
+        // Si la contraseña es _KEEP_ solo actualiza otros campos sin tocar el hash
+        const passHash = nuevaPassword === '_KEEP_'
+            ? cuenta.passHash
+            : await bcrypt.hash(nuevaPassword, 10);
 
         if (newU !== oldU) {
             datos.users[newU] = { ...cuenta, passHash, foto: foto !== undefined ? foto : cuenta.foto };
