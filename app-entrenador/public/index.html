@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Coach System — Aguila Corp</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/mi-web/app-entrenador/public/manifest.json">
     <meta name="theme-color" content="#d4ff00">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Aguila Corp">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="/mi-web/app-entrenador/public/icon-192.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -121,6 +121,12 @@
 
         /* === PANEL MASTER MENSAJE === */
         .master-msg-box { background: #1a1a2a; border: 1px solid #333; border-radius: 10px; padding: 15px; margin-top: 15px; }
+
+        /* === AVATAR USUARIO === */
+        .user-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .user-avatar { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover; object-position: center top; flex-shrink: 0; box-shadow: 0 0 10px rgba(212,255,0,0.2); }
+        .user-avatar-placeholder { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: #333; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .user-header h2 { margin: 0; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -152,6 +158,12 @@
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
         <button id="btn-login" onclick="login()">ENTRAR Y SINCRONIZAR</button>
+        <button id="btn-instalar" onclick="instalarApp()" style="display:none;background:#333;color:var(--primary);border:1px solid var(--primary);margin-top:5px;font-size:0.85rem;">📲 INSTALAR APP EN EL CELU</button>
+        <div style="margin-top:12px;padding:10px;background:#1a1a1a;border-radius:8px;border:1px solid #333;font-size:0.72rem;color:#888;line-height:1.6;">
+            📲 <b style="color:#ccc;">Instalá la app:</b><br>
+            <span style="color:#aaa;">🤖 Android:</span> menú <b style="color:#ccc;">⋮</b> → <b style="color:#ccc;">"Añadir a pantalla de inicio"</b><br>
+            <span style="color:#aaa;">🍎 iPhone:</span> botón <b style="color:#ccc;">compartir ↑</b> → <b style="color:#ccc;">"Añadir a pantalla de inicio"</b>
+        </div>
     </div>
 
     <!-- PANEL MASTER/DEV -->
@@ -168,6 +180,7 @@
         <hr style="border-color:#333;margin:15px 0;">
         <input type="text" id="reg-user" placeholder="Nuevo Usuario">
         <input type="password" id="reg-pass" placeholder="Contraseña">
+        <input type="text" id="reg-foto" placeholder="Nombre de foto (ej: juan.jpg) — opcional">
         <select id="reg-role" onchange="toggleProfeSelector()">
             <option value="profe">Entrenador</option>
             <option value="alumno">Alumno</option>
@@ -182,7 +195,10 @@
 
     <!-- PANEL PROFE -->
     <div id="section-profe" class="card hidden">
-        <h2 id="welcome-profe">Panel Profe</h2>
+        <div class="user-header">
+            <div id="profe-avatar-wrap"></div>
+            <h2 id="welcome-profe">Panel Profe</h2>
+        </div>
         <select id="p-nombre-alumno"></select>
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option>
@@ -218,7 +234,10 @@
 
     <!-- PANEL ALUMNO -->
     <div id="section-alumno" class="card hidden">
-        <h2 id="welcome-alumno">Mi Rutina</h2>
+        <div class="user-header">
+            <div id="alumno-avatar-wrap"></div>
+            <h2 id="welcome-alumno">Mi Rutina</h2>
+        </div>
 
         <!-- Mensaje del profe -->
         <div id="mensaje-profe-box" class="mensaje-profe hidden"></div>
@@ -429,11 +448,13 @@ function renderDashboard(role, username) {
     } else if (role === 'profe') {
         document.getElementById('section-profe').classList.remove('hidden');
         document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
+        renderAvatar('profe-avatar-wrap', username);
         actualizarSelectAlumnosProfe(username);
         renderExitButtons('profe-exit-zone');
     } else {
         document.getElementById('section-alumno').classList.remove('hidden');
         document.getElementById('welcome-alumno').innerText = `Plan de ${username.toUpperCase()}`;
+        renderAvatar('alumno-avatar-wrap', username);
         renderMensajeProfe();
         renderStatsAlumno(username);
         cargarDiaAlumno('lunes');
@@ -452,6 +473,20 @@ function renderExitButtons(containerId) {
 function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
 function loginAs(user)     { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
 function logout()          { esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
+
+// ══════════════════════════════════════════════
+//  AVATAR DE USUARIO
+// ══════════════════════════════════════════════
+function renderAvatar(containerId, username) {
+    const wrap = document.getElementById(containerId);
+    if (!wrap) return;
+    const foto = DATOS_GLOBALES.users?.[username]?.foto;
+    if (foto) {
+        wrap.innerHTML = `<img src="${foto}" class="user-avatar" alt="${username}" onerror="this.parentElement.innerHTML='<div class=\\'user-avatar-placeholder\\'>🏋️</div>'">`;
+    } else {
+        wrap.innerHTML = `<div class="user-avatar-placeholder">🏋️</div>`;
+    }
+}
 
 // ══════════════════════════════════════════════
 //  MENSAJE DEL PROFE
@@ -815,15 +850,16 @@ function actualizarGraficoEHistorial(user, tipo) {
 //  PANEL MASTER — USUARIOS
 // ══════════════════════════════════════════════
 async function masterRegister() {
-    const u  = document.getElementById('reg-user').value.toLowerCase().trim();
-    const p  = document.getElementById('reg-pass').value;
-    const r  = document.getElementById('reg-role').value;
-    const pr = document.getElementById('reg-profe-asignado').value;
+    const u    = document.getElementById('reg-user').value.toLowerCase().trim();
+    const p    = document.getElementById('reg-pass').value;
+    const r    = document.getElementById('reg-role').value;
+    const pr   = document.getElementById('reg-profe-asignado').value;
+    const foto = document.getElementById('reg-foto').value.trim();
     if (!u || !p) return toast('Faltan datos', 'var(--danger)');
     const res = await fetch(`${API_URL}/api/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr })
+        body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr, foto: foto || null })
     });
     const data = await res.json();
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario creado ✅'); }
@@ -834,13 +870,47 @@ async function editUser(oldU) {
     const newU = prompt('Nuevo usuario:', oldU)?.toLowerCase().trim();
     const newP = prompt('Nueva contraseña:');
     if (!newU || !newP) return;
+    const fotoActual = DATOS_GLOBALES.users?.[oldU]?.foto || '';
+    const newFoto = prompt('Foto (ej: juan.jpg) — Enter para mantener actual:', fotoActual);
+    const fotoFinal = (newFoto !== null && newFoto.trim() !== '') ? newFoto.trim() : (fotoActual || null);
     const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
+        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP, foto: fotoFinal })
     });
     const data = await res.json();
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
+}
+
+async function editFoto(u) {
+    const fotoActual = DATOS_GLOBALES.users?.[u]?.foto || '';
+    const newFoto = prompt('Nombre de foto (ej: juan.jpg):', fotoActual);
+    if (newFoto === null) return;
+    const datos = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}/foto`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ foto: newFoto.trim() || null })
+    });
+    const data = await datos.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Foto actualizada ✅'); }
+    else {
+        // Fallback: actualizar localmente y subir
+        if (DATOS_GLOBALES.users[u]) {
+            DATOS_GLOBALES.users[u].foto = newFoto.trim() || null;
+            await subirFotoUsuario(u, newFoto.trim() || null);
+        }
+    }
+}
+
+async function subirFotoUsuario(u, foto) {
+    const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuevoUsuario: u, nuevaPassword: '_KEEP_', foto })
+    });
+    const data = await res.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Foto actualizada ✅'); }
+    else toast('Error al actualizar foto', 'var(--danger)');
 }
 
 async function deleteUser(u) {
@@ -853,17 +923,25 @@ function renderMasterUsers() {
     const cont = document.getElementById('lista-usuarios-master');
     cont.innerHTML = '<h4>Cuentas:</h4>';
     for (const u in DATOS_GLOBALES.users) {
-        const racha = calcularRacha(u);
+        const racha    = calcularRacha(u);
         const sesiones = calcularSesiones(u);
+        const foto     = DATOS_GLOBALES.users[u].foto || '';
         cont.innerHTML += `<div class="user-item-master">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
-                <b>${u.toUpperCase()}</b>
-                <span style="font-size:0.65rem;color:#888;">${DATOS_GLOBALES.users[u].role}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    ${foto ? `<img src="${foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` : `<div style="width:36px;height:36px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:1rem;">🏋️</div>`}
+                    <div>
+                        <b>${u.toUpperCase()}</b>
+                        <span style="font-size:0.65rem;color:#888;margin-left:5px;">${DATOS_GLOBALES.users[u].role}</span>
+                        ${foto ? `<div style="font-size:0.6rem;color:#555;">${foto}</div>` : '<div style="font-size:0.6rem;color:#555;">sin foto</div>'}
+                    </div>
+                </div>
             </div>
             ${DATOS_GLOBALES.users[u].role === 'alumno' ? `<div style="font-size:0.7rem;color:#888;margin:3px 0;">🔥 ${racha} días · 🏋️ ${sesiones} sesiones</div>` : ''}
-            <div style="margin-top:6px;">
+            <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
+                <button class="btn-del" style="background:#888;" onclick="editFoto('${u}')">📸 FOTO</button>
                 <button class="btn-del" onclick="deleteUser('${u}')">X</button>
             </div>
         </div>`;
@@ -963,6 +1041,38 @@ function actualizarSelectAlumnosProfe(profe) {
 //  INIT
 // ══════════════════════════════════════════════
 window.onload = descargarDeLaRed;
+
+// ══════════════════════════════════════════════
+//  PWA — INSTALAR APP
+// ══════════════════════════════════════════════
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('btn-instalar');
+    if (btn) btn.style.display = 'block';
+});
+
+async function instalarApp() {
+    if (!deferredPrompt) {
+        toast('Usá el menú ⋮ del navegador para instalar', 'var(--accent)', 3000);
+        return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        toast('¡App instalada! 🎉', 'var(--success)', 3000);
+        document.getElementById('btn-instalar').style.display = 'none';
+    }
+    deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('btn-instalar');
+    if (btn) btn.style.display = 'none';
+    deferredPrompt = null;
+});
 
 // Registrar Service Worker (PWA)
 if ('serviceWorker' in navigator) {
