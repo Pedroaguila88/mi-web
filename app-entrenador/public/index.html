@@ -51,6 +51,7 @@
         .btn-edit-user { background: var(--accent); color: black; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; margin-right: 5px; }
         .btn-del { background: var(--danger); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; border-radius: 4px; }
         .btn-log-as { background: var(--success); color: white; width: auto; padding: 5px 8px; font-size: 0.65rem; margin-right: 5px; border-radius: 4px; }
+        .btn-foto { background: #888 !important; color: white !important; width: auto !important; padding: 5px 8px !important; font-size: 0.65rem !important; border-radius: 4px !important; margin: 0 !important; }
         .chart-wrap { background: var(--card); padding: 10px; border-radius: 12px; margin-top: 15px; height: 220px; }
         .historial-box { margin-top: 15px; max-height: 200px; overflow-y: auto; background: #111; border-radius: 8px; padding: 10px; font-size: 0.75rem; border: 1px solid #333; }
         .user-item-master { display: block; background: #333; padding: 12px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--accent); }
@@ -481,8 +482,10 @@ function renderAvatar(containerId, username) {
     const wrap = document.getElementById(containerId);
     if (!wrap) return;
     const foto = DATOS_GLOBALES.users?.[username]?.foto;
-    if (foto) {
-        wrap.innerHTML = `<img src="${foto}" class="user-avatar" alt="${username}" onerror="this.parentElement.innerHTML='<div class=\\'user-avatar-placeholder\\'>🏋️</div>'">`;
+    if (foto && foto.trim()) {
+        wrap.innerHTML = `<img src="${foto.trim()}" class="user-avatar" alt="${username}" 
+            onerror="this.outerHTML='<div class=\\'user-avatar-placeholder\\'>🏋️</div>'"
+            onload="this.style.display='block'">`;
     } else {
         wrap.innerHTML = `<div class="user-avatar-placeholder">🏋️</div>`;
     }
@@ -886,19 +889,23 @@ async function editFoto(u) {
     const fotoActual = DATOS_GLOBALES.users?.[u]?.foto || '';
     const newFoto = prompt('Nombre de foto (ej: juan.jpg):', fotoActual);
     if (newFoto === null) return;
-    const datos = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}/foto`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ foto: newFoto.trim() || null })
-    });
-    const data = await datos.json();
-    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Foto actualizada ✅'); }
-    else {
-        // Fallback: actualizar localmente y subir
-        if (DATOS_GLOBALES.users[u]) {
-            DATOS_GLOBALES.users[u].foto = newFoto.trim() || null;
-            await subirFotoUsuario(u, newFoto.trim() || null);
+    const fotoFinal = newFoto.trim() || null;
+    try {
+        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nuevoUsuario: u, nuevaPassword: '_KEEP_', foto: fotoFinal })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            renderMasterUsers();
+            toast('Foto actualizada ✅');
+        } else {
+            toast('Error al actualizar foto ❌', 'var(--danger)');
         }
+    } catch(e) {
+        toast('Error de conexión ❌', 'var(--danger)');
     }
 }
 
@@ -941,7 +948,7 @@ function renderMasterUsers() {
             <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
-                <button class="btn-del" style="background:#888;" onclick="editFoto('${u}')">📸 FOTO</button>
+                <button class="btn-foto" onclick="editFoto('${u}')">📸 FOTO</button>
                 <button class="btn-del" onclick="deleteUser('${u}')">X</button>
             </div>
         </div>`;
