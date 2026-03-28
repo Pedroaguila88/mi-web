@@ -1092,17 +1092,41 @@ function cambiarDiaVisor(dia, btn) {
         document.querySelectorAll('#dias-selector-profe .btn-day').forEach(b => b.classList.remove('active-day'));
         btn.classList.add('active-day');
     }
-    lista.innerHTML = `<h4>PLAN ${dia.toUpperCase()}</h4>`;
+
+    // Botón copiar día
+    const diasOpciones = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo']
+        .filter(d => d !== dia)
+        .map(d => `<option value="${d}">${d.charAt(0).toUpperCase()+d.slice(1)}</option>`)
+        .join('');
+
+    lista.innerHTML = `
+        <h4 style="margin-bottom:8px;">PLAN ${dia.toUpperCase()}</h4>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+            <span style="font-size:0.7rem;color:#888;">📋 Copiar a:</span>
+            <select id="select-copiar-dia" style="flex:1;padding:6px;font-size:0.75rem;margin:0;">
+                <option value="">-- elegí día --</option>
+                ${diasOpciones}
+            </select>
+            <button onclick="copiarDia('${al}','${dia}')" style="width:auto;padding:6px 12px;font-size:0.7rem;margin:0;">COPIAR</button>
+        </div>`;
+
+    if (r.length === 0) {
+        lista.innerHTML += `<p style="color:#555;font-size:0.8rem;text-align:center;padding:10px;">Sin ejercicios este día.</p>`;
+        return;
+    }
+
     r.forEach((item, idx) => {
         const rec = recordes[item.nombre] || 0;
         lista.innerHTML += `<div class="ejercicio-visor-item">
-            <span>${item.nombre} — <b>${item.peso || 0}kg</b>${rec > 0 ? `<span style="font-size:0.65rem;color:var(--warning);margin-left:4px;">🏆${rec}kg</span>` : ''}
+            <span style="flex:1;">${item.nombre} — <b>${item.peso || 0}kg</b>${rec > 0 ? `<span style="font-size:0.65rem;color:var(--warning);margin-left:4px;">🏆${rec}kg</span>` : ''}
             ${item.nota ? `<br><span style="font-size:0.65rem;color:#888;font-style:italic;">"${item.nota}"</span>` : ''}
             ${item.rpe ? `<span style="font-size:0.65rem;color:#ff9900;margin-left:4px;">RPE:${item.rpe}</span>` : ''}
             </span>
-            <div>
-                <button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit-user">✏️</button>
-                <button onclick="delEj('${al}','${dia}',${idx})" class="btn-del">X</button>
+            <div style="display:flex;gap:3px;">
+                <button onclick="moverEj('${al}','${dia}',${idx},-1)" style="width:auto;padding:4px 7px;font-size:0.7rem;background:#333;color:white;margin:0;" ${idx===0?'disabled':''}>↑</button>
+                <button onclick="moverEj('${al}','${dia}',${idx},1)" style="width:auto;padding:4px 7px;font-size:0.7rem;background:#333;color:white;margin:0;" ${idx===r.length-1?'disabled':''}>↓</button>
+                <button onclick="editEj('${al}','${dia}',${idx})" class="btn-edit-user" style="margin:0;">✏️</button>
+                <button onclick="delEj('${al}','${dia}',${idx})" class="btn-del" style="margin:0;">X</button>
             </div>
         </div>`;
     });
@@ -1110,6 +1134,39 @@ function cambiarDiaVisor(dia, btn) {
 
 // Variables para el modal de editar ejercicio
 let _editEjAl = null, _editEjDia = null, _editEjIdx = null;
+
+async function copiarDia(al, diaOrigen) {
+    const diaDestino = document.getElementById('select-copiar-dia').value;
+    if (!diaDestino) { toast('Elegí un día destino', 'var(--danger)'); return; }
+    const ejerciciosOrigen = DATOS_GLOBALES.rutinas?.[al]?.[diaOrigen] || [];
+    if (!ejerciciosOrigen.length) { toast('No hay ejercicios para copiar', 'var(--danger)'); return; }
+    if (!confirm(`¿Copiar ${ejerciciosOrigen.length} ejercicios del ${diaOrigen} al ${diaDestino}?\nSe agregarán a los que ya existan.`)) return;
+    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = {};
+    if (!DATOS_GLOBALES.rutinas[al][diaDestino]) DATOS_GLOBALES.rutinas[al][diaDestino] = [];
+    // Copia profunda de cada ejercicio reseteando peso, rpe y nota
+    ejerciciosOrigen.forEach(ej => {
+        DATOS_GLOBALES.rutinas[al][diaDestino].push({
+            nombre: ej.nombre,
+            series: ej.series,
+            gif:    ej.gif || '',
+            peso:   '',
+            rpe:    0,
+            nota:   ''
+        });
+    });
+    await subirALaRed();
+    toast(`✅ Copiado al ${diaDestino}`);
+}
+
+async function moverEj(al, dia, idx, direccion) {
+    const r = DATOS_GLOBALES.rutinas[al][dia];
+    const nuevoIdx = idx + direccion;
+    if (nuevoIdx < 0 || nuevoIdx >= r.length) return;
+    // Intercambiar posiciones
+    [r[idx], r[nuevoIdx]] = [r[nuevoIdx], r[idx]];
+    await subirALaRed();
+    cambiarDiaVisor(dia);
+}
 
 function editEj(al, dia, idx) {
     const ej = DATOS_GLOBALES.rutinas[al][dia][idx];
