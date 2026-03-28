@@ -122,7 +122,7 @@ app.post('/api/usuarios', async (req, res) => {
 app.put('/api/usuarios/:user', async (req, res) => {
     try {
         const oldU = req.params.user;
-        const { nuevoUsuario, nuevaPassword } = req.body;
+        const { nuevoUsuario, nuevaPassword, foto } = req.body;
         const newU = nuevoUsuario.toLowerCase().trim();
         const datos = await leerBin();
         const cuenta = datos.users[oldU];
@@ -131,13 +131,14 @@ app.put('/api/usuarios/:user', async (req, res) => {
         const passHash = await bcrypt.hash(nuevaPassword, 10);
 
         if (newU !== oldU) {
-            datos.users[newU] = { ...cuenta, passHash };
+            datos.users[newU] = { ...cuenta, passHash, foto: foto !== undefined ? foto : cuenta.foto };
             if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
             if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
             if (datos.recordes[oldU])  { datos.recordes[newU]  = datos.recordes[oldU];  delete datos.recordes[oldU]; }
             delete datos.users[oldU];
         } else {
             datos.users[oldU].passHash = passHash;
+            if (foto !== undefined) datos.users[oldU].foto = foto;
         }
 
         await escribirBin(datos);
