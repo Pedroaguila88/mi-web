@@ -869,11 +869,13 @@ async function masterRegister() {
 async function editUser(oldU) {
     const newU = prompt('Nuevo usuario:', oldU)?.toLowerCase().trim();
     const newP = prompt('Nueva contraseña:');
+    const fotoActual = DATOS_GLOBALES.users?.[oldU]?.foto || '';
+    const newFoto = prompt('Nombre de foto (ej: juan.jpg) — dejá vacío para no cambiar:', fotoActual);
     if (!newU || !newP) return;
     const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP })
+        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP, foto: newFoto || fotoActual || null })
     });
     const data = await res.json();
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
