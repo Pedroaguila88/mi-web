@@ -129,7 +129,17 @@
         .user-avatar-placeholder { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: #333; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
         .user-header h2 { margin: 0; font-size: 1.1rem; }
 
-        /* === MODAL EDITAR EJERCICIO === */
+        /* === BIBLIOTECA === */
+        .rutina-bib-item { background: #1a1a2a; border: 1px solid #333; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .rutina-bib-item h4 { margin: 0 0 4px; color: var(--primary); font-size: 0.9rem; }
+        .rutina-bib-meta { font-size: 0.7rem; color: #888; margin-bottom: 8px; }
+        .rutina-bib-ejs { font-size: 0.75rem; color: #aaa; margin-bottom: 8px; }
+        .btn-bib-aplicar { background: var(--success) !important; color: white !important; width: auto !important; padding: 5px 12px !important; font-size: 0.7rem !important; border-radius: 5px !important; margin: 0 4px 0 0 !important; }
+        .btn-bib-edit { background: var(--accent) !important; color: black !important; width: auto !important; padding: 5px 8px !important; font-size: 0.7rem !important; border-radius: 5px !important; margin: 0 4px 0 0 !important; }
+        .btn-bib-del { background: var(--danger) !important; color: white !important; width: auto !important; padding: 5px 8px !important; font-size: 0.7rem !important; border-radius: 5px !important; margin: 0 !important; }
+
+        /* === MODAL BIBLIOTECA === */
+        #modal-bib { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 1002; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
         #modal-edit-ej { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 1001; align-items: center; justify-content: center; padding: 20px; }
         .modal-box { background: var(--card2); border-radius: 15px; border-top: 4px solid var(--accent); padding: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .modal-box h3 { margin: 0 0 15px; color: var(--accent); font-size: 1rem; }
@@ -152,6 +162,95 @@
         <button onclick="addTime(30)" style="background:#333;color:white;width:auto">+30s</button>
     </div>
     <div style="font-size:0.75rem;color:#555;margin-top:15px;">Toca SALTAR cuando estés listo</div>
+</div>
+
+<!-- MODAL BIBLIOTECA (crear/editar rutina) -->
+<div id="modal-bib" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:1002;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;">
+    <div class="modal-box" style="margin-top:20px;">
+        <h3 id="modal-bib-titulo">📚 NUEVA RUTINA</h3>
+        <input type="text" id="bib-nombre" placeholder="Nombre de la rutina (ej: Piernas Básico)">
+        <input type="text" id="bib-objetivo" placeholder="Objetivo (ej: Fuerza, Volumen, Pérdida de peso)">
+        <textarea id="bib-descripcion" placeholder="Descripción breve..." style="min-height:50px;"></textarea>
+        <div style="font-size:0.75rem;color:#888;margin:8px 0 4px;">➕ Agregar ejercicios:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <input type="text" id="bib-ej-nombre" placeholder="Nombre ejercicio" style="flex:1;margin:0;">
+            <input type="text" id="bib-ej-series" placeholder="Series" style="width:90px;margin:0;">
+        </div>
+        <select id="bib-ej-gif" style="margin-top:6px;">
+            <option value="">-- Sin Técnica --</option>
+            <optgroup label="🏋️ Pecho / Espalda">
+                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
+                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
+                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
+                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
+                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
+                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
+                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
+                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
+            </optgroup>
+            <optgroup label="🦵 Piernas / Glúteos">
+                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas</option>
+                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo</option>
+                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla Mancuernas</option>
+                <option value="gifs/sentadilla en la smite.gif">Sentadilla Smith</option>
+                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Cuádriceps</option>
+                <option value="gifs/elevación_unilateral_gluteos.gif">Elev. Unilateral Glúteos</option>
+                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elev. Lateral Polea Glúteos</option>
+                <option value="gifs/sila de aducción.gif">Silla Aducción</option>
+                <option value="gifs/Patada posterior en polea.gif">Patada Posterior Polea</option>
+                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Isquios</option>
+                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral</option>
+                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Isquiotibiales</option>
+                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Máquina Isquiotibiales</option>
+                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
+                <option value="gifs/Elevacion de pelvis con barra.jpg">Elev. Pelvis Barra</option>
+                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas</option>
+            </optgroup>
+            <optgroup label="💪 Deltoides / Hombros">
+                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
+                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
+                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
+                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
+            </optgroup>
+            <optgroup label="🦶 Pantorrilla">
+                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla</option>
+            </optgroup>
+            <optgroup label="💪 Abdomen / Core">
+                <option value="gifs/Crunch.gif">Crunch</option>
+                <option value="gifs/plancha_frontal_antebrazos_poyo_bipodal.jpg">Plancha Frontal</option>
+                <option value="gifs/rotación_tronco_sedestación_Inclinación_posterior.gif">Rotación Tronco</option>
+            </optgroup>
+        </select>
+        <button onclick="bibAgregarEj()" style="background:#333;color:var(--primary);margin-top:6px;">➕ AGREGAR EJERCICIO</button>
+        <div id="bib-lista-ejs" style="margin-top:8px;max-height:200px;overflow-y:auto;"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+            <button onclick="bibGuardar()" style="flex:1;">💾 GUARDAR RUTINA</button>
+            <button onclick="cerrarModalBib()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL APLICAR RUTINA (para profes) -->
+<div id="modal-aplicar-bib" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:1002;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal-box">
+        <h3>📚 APLICAR RUTINA DE BIBLIOTECA</h3>
+        <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">Seleccioná alumno y día destino:</div>
+        <select id="aplicar-alumno"></select>
+        <select id="aplicar-dia">
+            <option value="lunes">Lunes</option>
+            <option value="martes">Martes</option>
+            <option value="miercoles">Miércoles</option>
+            <option value="jueves">Jueves</option>
+            <option value="viernes">Viernes</option>
+            <option value="sabado">Sábado</option>
+            <option value="domingo">Domingo</option>
+        </select>
+        <div id="aplicar-rutina-info" style="font-size:0.8rem;color:#aaa;margin:8px 0;padding:10px;background:#111;border-radius:8px;"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button onclick="confirmarAplicarBib()" style="flex:1;background:var(--success);color:white;">✅ APLICAR</button>
+            <button onclick="cerrarModalAplicar()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL EDITAR EJERCICIO -->
@@ -256,6 +355,12 @@
         <button onclick="masterRegister()">CREAR USUARIO</button>
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
+
+        <!-- BIBLIOTECA DE RUTINAS -->
+        <hr style="border-color:#333;margin:20px 0;">
+        <h3 style="color:var(--primary);margin:0 0 10px;">📚 BIBLIOTECA DE RUTINAS</h3>
+        <button onclick="abrirModalBib()" style="background:var(--primary);color:black;">➕ CREAR RUTINA</button>
+        <div id="lista-biblioteca-dev" style="margin-top:10px;"></div>
     </div>
 
     <!-- PANEL PROFE -->
@@ -322,6 +427,7 @@
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
+        <button onclick="abrirModalAplicarBib()" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;">📚 APLICAR RUTINA DE BIBLIOTECA</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
         <div id="visor-progreso-profe" class="hidden">
             <div id="dias-selector-profe" style="display:flex;overflow-x:auto;padding:10px 0;">
@@ -424,7 +530,7 @@
 //  COACH SYSTEM v7.0.0 — Estado global
 // ══════════════════════════════════════════════
 const API_URL = 'https://mi-web-79w7.onrender.com';
-let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {} };
+let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {}, biblioteca: [] };
 let SESSION = { usuario: null, role: null };
 let diaActualAlumno = 'lunes';
 let diaActualVisor  = 'lunes';
@@ -487,11 +593,12 @@ async function descargarDeLaRed() {
         const res = await fetch(`${API_URL}/api/datos`);
         const data = await res.json();
         // Preservar campos extra que el server no conoce si vienen vacíos
-        DATOS_GLOBALES.users    = data.users    || {};
-        DATOS_GLOBALES.rutinas  = data.rutinas  || {};
-        DATOS_GLOBALES.historial = data.historial || {};
+        DATOS_GLOBALES.users         = data.users         || {};
+        DATOS_GLOBALES.rutinas       = data.rutinas       || {};
+        DATOS_GLOBALES.historial     = data.historial     || {};
         DATOS_GLOBALES.mensajeMaster = data.mensajeMaster || '';
         DATOS_GLOBALES.recordes      = data.recordes      || {};
+        DATOS_GLOBALES.biblioteca    = data.biblioteca    || [];
         setStatus('✅ SINCRONIZADO');
     } catch (e) { setStatus('❌ ERROR RED'); }
 }
@@ -553,7 +660,7 @@ function renderDashboard(role, username) {
         document.getElementById('section-dev').classList.remove('hidden');
         actualizarSelectProfes();
         renderMasterUsers();
-        // Cargar mensaje actual en el textarea
+        renderBibliotecaDev();
         document.getElementById('master-mensaje').value = DATOS_GLOBALES.mensajeMaster || '';
     } else if (role === 'profe') {
         document.getElementById('section-profe').classList.remove('hidden');
@@ -1241,8 +1348,191 @@ function actualizarSelectAlumnosProfe(profe) {
 }
 
 // ══════════════════════════════════════════════
-//  INIT
+//  BIBLIOTECA DE RUTINAS
 // ══════════════════════════════════════════════
+let _bibEjsTemp   = [];   // ejercicios en construcción
+let _bibEditId    = null; // id de rutina en edición
+let _bibAplicarRutina = null; // rutina seleccionada para aplicar
+
+// ── DEV: Abrir modal crear/editar ──
+function abrirModalBib(id = null) {
+    _bibEjsTemp = [];
+    _bibEditId  = id;
+    if (id) {
+        const r = DATOS_GLOBALES.biblioteca.find(r => r.id === id);
+        if (!r) return;
+        document.getElementById('modal-bib-titulo').innerText = '✏️ EDITAR RUTINA';
+        document.getElementById('bib-nombre').value      = r.nombre;
+        document.getElementById('bib-objetivo').value    = r.objetivo || '';
+        document.getElementById('bib-descripcion').value = r.descripcion || '';
+        _bibEjsTemp = JSON.parse(JSON.stringify(r.ejercicios || []));
+    } else {
+        document.getElementById('modal-bib-titulo').innerText = '📚 NUEVA RUTINA';
+        document.getElementById('bib-nombre').value      = '';
+        document.getElementById('bib-objetivo').value    = '';
+        document.getElementById('bib-descripcion').value = '';
+    }
+    bibRenderEjsTemp();
+    document.getElementById('modal-bib').style.display = 'flex';
+}
+
+function cerrarModalBib() {
+    document.getElementById('modal-bib').style.display = 'none';
+    _bibEjsTemp = []; _bibEditId = null;
+}
+
+function bibAgregarEj() {
+    const nombre = document.getElementById('bib-ej-nombre').value.trim();
+    const series = document.getElementById('bib-ej-series').value.trim();
+    const gif    = document.getElementById('bib-ej-gif').value;
+    if (!nombre || !series) { toast('Completá nombre y series', 'var(--danger)'); return; }
+    _bibEjsTemp.push({ nombre, series, gif });
+    document.getElementById('bib-ej-nombre').value = '';
+    document.getElementById('bib-ej-series').value = '';
+    document.getElementById('bib-ej-gif').value    = '';
+    bibRenderEjsTemp();
+}
+
+function bibRenderEjsTemp() {
+    const cont = document.getElementById('bib-lista-ejs');
+    if (!_bibEjsTemp.length) { cont.innerHTML = '<p style="color:#555;font-size:0.75rem;text-align:center;">Sin ejercicios aún</p>'; return; }
+    cont.innerHTML = _bibEjsTemp.map((e, i) =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #333;font-size:0.8rem;">
+            <span>📌 ${e.nombre} — ${e.series} ${e.gif ? '📹' : ''}</span>
+            <button onclick="bibQuitarEj(${i})" style="background:var(--danger);color:white;width:auto;padding:3px 8px;font-size:0.65rem;margin:0;">X</button>
+        </div>`
+    ).join('');
+}
+
+function bibQuitarEj(idx) {
+    _bibEjsTemp.splice(idx, 1);
+    bibRenderEjsTemp();
+}
+
+async function bibGuardar() {
+    const nombre      = document.getElementById('bib-nombre').value.trim();
+    const objetivo    = document.getElementById('bib-objetivo').value.trim();
+    const descripcion = document.getElementById('bib-descripcion').value.trim();
+    if (!nombre) { toast('Poné un nombre a la rutina', 'var(--danger)'); return; }
+    if (!_bibEjsTemp.length) { toast('Agregá al menos un ejercicio', 'var(--danger)'); return; }
+
+    try {
+        let res;
+        if (_bibEditId) {
+            res = await fetch(`${API_URL}/api/biblioteca/${_bibEditId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, objetivo, descripcion, ejercicios: _bibEjsTemp })
+            });
+        } else {
+            res = await fetch(`${API_URL}/api/biblioteca`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, objetivo, descripcion, ejercicios: _bibEjsTemp })
+            });
+        }
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            renderBibliotecaDev();
+            cerrarModalBib();
+            toast('Rutina guardada ✅');
+        } else { toast('Error al guardar', 'var(--danger)'); }
+    } catch(e) { toast('Error de conexión', 'var(--danger)'); }
+}
+
+async function bibEliminar(id) {
+    if (!confirm('¿Eliminar esta rutina de la biblioteca?')) return;
+    try {
+        const res  = await fetch(`${API_URL}/api/biblioteca/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.ok) { await descargarDeLaRed(); renderBibliotecaDev(); toast('Rutina eliminada'); }
+    } catch(e) { toast('Error de conexión', 'var(--danger)'); }
+}
+
+function renderBibliotecaDev() {
+    const cont = document.getElementById('lista-biblioteca-dev');
+    if (!cont) return;
+    const bib = DATOS_GLOBALES.biblioteca || [];
+    if (!bib.length) { cont.innerHTML = '<p style="color:#555;font-size:0.8rem;text-align:center;padding:10px;">No hay rutinas en la biblioteca aún.</p>'; return; }
+    cont.innerHTML = bib.map(r => `
+        <div class="rutina-bib-item">
+            <h4>${r.nombre}</h4>
+            <div class="rutina-bib-meta">🎯 ${r.objetivo || 'Sin objetivo'} · 📅 ${r.creadaEn || ''} · ${r.ejercicios?.length || 0} ejercicios</div>
+            ${r.descripcion ? `<div style="font-size:0.75rem;color:#888;font-style:italic;margin-bottom:6px;">${r.descripcion}</div>` : ''}
+            <div class="rutina-bib-ejs">${(r.ejercicios || []).map(e => `• ${e.nombre} (${e.series})`).join('<br>')}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="btn-bib-edit" onclick="abrirModalBib('${r.id}')">✏️ EDITAR</button>
+                <button class="btn-bib-del" onclick="bibEliminar('${r.id}')">X</button>
+            </div>
+        </div>`
+    ).join('');
+}
+
+// ── PROFE: Aplicar rutina a alumno ──
+function abrirModalAplicarBib() {
+    const bib = DATOS_GLOBALES.biblioteca || [];
+    if (!bib.length) { toast('No hay rutinas en la biblioteca aún', 'var(--danger)'); return; }
+
+    // Poblar select de alumnos del profe
+    const profe = SESSION.usuario || sessionStorage.getItem('active_user');
+    const selAl = document.getElementById('aplicar-alumno');
+    selAl.innerHTML = '';
+    for (const u in DATOS_GLOBALES.users) {
+        if (DATOS_GLOBALES.users[u].profe_asignado === profe || esMasterSession)
+            selAl.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+    }
+
+    // Mostrar lista de rutinas disponibles
+    const info = document.getElementById('aplicar-rutina-info');
+    info.innerHTML = bib.map(r =>
+        `<div style="padding:8px;border-bottom:1px solid #222;cursor:pointer;" onclick="seleccionarRutinaBib('${r.id}', this)">
+            <b style="color:var(--primary);">${r.nombre}</b>
+            <span style="font-size:0.7rem;color:#888;"> · ${r.ejercicios?.length || 0} ej.</span>
+            ${r.objetivo ? `<span style="font-size:0.7rem;color:#888;"> · ${r.objetivo}</span>` : ''}
+        </div>`
+    ).join('');
+
+    _bibAplicarRutina = null;
+    document.getElementById('modal-aplicar-bib').style.display = 'flex';
+}
+
+function seleccionarRutinaBib(id, el) {
+    _bibAplicarRutina = id;
+    document.querySelectorAll('#aplicar-rutina-info div').forEach(d => d.style.background = '');
+    el.style.background = '#1a3a1a';
+}
+
+function cerrarModalAplicar() {
+    document.getElementById('modal-aplicar-bib').style.display = 'none';
+    _bibAplicarRutina = null;
+}
+
+async function confirmarAplicarBib() {
+    if (!_bibAplicarRutina) { toast('Seleccioná una rutina', 'var(--danger)'); return; }
+    const al  = document.getElementById('aplicar-alumno').value;
+    const dia = document.getElementById('aplicar-dia').value;
+    const rutina = DATOS_GLOBALES.biblioteca.find(r => r.id === _bibAplicarRutina);
+    if (!rutina || !al || !dia) return;
+
+    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
+    if (!DATOS_GLOBALES.rutinas[al][dia]) DATOS_GLOBALES.rutinas[al][dia] = [];
+
+    rutina.ejercicios.forEach(ej => {
+        DATOS_GLOBALES.rutinas[al][dia].push({
+            nombre: ej.nombre,
+            series: ej.series,
+            gif:    ej.gif || '',
+            peso:   '',
+            rpe:    0,
+            nota:   ''
+        });
+    });
+
+    await subirALaRed();
+    cerrarModalAplicar();
+    toast(`✅ ${rutina.nombre} aplicada a ${al.toUpperCase()} — ${dia}`);
+}
 window.onload = descargarDeLaRed;
 
 // ══════════════════════════════════════════════
