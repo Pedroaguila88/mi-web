@@ -941,7 +941,7 @@ function renderMasterUsers() {
             <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
-                <button onclick="editFoto('${u}')" style="background:#555;color:white;width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;">📸 FOTO</button>
+                <button class="btn-del" style="background:#888;" onclick="editFoto('${u}')">📸 FOTO</button>
                 <button class="btn-del" onclick="deleteUser('${u}')">X</button>
             </div>
         </div>`;
