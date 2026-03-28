@@ -159,11 +159,18 @@ app.delete('/api/biblioteca/:id', async (req, res) => {
 // CREAR USUARIO
 app.post('/api/usuarios', async (req, res) => {
     try {
-        const { usuario, password, role, profe_asignado, foto } = req.body;
+        const { usuario, password, role, profe_asignado, foto, fechaInicio, bloqueado } = req.body;
         const u = usuario.toLowerCase().trim();
         const passHash = await bcrypt.hash(password, 10);
         const datos = await leerBin();
-        datos.users[u] = { passHash, role, profe_asignado: role === 'alumno' ? profe_asignado : null, foto: foto || null };
+        datos.users[u] = {
+            passHash,
+            role,
+            profe_asignado: role === 'alumno' ? profe_asignado : null,
+            foto:        foto        || null,
+            fechaInicio: fechaInicio || null,
+            bloqueado:   bloqueado   || false
+        };
         await escribirBin(datos);
         res.json({ ok: true });
     } catch (e) {
@@ -175,26 +182,31 @@ app.post('/api/usuarios', async (req, res) => {
 app.put('/api/usuarios/:user', async (req, res) => {
     try {
         const oldU = req.params.user;
-        const { nuevoUsuario, nuevaPassword, foto } = req.body;
+        const { nuevoUsuario, nuevaPassword, foto, fechaInicio, bloqueado } = req.body;
         const newU = nuevoUsuario.toLowerCase().trim();
         const datos = await leerBin();
         const cuenta = datos.users[oldU];
         if (!cuenta) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
 
-        // Si la contraseña es _KEEP_ solo actualiza otros campos sin tocar el hash
         const passHash = nuevaPassword === '_KEEP_'
             ? cuenta.passHash
             : await bcrypt.hash(nuevaPassword, 10);
 
         if (newU !== oldU) {
-            datos.users[newU] = { ...cuenta, passHash, foto: foto !== undefined ? foto : cuenta.foto };
+            datos.users[newU] = { ...cuenta, passHash,
+                foto:        foto        !== undefined ? foto        : cuenta.foto,
+                fechaInicio: fechaInicio !== undefined ? fechaInicio : cuenta.fechaInicio,
+                bloqueado:   bloqueado   !== undefined ? bloqueado   : cuenta.bloqueado
+            };
             if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
             if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
             if (datos.recordes[oldU])  { datos.recordes[newU]  = datos.recordes[oldU];  delete datos.recordes[oldU]; }
             delete datos.users[oldU];
         } else {
             datos.users[oldU].passHash = passHash;
-            if (foto !== undefined) datos.users[oldU].foto = foto;
+            if (foto        !== undefined) datos.users[oldU].foto        = foto;
+            if (fechaInicio !== undefined) datos.users[oldU].fechaInicio = fechaInicio;
+            if (bloqueado   !== undefined) datos.users[oldU].bloqueado   = bloqueado;
         }
 
         await escribirBin(datos);

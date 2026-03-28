@@ -129,6 +129,11 @@
         .user-avatar-placeholder { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: #333; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
         .user-header h2 { margin: 0; font-size: 1.1rem; }
 
+        /* === CUOTA === */
+        .cuota-aviso { border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; font-size: 0.85rem; font-weight: bold; text-align: center; }
+        .cuota-warning { background: #2a1a00; border: 1px solid var(--warning); color: var(--warning); }
+        .cuota-vencida { background: #2a0000; border: 1px solid var(--danger); color: var(--danger); }
+
         /* === BIBLIOTECA === */
         .rutina-bib-item { background: #1a1a2a; border: 1px solid #333; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
         .rutina-bib-item h4 { margin: 0 0 4px; color: var(--primary); font-size: 0.9rem; }
@@ -218,7 +223,7 @@
             <optgroup label="💪 Abdomen / Core">
                 <option value="gifs/Crunch.gif">Crunch</option>
                 <option value="gifs/plancha_frontal_antebrazos_poyo_bipodal.jpg">Plancha Frontal</option>
-                <option value="gifs/rotación_tronco.gif">Rotación Tronco</option>
+                <option value="gifs/rotación_tronco_sedestación_Inclinación_posterior.gif">Rotación Tronco</option>
             </optgroup>
         </select>
         <button onclick="bibAgregarEj()" style="background:#333;color:var(--primary);margin-top:6px;">➕ AGREGAR EJERCICIO</button>
@@ -345,6 +350,8 @@
         <input type="text" id="reg-user" placeholder="Nuevo Usuario">
         <input type="password" id="reg-pass" placeholder="Contraseña">
         <input type="text" id="reg-foto" placeholder="Nombre de foto (ej: juan.jpg) — opcional">
+        <label style="font-size:0.75rem;color:#888;margin-top:4px;display:block;">📅 Fecha inicio de pago</label>
+        <input type="date" id="reg-fecha-inicio" style="color:white;">
         <select id="reg-role" onchange="toggleProfeSelector()">
             <option value="profe">Entrenador</option>
             <option value="alumno">Alumno</option>
@@ -452,8 +459,8 @@
             <div id="alumno-avatar-wrap"></div>
             <h2 id="welcome-alumno">Mi Rutina</h2>
         </div>
-
-        <!-- Mensaje del profe -->
+        <!-- Aviso de cuota -->
+        <div id="cuota-aviso-alumno" style="display:none;"></div>
         <div id="mensaje-profe-box" class="mensaje-profe hidden"></div>
 
         <!-- Stats row -->
@@ -643,6 +650,17 @@ async function login() {
         SESSION = { usuario: data.usuario, role: data.role };
         esMasterSession = data.role === 'dev';
         await descargarDeLaRed();
+
+        // Verificar cuota antes de entrar
+        if (data.role !== 'dev') {
+            const { estado } = estadoCuota(data.usuario);
+            if (estado === 'vencida' || estado === 'bloqueado') {
+                toast('🔒 Tu acceso está vencido. Contactá a tu coach.', 'var(--danger)', 5000);
+                setLoading('btn-login', false);
+                return;
+            }
+        }
+
         renderDashboard(data.role, data.usuario);
     } catch (e) {
         if (e.name === 'AbortError') toast('Timeout — intentá de nuevo ⏱️', 'var(--danger)');
@@ -672,6 +690,7 @@ function renderDashboard(role, username) {
         document.getElementById('section-alumno').classList.remove('hidden');
         document.getElementById('welcome-alumno').innerText = `Plan de ${username.toUpperCase()}`;
         renderAvatar('alumno-avatar-wrap', username);
+        mostrarAvisoCuota(username);
         renderMensajeProfe();
         renderStatsAlumno(username);
         cargarDiaAlumno('lunes');
@@ -1070,16 +1089,17 @@ function actualizarGraficoEHistorial(user, tipo) {
 //  PANEL MASTER — USUARIOS
 // ══════════════════════════════════════════════
 async function masterRegister() {
-    const u    = document.getElementById('reg-user').value.toLowerCase().trim();
-    const p    = document.getElementById('reg-pass').value;
-    const r    = document.getElementById('reg-role').value;
-    const pr   = document.getElementById('reg-profe-asignado').value;
-    const foto = document.getElementById('reg-foto').value.trim();
+    const u          = document.getElementById('reg-user').value.toLowerCase().trim();
+    const p          = document.getElementById('reg-pass').value;
+    const r          = document.getElementById('reg-role').value;
+    const pr         = document.getElementById('reg-profe-asignado').value;
+    const foto       = document.getElementById('reg-foto').value.trim();
+    const fechaInicio = document.getElementById('reg-fecha-inicio').value;
     if (!u || !p) return toast('Faltan datos', 'var(--danger)');
     const res = await fetch(`${API_URL}/api/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr, foto: foto || null })
+        body: JSON.stringify({ usuario: u, password: p, role: r, profe_asignado: pr, foto: foto || null, fechaInicio: fechaInicio || null, bloqueado: false })
     });
     const data = await res.json();
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario creado ✅'); }
@@ -1150,22 +1170,46 @@ function renderMasterUsers() {
         const racha    = calcularRacha(u);
         const sesiones = calcularSesiones(u);
         const foto     = DATOS_GLOBALES.users[u].foto || '';
+        const { estado, dias } = estadoCuota(u);
+        const user = DATOS_GLOBALES.users[u];
+        const vence = user.fechaInicio ? calcularVencimiento(user.fechaInicio) : null;
+        const venceStr = vence ? vence.toLocaleDateString('es-PY') : 'Sin fecha';
+
+        let cuotaBadge = '';
+        if (user.role !== 'dev') {
+            if (estado === 'bloqueado' || estado === 'vencida') {
+                cuotaBadge = `<span style="background:var(--danger);color:white;font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:5px;">🔒 VENCIDA</span>`;
+            } else if (estado === 'por_vencer') {
+                cuotaBadge = `<span style="background:var(--warning);color:black;font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:5px;">⚠️ ${dias}d</span>`;
+            } else if (estado === 'activa') {
+                cuotaBadge = `<span style="background:var(--success);color:white;font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:5px;">✅ ${dias}d</span>`;
+            } else {
+                cuotaBadge = `<span style="background:#444;color:#aaa;font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:5px;">Sin cuota</span>`;
+            }
+        }
+
         cont.innerHTML += `<div class="user-item-master">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    ${foto ? `<img src="${foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` : `<div style="width:36px;height:36px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:1rem;">🏋️</div>`}
+                    ${foto ? `<img src="${foto.includes('/') ? foto : 'fotos/'+foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` : `<div style="width:36px;height:36px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:1rem;">🏋️</div>`}
                     <div>
                         <b>${u.toUpperCase()}</b>
-                        <span style="font-size:0.65rem;color:#888;margin-left:5px;">${DATOS_GLOBALES.users[u].role}</span>
+                        <span style="font-size:0.65rem;color:#888;margin-left:5px;">${user.role}</span>
+                        ${cuotaBadge}
                         ${foto ? `<div style="font-size:0.6rem;color:#555;">${foto}</div>` : '<div style="font-size:0.6rem;color:#555;">sin foto</div>'}
+                        ${user.fechaInicio && user.role !== 'dev' ? `<div style="font-size:0.6rem;color:#555;">📅 Vence: ${venceStr}</div>` : ''}
                     </div>
                 </div>
             </div>
-            ${DATOS_GLOBALES.users[u].role === 'alumno' ? `<div style="font-size:0.7rem;color:#888;margin:3px 0;">🔥 ${racha} días · 🏋️ ${sesiones} sesiones</div>` : ''}
+            ${user.role === 'alumno' ? `<div style="font-size:0.7rem;color:#888;margin:3px 0;">🔥 ${racha} días · 🏋️ ${sesiones} sesiones</div>` : ''}
             <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
                 <button class="btn-foto" onclick="editFoto('${u}')">📸 FOTO</button>
+                ${user.role !== 'dev' ? `
+                <button onclick="renovarCuota('${u}')" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;margin:0;">💳 CUOTA</button>
+                <button onclick="toggleBloqueo('${u}')" style="background:${user.bloqueado ? 'var(--success)' : '#444'};color:white;width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;margin:0;">${user.bloqueado ? '🔓 ACTIVAR' : '🔒 BLOQUEAR'}</button>
+                ` : ''}
                 <button class="btn-del" onclick="deleteUser('${u}')">X</button>
             </div>
         </div>`;
@@ -1348,8 +1392,92 @@ function actualizarSelectAlumnosProfe(profe) {
 }
 
 // ══════════════════════════════════════════════
-//  BIBLIOTECA DE RUTINAS
+//  CONTROL DE CUOTAS
 // ══════════════════════════════════════════════
+function calcularVencimiento(fechaInicio) {
+    if (!fechaInicio) return null;
+    const inicio = new Date(fechaInicio);
+    // Sumar un mes calendario exacto
+    const vence = new Date(inicio);
+    vence.setMonth(vence.getMonth() + 1);
+    return vence;
+}
+
+function diasRestantes(fechaInicio) {
+    if (!fechaInicio) return null;
+    const vence = calcularVencimiento(fechaInicio);
+    const hoy   = new Date();
+    hoy.setHours(0,0,0,0);
+    vence.setHours(0,0,0,0);
+    return Math.ceil((vence - hoy) / 86400000);
+}
+
+function estadoCuota(username) {
+    const user = DATOS_GLOBALES.users?.[username];
+    if (!user?.fechaInicio) return { estado: 'sin_cuota', dias: null };
+    if (user.bloqueado) return { estado: 'bloqueado', dias: 0 };
+    const dias = diasRestantes(user.fechaInicio);
+    if (dias <= 0) return { estado: 'vencida', dias };
+    if (dias <= 3) return { estado: 'por_vencer', dias };
+    return { estado: 'activa', dias };
+}
+
+function mostrarAvisoCuota(username) {
+    const { estado, dias } = estadoCuota(username);
+    const div = document.getElementById('cuota-aviso-alumno');
+    if (!div) return;
+    if (estado === 'por_vencer') {
+        div.style.display = 'block';
+        div.className = 'cuota-aviso cuota-warning';
+        div.innerHTML = `⚠️ Tu cuota vence en <b>${dias} día${dias === 1 ? '' : 's'}</b>. Contactá a tu coach para renovar.`;
+    } else if (estado === 'vencida' || estado === 'bloqueado') {
+        div.style.display = 'block';
+        div.className = 'cuota-aviso cuota-vencida';
+        div.innerHTML = `🔒 Tu acceso está <b>vencido</b>. Contactá a tu coach para renovar tu cuota.`;
+    } else {
+        div.style.display = 'none';
+    }
+}
+
+async function toggleBloqueo(username) {
+    const user = DATOS_GLOBALES.users?.[username];
+    if (!user) return;
+    const bloqueado = !user.bloqueado;
+    const accion = bloqueado ? 'bloquear' : 'activar';
+    if (!confirm(`¿${accion.charAt(0).toUpperCase()+accion.slice(1)} a ${username.toUpperCase()}?`)) return;
+    try {
+        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(username)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nuevoUsuario: username, nuevaPassword: '_KEEP_', bloqueado })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            renderMasterUsers();
+            toast(bloqueado ? `🔒 ${username} bloqueado` : `✅ ${username} activado`);
+        }
+    } catch(e) { toast('Error de conexión', 'var(--danger)'); }
+}
+
+async function renovarCuota(username) {
+    const hoy = new Date().toISOString().split('T')[0];
+    const fecha = prompt(`Nueva fecha de inicio para ${username.toUpperCase()}:`, hoy);
+    if (!fecha) return;
+    try {
+        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(username)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nuevoUsuario: username, nuevaPassword: '_KEEP_', fechaInicio: fecha, bloqueado: false })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            renderMasterUsers();
+            toast(`✅ Cuota renovada para ${username.toUpperCase()}`);
+        }
+    } catch(e) { toast('Error de conexión', 'var(--danger)'); }
+}
 let _bibEjsTemp   = [];   // ejercicios en construcción
 let _bibEditId    = null; // id de rutina en edición
 let _bibAplicarRutina = null; // rutina seleccionada para aplicar
