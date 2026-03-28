@@ -154,7 +154,7 @@
 
     <!-- LOGIN -->
     <div id="section-auth" class="card">
-        <img src="pedro.jpeg" class="foto-perfil" alt="Pedro Alfonso Coach">
+        <img src="fotos/pedro.jpeg" class="foto-perfil" alt="Pedro Alfonso Coach">
         <h1>🏋️‍♂️ COACH SYSTEM v7.0.0</h1>
         <input type="text" id="auth-user" placeholder="Usuario">
         <input type="password" id="auth-pass" placeholder="Contraseña">
@@ -210,10 +210,44 @@
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
         <select id="p-gif-selector">
-            <option value="">-- Sin Técnica (GIF) --</option>
-            <option value="press_banca_barra.gif">Press de Banca Barra</option>
-            <option value="apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
-            <option value="Patada posterior en polea.gif">Patada posterior en polea</option>
+            <option value="">-- Sin Técnica --</option>
+            <optgroup label="🏋️ Pecho / Espalda">
+                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
+                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
+                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
+                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
+                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
+                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
+                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
+                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
+            </optgroup>
+            <optgroup label="🦵 Piernas / Glúteos">
+                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas Glúteos</option>
+                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo Mancuernas</option>
+                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla con Mancuernas</option>
+                <option value="gifs/sentadilla en la smite.gif">Sentadilla en Smith</option>
+                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Extensiones Cuádriceps</option>
+                <option value="gifs/elevación_unilateral_gluteos.gif">Elevación Unilateral Glúteos</option>
+                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elevación Lateral Polea Glúteos</option>
+                <option value="gifs/sila de aducción.gif">Silla de Aducción</option>
+                <option value="gifs/Patada posterior en polea.gif">Patada Posterior en Polea</option>
+                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Extensión Isquios</option>
+                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral Mancuerna</option>
+                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Mancuerna Isquiotibiales</option>
+                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Unilateral Máquina Isquiotibiales</option>
+                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
+                <option value="gifs/Elevacion de pelvis con barra.jpg">Elevación de Pelvis con Barra</option>
+                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas Desplazamiento</option>
+            </optgroup>
+            <optgroup label="💪 Deltoides / Hombros">
+                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
+                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
+                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
+                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
+            </optgroup>
+            <optgroup label="🦶 Pantorrilla">
+                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla Step</option>
+            </optgroup>
         </select>
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
@@ -483,7 +517,8 @@ function renderAvatar(containerId, username) {
     if (!wrap) return;
     const foto = DATOS_GLOBALES.users?.[username]?.foto;
     if (foto && foto.trim()) {
-        wrap.innerHTML = `<img src="${foto.trim()}" class="user-avatar" alt="${username}" 
+        const src = foto.startsWith('http') || foto.includes('/') ? foto.trim() : `fotos/${foto.trim()}`;
+        wrap.innerHTML = `<img src="${src}" class="user-avatar" alt="${username}"
             onerror="this.outerHTML='<div class=\\'user-avatar-placeholder\\'>🏋️</div>'"
             onload="this.style.display='block'">`;
     } else {
