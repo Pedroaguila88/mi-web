@@ -869,16 +869,48 @@ async function masterRegister() {
 async function editUser(oldU) {
     const newU = prompt('Nuevo usuario:', oldU)?.toLowerCase().trim();
     const newP = prompt('Nueva contraseña:');
-    const fotoActual = DATOS_GLOBALES.users?.[oldU]?.foto || '';
-    const newFoto = prompt('Nombre de foto (ej: juan.jpg) — dejá vacío para no cambiar:', fotoActual);
     if (!newU || !newP) return;
+    const fotoActual = DATOS_GLOBALES.users?.[oldU]?.foto || '';
+    const newFoto = prompt('Foto (ej: juan.jpg) — Enter para mantener actual:', fotoActual);
+    const fotoFinal = (newFoto !== null && newFoto.trim() !== '') ? newFoto.trim() : (fotoActual || null);
     const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(oldU)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP, foto: newFoto || fotoActual || null })
+        body: JSON.stringify({ nuevoUsuario: newU, nuevaPassword: newP, foto: fotoFinal })
     });
     const data = await res.json();
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
+}
+
+async function editFoto(u) {
+    const fotoActual = DATOS_GLOBALES.users?.[u]?.foto || '';
+    const newFoto = prompt('Nombre de foto (ej: juan.jpg):', fotoActual);
+    if (newFoto === null) return;
+    const datos = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}/foto`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ foto: newFoto.trim() || null })
+    });
+    const data = await datos.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Foto actualizada ✅'); }
+    else {
+        // Fallback: actualizar localmente y subir
+        if (DATOS_GLOBALES.users[u]) {
+            DATOS_GLOBALES.users[u].foto = newFoto.trim() || null;
+            await subirFotoUsuario(u, newFoto.trim() || null);
+        }
+    }
+}
+
+async function subirFotoUsuario(u, foto) {
+    const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(u)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuevoUsuario: u, nuevaPassword: '_KEEP_', foto })
+    });
+    const data = await res.json();
+    if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Foto actualizada ✅'); }
+    else toast('Error al actualizar foto', 'var(--danger)');
 }
 
 async function deleteUser(u) {
@@ -891,17 +923,25 @@ function renderMasterUsers() {
     const cont = document.getElementById('lista-usuarios-master');
     cont.innerHTML = '<h4>Cuentas:</h4>';
     for (const u in DATOS_GLOBALES.users) {
-        const racha = calcularRacha(u);
+        const racha    = calcularRacha(u);
         const sesiones = calcularSesiones(u);
+        const foto     = DATOS_GLOBALES.users[u].foto || '';
         cont.innerHTML += `<div class="user-item-master">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
-                <b>${u.toUpperCase()}</b>
-                <span style="font-size:0.65rem;color:#888;">${DATOS_GLOBALES.users[u].role}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    ${foto ? `<img src="${foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` : `<div style="width:36px;height:36px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:1rem;">🏋️</div>`}
+                    <div>
+                        <b>${u.toUpperCase()}</b>
+                        <span style="font-size:0.65rem;color:#888;margin-left:5px;">${DATOS_GLOBALES.users[u].role}</span>
+                        ${foto ? `<div style="font-size:0.6rem;color:#555;">${foto}</div>` : '<div style="font-size:0.6rem;color:#555;">sin foto</div>'}
+                    </div>
+                </div>
             </div>
             ${DATOS_GLOBALES.users[u].role === 'alumno' ? `<div style="font-size:0.7rem;color:#888;margin:3px 0;">🔥 ${racha} días · 🏋️ ${sesiones} sesiones</div>` : ''}
-            <div style="margin-top:6px;">
+            <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
+                <button onclick="editFoto('${u}')" style="background:#555;color:white;width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;">📸 FOTO</button>
                 <button class="btn-del" onclick="deleteUser('${u}')">X</button>
             </div>
         </div>`;
