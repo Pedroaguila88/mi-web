@@ -646,7 +646,7 @@ async function login() {
         });
         clearTimeout(timeout);
         const data = await res.json();
-        if (!data.ok) { toast('Acceso denegado ❌', 'var(--danger)'); return; }
+        if (!data.ok) { toast(data.msg || 'Acceso denegado ❌', 'var(--danger)', 4000); return; }
         SESSION = { usuario: data.usuario, role: data.role };
         esMasterSession = data.role === 'dev';
         await descargarDeLaRed();

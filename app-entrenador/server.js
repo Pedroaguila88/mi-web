@@ -59,6 +59,20 @@ app.post('/api/login', async (req, res) => {
         const match = await bcrypt.compare(password, cuenta.passHash);
         if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
 
+        // Verificar si está bloqueado
+        if (cuenta.bloqueado) return res.status(401).json({ ok: false, msg: 'Acceso bloqueado. Contactá a tu coach.' });
+
+        // Verificar si la cuota está vencida
+        if (cuenta.fechaInicio) {
+            const inicio = new Date(cuenta.fechaInicio);
+            const vence  = new Date(inicio);
+            vence.setMonth(vence.getMonth() + 1);
+            vence.setHours(0,0,0,0);
+            const hoy = new Date();
+            hoy.setHours(0,0,0,0);
+            if (hoy >= vence) return res.status(401).json({ ok: false, msg: 'Cuota vencida. Contactá a tu coach.' });
+        }
+
         res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
     } catch (e) {
         console.error(e);
