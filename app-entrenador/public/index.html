@@ -192,13 +192,6 @@
                 <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
                 <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
                 <option value="gifs/Prensa 45.gif">Prensa 45°</option>
-                <option value="gifs/jaón_pecho_poleaalta_espalda.gif">jaón_pecho_poleaalta_espalda</option>
-                <option value="gifs/Jalón en polea baja con agarreprono.gif">Jalón en polea baja con agarreprono</option>
-                <option value="gifs/curl_polea_agarre_supino.gif">curl_polea_agarre_supino</option>
-                <option value="gifs/remo_mancuernas_.gif">remo_mancuernas_</option>
-                <option value="gifs/patada_polea_triceps.gif">patada_polea_triceps</option>
-                <option value="gifs/extensión_tricesp_cuerda_polea_pedestacion.gif">extensión_tricesp_cuerda_polea_pedestacion</option>
-                <option value="gifs/Jalon Unilateral arrodillado en Polea Alta con Agarre Neutro.gif">Jalon Unilateral arrodillado en Polea Alta con Agarre Neutro</option>
             </optgroup>
             <optgroup label="🦵 Piernas / Glúteos">
                 <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas</option>
@@ -455,6 +448,12 @@
             </div>
             <div id="lista-ejercicios-visor" class="visor-box"></div>
             <div class="chart-wrap"><canvas id="chartProfe"></canvas></div>
+            <div style="margin-top:8px;">
+                <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">📈 VER PROGRESO POR EJERCICIO</div>
+                <select id="select-ejercicio-profe" onchange="cambiarEjercicioGrafico('profe')" style="margin-bottom:8px;">
+                    <option value="">-- Elegí un ejercicio --</option>
+                </select>
+            </div>
             <div id="historial-profe" class="historial-box"></div>
         </div>
         <div id="profe-exit-zone"></div>
@@ -526,6 +525,12 @@
 
         <!-- Progreso -->
         <div id="visor-progreso-alumno" class="hidden">
+            <div style="margin-top:10px;">
+                <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">📈 VER PROGRESO POR EJERCICIO</div>
+                <select id="select-ejercicio-alumno" onchange="cambiarEjercicioGrafico('alumno')" style="margin-bottom:8px;">
+                    <option value="">-- Elegí un ejercicio --</option>
+                </select>
+            </div>
             <div class="chart-wrap"><canvas id="chartAlumno"></canvas></div>
             <div class="volumen-box">
                 <div style="font-size:0.75rem;color:#888;margin-bottom:5px;">📊 VOLUMEN SEMANAL TOTAL</div>
@@ -1068,22 +1073,153 @@ function actualizarVolumenSemanal(username) {
 }
 
 function actualizarGraficoEHistorial(user, tipo) {
+    const h = DATOS_GLOBALES.historial?.[user] || [];
+
+    // Obtener ejercicios únicos del historial
+    const ejercicios = [...new Set(h.map(r => r.ejercicio))].sort();
+
+    // Poblar selector de ejercicios
+    const selId = tipo === 'profe' ? 'select-ejercicio-profe' : 'select-ejercicio-alumno';
+    const sel = document.getElementById(selId);
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Elegí un ejercicio --</option>';
+        ejercicios.forEach(ej => {
+            sel.innerHTML += `<option value="${ej}">${ej}</option>`;
+        });
+        // Seleccionar el primero automáticamente si existe
+        if (ejercicios.length > 0) {
+            sel.value = ejercicios[0];
+            renderGraficoEjercicio(user, tipo, ejercicios[0]);
+        } else {
+            renderGraficoVacio(tipo);
+        }
+    }
+
+    // Historial general
+    renderHistorialGeneral(user, tipo);
+}
+
+function cambiarEjercicioGrafico(tipo) {
+    const user = tipo === 'profe'
+        ? document.getElementById('p-nombre-alumno').value
+        : sessionStorage.getItem('active_user');
+    const selId = tipo === 'profe' ? 'select-ejercicio-profe' : 'select-ejercicio-alumno';
+    const ejercicio = document.getElementById(selId)?.value;
+    if (!ejercicio) { renderGraficoVacio(tipo); return; }
+    renderGraficoEjercicio(user, tipo, ejercicio);
+    renderHistorialEjercicio(user, tipo, ejercicio);
+}
+
+function renderGraficoEjercicio(user, tipo, ejercicio) {
     const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
-    const histId   = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
     const ctx = document.getElementById(canvasId).getContext('2d');
     const h   = DATOS_GLOBALES.historial?.[user] || [];
-    const labels = h.slice(-10).map(x => x.fecha);
-    const data   = h.slice(-10).map(x => parseFloat(x.peso || 0));
+
+    // Filtrar por ejercicio y agrupar por fecha (último peso del día)
+    const porFecha = {};
+    h.filter(r => r.ejercicio === ejercicio).forEach(r => {
+        porFecha[r.fecha_iso || r.fecha] = parseFloat(r.peso || 0);
+    });
+
+    const fechas = Object.keys(porFecha).sort().slice(-15);
+    const pesos  = fechas.map(f => porFecha[f]);
+    const labels = fechas.map(f => {
+        if (f && f.includes('-')) {
+            const [,m,d] = f.split('-');
+            return `${d}/${m}`;
+        }
+        return f;
+    });
+
+    // Récord del ejercicio
+    const record = DATOS_GLOBALES.recordes?.[user]?.[ejercicio] || 0;
+
+    if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
+    if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
+
+    const config = {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: `${ejercicio} (kg)`,
+                data: pesos,
+                borderColor: '#d4ff00',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(212,255,0,0.08)',
+                pointBackgroundColor: pesos.map(p => p === Math.max(...pesos) ? '#ff9900' : '#d4ff00'),
+                pointRadius: pesos.map(p => p === Math.max(...pesos) ? 6 : 4),
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#eee' } },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: ctx => ctx.parsed.y === record && record > 0 ? '🏆 Récord personal' : ''
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#888' } },
+                y: { ticks: { color: '#888' }, beginAtZero: false }
+            }
+        }
+    };
+
+    if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
+    else graficoAlumno = new Chart(ctx, config);
+
+    // Historial filtrado por ese ejercicio
+    renderHistorialEjercicio(user, tipo, ejercicio);
+}
+
+function renderGraficoVacio(tipo) {
+    const canvasId = tipo === 'profe' ? 'chartProfe' : 'chartAlumno';
+    const ctx = document.getElementById(canvasId).getContext('2d');
     if (tipo === 'profe' && graficoProfe) graficoProfe.destroy();
     if (tipo === 'alumno' && graficoAlumno) graficoAlumno.destroy();
     const config = {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Kg registrados', data, borderColor: '#d4ff00', tension: 0.4, fill: true, backgroundColor: 'rgba(212,255,0,0.08)' }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#eee' } } }, scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } } }
+        data: { labels: [], datasets: [{ label: 'Sin datos', data: [], borderColor: '#444' }] },
+        options: { responsive: true, maintainAspectRatio: false }
     };
     if (tipo === 'profe') graficoProfe = new Chart(ctx, config);
     else graficoAlumno = new Chart(ctx, config);
+}
 
+function renderHistorialEjercicio(user, tipo, ejercicio) {
+    const histId = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
+    const h      = DATOS_GLOBALES.historial?.[user] || [];
+    const record = DATOS_GLOBALES.recordes?.[user]?.[ejercicio] || 0;
+    const cont   = document.getElementById(histId);
+    const filtrado = h.filter(r => r.ejercicio === ejercicio).reverse();
+
+    cont.innerHTML = `<strong style="color:var(--accent);">📋 ${ejercicio}</strong>`;
+    if (record > 0) cont.innerHTML += ` <span style="background:var(--warning);color:black;font-size:0.65rem;padding:1px 6px;border-radius:4px;font-weight:bold;">🏆 Récord: ${record}kg</span>`;
+    cont.innerHTML += '<br>';
+
+    if (!filtrado.length) {
+        cont.innerHTML += '<p style="color:#555;font-size:0.75rem;">Sin registros aún.</p>';
+        return;
+    }
+    filtrado.slice(0, 20).forEach(r => {
+        const rpeTag = r.rpe ? `<span style="color:#ff9900;font-size:0.65rem;"> RPE:${r.rpe}</span>` : '';
+        const esRecord = parseFloat(r.peso) === record && record > 0 ? '🏆 ' : '';
+        cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:3px 0;font-size:0.75rem;">${r.fecha} — ${esRecord}<span style="color:var(--primary)">${r.peso}kg</span>${rpeTag}</div>`;
+    });
+}
+
+function renderHistorialGeneral(user, tipo) {
+    // Solo muestra historial cuando no hay ejercicio seleccionado
+    const selId = tipo === 'profe' ? 'select-ejercicio-profe' : 'select-ejercicio-alumno';
+    const sel = document.getElementById(selId);
+    if (sel?.value) return; // Ya está filtrando por ejercicio
+    const histId = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
+    const h = DATOS_GLOBALES.historial?.[user] || [];
     const cont = document.getElementById(histId);
     cont.innerHTML = '<strong>Últimos movimientos:</strong><br>';
     [...h].reverse().slice(0, 15).forEach(r => {
