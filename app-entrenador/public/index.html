@@ -111,6 +111,20 @@
         .rpe-btn.active { background: var(--danger); border-color: var(--danger); color: white; }
         .rpe-btn:hover { background: #555; }
 
+        /* === SELECTOR VISUAL DE GIFS === */
+        #modal-gif-visual { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;flex-direction:column; }
+        .gif-visual-header { display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#1a1a1a;border-bottom:1px solid #333;flex-shrink:0; }
+        .gif-visual-header h3 { margin:0;color:var(--accent);font-size:0.95rem; }
+        .gif-musculo-tabs { display:flex;overflow-x:auto;gap:6px;padding:10px 12px;background:#111;flex-shrink:0;scrollbar-width:none; }
+        .gif-musculo-tab { white-space:nowrap;padding:6px 12px;border-radius:20px;font-size:0.7rem;font-weight:bold;cursor:pointer;border:1px solid #444;background:#222;color:#888;flex-shrink:0;transition:0.2s; }
+        .gif-musculo-tab.activo { background:var(--primary);color:black;border-color:var(--primary); }
+        .gif-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px;overflow-y:auto;flex:1; }
+        .gif-card { background:#1a1a1a;border-radius:10px;border:2px solid #333;cursor:pointer;overflow:hidden;transition:0.2s; }
+        .gif-card.seleccionado { border-color:var(--primary);background:#1a2a00; }
+        .gif-card img { width:100%;height:110px;object-fit:cover;display:block;background:#111; }
+        .gif-card-nombre { font-size:0.65rem;padding:5px 7px;color:#ccc;text-align:center;line-height:1.3; }
+        .gif-confirm-bar { padding:12px;background:#1a1a1a;border-top:1px solid #333;flex-shrink:0;display:flex;gap:8px; }
+
         /* === NOTAS === */
         .notas-wrap { margin-top: 8px; }
         .nota-input { background: #2a2a2a; border: 1px solid #444; color: #ccc; font-size: 0.8rem; padding: 8px; border-radius: 6px; width: 100%; min-height: 50px; margin: 0; }
@@ -181,60 +195,11 @@
             <input type="text" id="bib-ej-nombre" placeholder="Nombre ejercicio" style="flex:1;margin:0;">
             <input type="text" id="bib-ej-series" placeholder="Series" style="width:90px;margin:0;">
         </div>
-        <select id="bib-ej-gif" style="margin-top:6px;">
-            <option value="">-- Sin Técnica --</option>
-            <optgroup label="🏋️ Pecho / Espalda">
-                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
-                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
-                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
-                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
-                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
-                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
-                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
-                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
-                <option value="gifs/apertura_mancuerna_inclinado_pectoral.gif">apertura_mancuerna_inclinado_pectoral</option>
-                <option value="cierre_maquina_pectoral.gif">cierre_maquina_pectoral</option>
-                <option value="curl_alternado_biceps_pedestacion.gif">curl_alternado_biceps_pedestacion</option>
-                <option value="curl_barrazeta_supino.gif">curl_barrazeta_supino</option>
-                <option value="curl_martillo_biceps.gif">martillo_biceps</option>
-                <option value="pullover_pectoral.gif">pullover_pectoral</option>
-            </optgroup>
-            <optgroup label="🦵 Piernas / Glúteos">
-                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas</option>
-                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo</option>
-                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla Mancuernas</option>
-                <option value="gifs/sentadilla en la smite.gif">Sentadilla Smith</option>
-                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Cuádriceps</option>
-                <option value="gifs/elevación_unilateral_gluteos.gif">Elev. Unilateral Glúteos</option>
-                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elev. Lateral Polea Glúteos</option>
-                <option value="gifs/sila de aducción.gif">Silla Aducción</option>
-                <option value="gifs/Patada posterior en polea.gif">Patada Posterior Polea</option>
-                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Isquios</option>
-                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral</option>
-                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Isquiotibiales</option>
-                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Máquina Isquiotibiales</option>
-                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
-                <option value="gifs/Elevacion de pelvis con barra.jpg">Elev. Pelvis Barra</option>
-                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas</option>
-            </optgroup>
-            <optgroup label="💪 Deltoides / Hombros">
-                <option value="gifs/extensión_tricesp_cuerda_polea_pedestacion.jpg">extensión_tricesp_cuerda_polea_pedestacion</option>
-                <option value="gifs/curl_polea_agarre_supino_triceps.jpg">curl_polea_agarre_supino_triceps</option>
-                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
-                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
-                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
-                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
-            </optgroup>
-            <optgroup label="🦶 Pantorrilla">
-                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla</option>
-            </optgroup>
-            <optgroup label="💪 Abdomen / Core">
-                <option value="gifs/Crunch.gif">Crunch</option>
-                <option value="gifs/plancha_frontal_antebrazos_poyo_bipodal.jpg">Plancha Frontal</option>
-                <option value="gifs/rotación_tronco_sedestación_Inclinación_posterior.gif">Rotación Tronco</option>
-                <option value="rotación_troncal_sedestación_abdomen.gif">rotación_troncal_sedestación_abdomen</option>
-            </optgroup>
-        </select>
+        <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+            <div id="bib-ej-gif-preview" style="font-size:0.75rem;color:#888;flex:1;">📹 Sin técnica</div>
+            <button onclick="abrirGifVisual('bib-agregar')" style="width:auto;padding:8px 12px;background:#333;color:var(--accent);border:1px solid var(--accent);font-size:0.75rem;margin:0;">📹 ELEGIR</button>
+        </div>
+        <input type="hidden" id="bib-ej-gif" value="">
         <button onclick="bibAgregarEj()" style="background:#333;color:var(--primary);margin-top:6px;">➕ AGREGAR EJERCICIO</button>
         <div id="bib-lista-ejs" style="margin-top:8px;max-height:200px;overflow-y:auto;"></div>
         <div style="display:flex;gap:8px;margin-top:12px;">
@@ -273,56 +238,29 @@
         <h3>✏️ EDITAR EJERCICIO</h3>
         <input type="text" id="modal-nombre" placeholder="Nombre del ejercicio">
         <input type="text" id="modal-series" placeholder="Series (ej: 4x12)">
-        <label style="font-size:0.75rem;color:#888;margin-top:5px;display:block;">📹 Técnica / GIF</label>
-        <select id="modal-gif">
-            <option value="">-- Sin Técnica --</option>
-            <optgroup label="🏋️ Pecho / Espalda">
-                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
-                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
-                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
-                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
-                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
-                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
-                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
-                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
-            </optgroup>
-            <optgroup label="🦵 Piernas / Glúteos">
-                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas Glúteos</option>
-                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo Mancuernas</option>
-                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla con Mancuernas</option>
-                <option value="gifs/sentadilla en la smite.gif">Sentadilla en Smith</option>
-                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Extensiones Cuádriceps</option>
-                <option value="gifs/elevación_unilateral_gluteos.gif">Elevación Unilateral Glúteos</option>
-                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elevación Lateral Polea Glúteos</option>
-                <option value="gifs/sila de aducción.gif">Silla de Aducción</option>
-                <option value="gifs/Patada posterior en polea.gif">Patada Posterior en Polea</option>
-                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Extensión Isquios</option>
-                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral Mancuerna</option>
-                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Mancuerna Isquiotibiales</option>
-                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Unilateral Máquina Isquiotibiales</option>
-                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
-                <option value="gifs/Elevacion de pelvis con barra.jpg">Elevación de Pelvis con Barra</option>
-                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas Desplazamiento</option>
-            </optgroup>
-            <optgroup label="💪 Deltoides / Hombros">
-                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
-                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
-                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
-                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
-            </optgroup>
-            <optgroup label="🦶 Pantorrilla">
-                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla Step</option>
-            </optgroup>
-            <optgroup label="💪 Abdomen / Core">
-                <option value="gifs/Crunch.gif">Crunch</option>
-                <option value="gifs/plancha_frontal_antebrazos_poyo_bipodal.jpg">Plancha Frontal Antebrazos</option>
-                <option value="gifs/rotación_tronco_sedestación_Inclinación_posterior.gif">Rotación Tronco Sedestación</option>
-            </optgroup>
-        </select>
+        <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+            <div id="modal-gif-preview" style="font-size:0.75rem;color:#888;flex:1;">📹 Sin técnica</div>
+            <button onclick="abrirGifVisual('modal-editar')" style="width:auto;padding:8px 12px;background:#333;color:var(--accent);border:1px solid var(--accent);font-size:0.75rem;margin:0;">📹 CAMBIAR</button>
+        </div>
+        <input type="hidden" id="modal-gif" value="">
         <div style="display:flex;gap:8px;margin-top:5px;">
             <button onclick="guardarEditEj()" style="flex:1;">💾 GUARDAR</button>
             <button onclick="cerrarModalEj()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
         </div>
+    </div>
+</div>
+
+<!-- MODAL SELECTOR VISUAL DE GIFS -->
+<div id="modal-gif-visual" style="display:none;">
+    <div class="gif-visual-header">
+        <h3>📹 ELEGÍ LA TÉCNICA</h3>
+        <button onclick="cerrarModalGifVisual()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
+    </div>
+    <div class="gif-musculo-tabs" id="gif-tabs"></div>
+    <div class="gif-grid" id="gif-grid"></div>
+    <div class="gif-confirm-bar">
+        <button onclick="confirmarGifVisual()" style="flex:1;margin:0;">✅ CONFIRMAR</button>
+        <button onclick="quitarGifVisual()" style="flex:1;margin:0;background:#444;color:white;">❌ SIN TÉCNICA</button>
     </div>
 </div>
 
@@ -396,51 +334,11 @@
             <option value="domingo">Domingo</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
-        <select id="p-gif-selector">
-            <option value="">-- Sin Técnica --</option>
-            <optgroup label="🏋️ Pecho / Espalda">
-                <option value="gifs/press_banca_barra.gif">Press Banca Barra</option>
-                <option value="gifs/press_lineal_mancuernas_deltoides.gif">Press Lineal Mancuernas</option>
-                <option value="gifs/apertura_banca_mancuerna.gif">Apertura Banca Mancuerna</option>
-                <option value="gifs/peso_muerto_con barra.gif">Peso Muerto con Barra</option>
-                <option value="gifs/jalón_posterior_polea_deltoides.gif">Jalón Posterior Polea</option>
-                <option value="gifs/vuelo_lateral_mancuernas_deltoides.gif">Vuelo Lateral Mancuernas</option>
-                <option value="gifs/Prensa Horizontal.gif">Prensa Horizontal</option>
-                <option value="gifs/Prensa 45.gif">Prensa 45°</option>
-            </optgroup>
-            <optgroup label="🦵 Piernas / Glúteos">
-                <option value="gifs/bulgara_mancuernas_gluteos.gif">Búlgara Mancuernas Glúteos</option>
-                <option value="gifs/sentadilla_sumo_mancuernas_gluteos.gif">Sentadilla Sumo Mancuernas</option>
-                <option value="gifs/sentadilla con mancuernas.gif">Sentadilla con Mancuernas</option>
-                <option value="gifs/sentadilla en la smite.gif">Sentadilla en Smith</option>
-                <option value="gifs/Silla de Extensiones Cuadriceps.gif">Silla Extensiones Cuádriceps</option>
-                <option value="gifs/elevación_unilateral_gluteos.gif">Elevación Unilateral Glúteos</option>
-                <option value="gifs/elevación_lateral_polea_gluteos.gif">Elevación Lateral Polea Glúteos</option>
-                <option value="gifs/sila de aducción.gif">Silla de Aducción</option>
-                <option value="gifs/Patada posterior en polea.gif">Patada Posterior en Polea</option>
-                <option value="gifs/Camilla de extension de ilsquios.gif">Camilla Extensión Isquios</option>
-                <option value="gifs/Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg">Curl Femoral Mancuerna</option>
-                <option value="gifs/unilateral_mancuerna_isquiotibiales.jpg">Unilateral Mancuerna Isquiotibiales</option>
-                <option value="gifs/unilateral_maquina_isquiotibiales.gif">Unilateral Máquina Isquiotibiales</option>
-                <option value="gifs/buenos_dias_barra.jpg">Buenos Días Barra</option>
-                <option value="gifs/Elevacion de pelvis con barra.jpg">Elevación de Pelvis con Barra</option>
-                <option value="gifs/Zancadas desplazamiento.jpg">Zancadas Desplazamiento</option>
-            </optgroup>
-            <optgroup label="💪 Deltoides / Hombros">
-                <option value="gifs/elev_lat_pol_unila_deltoides.gif">Elev. Lateral Polea Unilateral</option>
-                <option value="gifs/elev_lat_polea_deltoides.gif">Elev. Lateral Polea</option>
-                <option value="gifs/elevación_frontal_mancuernas_deltoides.gif">Elev. Frontal Mancuernas</option>
-                <option value="gifs/elevacion_frontal_disco_deltoides.jpg">Elev. Frontal Disco</option>
-            </optgroup>
-            <optgroup label="🦶 Pantorrilla">
-                <option value="gifs/extensión_pantorrila_sonre step.jpg">Extensión Pantorrilla Step</option>
-            </optgroup>
-            <optgroup label="💪 Abdomen / Core">
-                <option value="gifs/Crunch.gif">Crunch</option>
-                <option value="gifs/plancha_frontal_antebrazos_poyo_bipodal.jpg">Plancha Frontal Antebrazos</option>
-                <option value="gifs/rotación_tronco_sedestación_Inclinación_posterior.gif">Rotación Tronco Sedestación</option>
-            </optgroup>
-        </select>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+            <div id="p-gif-preview" style="font-size:0.75rem;color:#888;flex:1;">📹 Sin técnica seleccionada</div>
+            <button onclick="abrirGifVisual('profe-asignar')" style="width:auto;padding:8px 12px;background:#333;color:var(--accent);border:1px solid var(--accent);font-size:0.75rem;margin:0;">📹 ELEGIR TÉCNICA</button>
+        </div>
+        <input type="hidden" id="p-gif-selector" value="">
         <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
         <button onclick="abrirModalAplicarBib()" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;">📚 APLICAR RUTINA DE BIBLIOTECA</button>
@@ -1382,6 +1280,8 @@ async function asignarRutina() {
     DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: '', gif, rpe: 0, nota: '' });
     await subirALaRed();
     document.getElementById('p-ejercicio-nombre').value = '';
+    document.getElementById('p-gif-selector').value = '';
+    document.getElementById('p-gif-preview').innerText = '📹 Sin técnica seleccionada';
     toast('Ejercicio asignado ✅');
 }
 
@@ -1476,12 +1376,10 @@ function editEj(al, dia, idx) {
     _editEjAl = al; _editEjDia = dia; _editEjIdx = idx;
     document.getElementById('modal-nombre').value = ej.nombre || '';
     document.getElementById('modal-series').value = ej.series || '';
-    // Seleccionar el gif actual en el select
-    const sel = document.getElementById('modal-gif');
-    sel.value = ej.gif || '';
-    // Mostrar modal
-    const modal = document.getElementById('modal-edit-ej');
-    modal.style.display = 'flex';
+    document.getElementById('modal-gif').value = ej.gif || '';
+    const nombre = gifNombreDesdeRuta(ej.gif);
+    document.getElementById('modal-gif-preview').innerText = nombre ? `📹 ${nombre}` : '📹 Sin técnica';
+    document.getElementById('modal-edit-ej').style.display = 'flex';
 }
 
 async function guardarEditEj() {
@@ -1813,6 +1711,177 @@ async function confirmarAplicarBib() {
     cerrarModalAplicar();
     toast(`✅ ${rutina.nombre} aplicada a ${al.toUpperCase()} — ${dia}`);
 }
+
+// ══════════════════════════════════════════════
+//  SELECTOR VISUAL DE GIFS
+// ══════════════════════════════════════════════
+const GIFS_POR_MUSCULO = {
+    '🏋️ Pectoral': [
+        { archivo: 'apertura_banca_mancuerna_pectoral.gif',         nombre: 'Apertura Banca Mancuerna' },
+        { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',nombre: 'Apertura Banca Inclinada' },
+        { archivo: 'press_banca_barra.gif',                          nombre: 'Press Banca Barra' },
+        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
+        { archivo: 'cierre_maquina_pectoral.gif',                    nombre: 'Cierre Máquina Pectoral' },
+        { archivo: 'pullover_pectoral.gif',                          nombre: 'Pullover Pectoral' },
+        { archivo: 'Prensa Horizontal.gif',                          nombre: 'Prensa Horizontal' },
+        { archivo: 'Prensa 45.gif',                                  nombre: 'Prensa 45°' },
+    ],
+    '🦴 Espalda': [
+        { archivo: 'jalón_posterior_polea_deltoides.gif',                                          nombre: 'Jalón Posterior Polea' },
+        { archivo: 'jaón_pecho_poleaalta_espalda.gif',                                             nombre: 'Jalón Pecho Polea Alta' },
+        { archivo: 'Jalón en polea baja con agarrepronoespalda.gif',                               nombre: 'Jalón Polea Baja Prone' },
+        { archivo: 'Jalon Unilateral arrodillado en Polea Alta con Agarre Neutro_espalda.gif',     nombre: 'Jalón Unilateral Polea Alta' },
+        { archivo: 'peso_muerto_con barra.gif',                                                    nombre: 'Peso Muerto Barra' },
+        { archivo: 'remo_mancuernas_.gif',                                                         nombre: 'Remo Mancuernas' },
+        { archivo: 'vuelo_lateral_mancuernas_deltoides.gif',                                       nombre: 'Vuelo Lateral Mancuernas' },
+    ],
+    '💪 Bíceps': [
+        { archivo: 'curl_alternado_biceps_pedestacion.gif', nombre: 'Curl Alternado Bíceps' },
+        { archivo: 'curl_barrazeta_supino_biceps.gif',      nombre: 'Curl Barra Z Supino' },
+        { archivo: 'martillo_biceps.gif',                   nombre: 'Curl Martillo' },
+    ],
+    '🔺 Tríceps': [
+        { archivo: 'extensión_tricesp_cuerda_polea_pedestacion.jpg', nombre: 'Extensión Cuerda Polea' },
+        { archivo: 'curl_polea_agarre_supino_triceps.gif',            nombre: 'Curl Polea Agarre Supino' },
+        { archivo: 'patada_polea_triceps.gif',                        nombre: 'Patada Polea Tríceps' },
+    ],
+    '🏔️ Deltoides': [
+        { archivo: 'elev_lat_pol_unila_deltoides.gif',          nombre: 'Elev. Lateral Polea Unilateral' },
+        { archivo: 'elev_lat_polea_deltoides.gif',               nombre: 'Elev. Lateral Polea' },
+        { archivo: 'elevación_frontal_mancuernas_deltoides.gif', nombre: 'Elev. Frontal Mancuernas' },
+        { archivo: 'elevacion_frontal_disco_deltoides.jpg',      nombre: 'Elev. Frontal Disco' },
+    ],
+    '🍑 Glúteos': [
+        { archivo: 'bulgara_mancuernas_gluteos.gif',            nombre: 'Búlgara Mancuernas' },
+        { archivo: 'sentadilla_sumo_mancuernas_gluteos.gif',    nombre: 'Sentadilla Sumo' },
+        { archivo: 'elevación_unilateral_gluteos.gif',          nombre: 'Elev. Unilateral Glúteos' },
+        { archivo: 'elevación_lateral_polea_gluteos.gif',       nombre: 'Elev. Lateral Polea Glúteos' },
+        { archivo: 'Patada posterior en polea_gluteos.gif',     nombre: 'Patada Posterior Polea' },
+        { archivo: 'Elevacion de pelvis con barra_gluteos.jpg', nombre: 'Elev. Pelvis Barra' },
+        { archivo: 'sila de aducción.gif',                      nombre: 'Silla Aducción' },
+    ],
+    '🦵 Cuádriceps': [
+        { archivo: 'sentadilla con mancuernas.gif',      nombre: 'Sentadilla Mancuernas' },
+        { archivo: 'sentadilla en la smite.gif',         nombre: 'Sentadilla Smith' },
+        { archivo: 'Silla de Extensiones Cuadriceps.gif',nombre: 'Silla Extensiones Cuádriceps' },
+        { archivo: 'Zancadas desplazamiento.jpg',         nombre: 'Zancadas' },
+    ],
+    '🦿 Isquiotibiales': [
+        { archivo: 'Camilla de extension de ilsquios.gif',                        nombre: 'Camilla Extensión Isquios' },
+        { archivo: 'Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg',   nombre: 'Curl Femoral Mancuerna' },
+        { archivo: 'unilateral_mancuerna_isquiotibiales.jpg',                     nombre: 'Unilateral Mancuerna Isquiotibiales' },
+        { archivo: 'unilateral_maquina_isquiotibiales.gif',                       nombre: 'Unilateral Máquina Isquiotibiales' },
+        { archivo: 'buenos_dias_barra_isquio.jpg',                                nombre: 'Buenos Días Barra' },
+    ],
+    '🦶 Pantorrilla': [
+        { archivo: 'extensión_pantorrila_sonre step.jpg', nombre: 'Extensión Pantorrilla Step' },
+    ],
+    '🧘 Abdomen/Core': [
+        { archivo: 'Crunch.gif',                                               nombre: 'Crunch' },
+        { archivo: 'Crunchabdomen.gif',                                        nombre: 'Crunch Abdomen' },
+        { archivo: 'activo_suelo_abdomen.gif',                                 nombre: 'Activo Suelo Abdomen' },
+        { archivo: 'rotación_troncal_sedestación_abdomen.gif',                 nombre: 'Rotación Troncal Sedestación' },
+        { archivo: 'rotación_tronco.gif',                                      nombre: 'Rotación Tronco' },
+        { archivo: 'plancha_frontal_antebrazos_poyo_bipodal.jpg',              nombre: 'Plancha Frontal Antebrazos' },
+        { archivo: 'rotación_tronco_sedestación_Inclinación_posterior.gif',    nombre: 'Rotación Tronco Inclinación' },
+    ],
+};
+
+// target: 'profe-asignar' | 'modal-editar' | 'bib-agregar'
+let _gifTarget = null;
+let _gifSeleccionado = null;
+
+function gifNombreDesdeRuta(ruta) {
+    if (!ruta) return '';
+    const archivo = ruta.replace('gifs/', '');
+    for (const musculo in GIFS_POR_MUSCULO) {
+        const found = GIFS_POR_MUSCULO[musculo].find(g => g.archivo === archivo);
+        if (found) return found.nombre;
+    }
+    return archivo;
+}
+
+function abrirGifVisual(target) {
+    _gifTarget = target;
+    _gifSeleccionado = null;
+
+    // Determinar gif actual para preseleccionar
+    let gifActual = '';
+    if (target === 'profe-asignar') gifActual = document.getElementById('p-gif-selector').value.replace('gifs/','');
+    if (target === 'modal-editar')  gifActual = document.getElementById('modal-gif').value.replace('gifs/','');
+    if (target === 'bib-agregar')   gifActual = document.getElementById('bib-ej-gif').value.replace('gifs/','');
+    if (gifActual) _gifSeleccionado = gifActual;
+
+    // Renderizar tabs
+    const tabsEl = document.getElementById('gif-tabs');
+    const musculos = Object.keys(GIFS_POR_MUSCULO);
+    tabsEl.innerHTML = musculos.map((m, i) =>
+        `<div class="gif-musculo-tab ${i===0?'activo':''}" onclick="gifCambiarMusculo('${m}', this)">${m}</div>`
+    ).join('');
+
+    // Renderizar primera grilla
+    renderGifGrid(musculos[0]);
+
+    // Mostrar modal
+    const modal = document.getElementById('modal-gif-visual');
+    modal.style.display = 'flex';
+}
+
+function gifCambiarMusculo(musculo, tab) {
+    document.querySelectorAll('.gif-musculo-tab').forEach(t => t.classList.remove('activo'));
+    tab.classList.add('activo');
+    renderGifGrid(musculo);
+}
+
+function renderGifGrid(musculo) {
+    const gifs = GIFS_POR_MUSCULO[musculo] || [];
+    const grid = document.getElementById('gif-grid');
+    grid.innerHTML = gifs.map(g => {
+        const seleccionado = _gifSeleccionado === g.archivo ? 'seleccionado' : '';
+        return `<div class="gif-card ${seleccionado}" onclick="seleccionarGifCard('${g.archivo}', this)">
+            <img src="gifs/${g.archivo}" alt="${g.nombre}" loading="lazy" onerror="this.style.display='none'">
+            <div class="gif-card-nombre">${g.nombre}</div>
+        </div>`;
+    }).join('');
+}
+
+function seleccionarGifCard(archivo, el) {
+    document.querySelectorAll('.gif-card').forEach(c => c.classList.remove('seleccionado'));
+    el.classList.add('seleccionado');
+    _gifSeleccionado = archivo;
+}
+
+function confirmarGifVisual() {
+    if (!_gifSeleccionado) { toast('Seleccioná un ejercicio o tocá SIN TÉCNICA', '#888'); return; }
+    aplicarGifSeleccionado(`gifs/${_gifSeleccionado}`);
+    cerrarModalGifVisual();
+}
+
+function quitarGifVisual() {
+    aplicarGifSeleccionado('');
+    cerrarModalGifVisual();
+}
+
+function aplicarGifSeleccionado(ruta) {
+    const nombre = ruta ? gifNombreDesdeRuta(ruta) : '';
+    const preview = nombre ? `📹 ${nombre}` : '📹 Sin técnica seleccionada';
+    if (_gifTarget === 'profe-asignar') {
+        document.getElementById('p-gif-selector').value = ruta;
+        document.getElementById('p-gif-preview').innerText = preview;
+    } else if (_gifTarget === 'modal-editar') {
+        document.getElementById('modal-gif').value = ruta;
+        document.getElementById('modal-gif-preview').innerText = ruta ? `📹 ${nombre}` : '📹 Sin técnica';
+    } else if (_gifTarget === 'bib-agregar') {
+        document.getElementById('bib-ej-gif').value = ruta;
+        document.getElementById('bib-ej-gif-preview').innerText = ruta ? `📹 ${nombre}` : '📹 Sin técnica';
+    }
+}
+
+function cerrarModalGifVisual() {
+    document.getElementById('modal-gif-visual').style.display = 'none';
+    _gifTarget = null;
+}
+
 window.onload = descargarDeLaRed;
 
 // ══════════════════════════════════════════════
