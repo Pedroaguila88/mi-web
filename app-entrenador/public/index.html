@@ -981,6 +981,8 @@ async function guardarPesoAlumno() {
         setLoading('btn-guardar', false);
     }
 }
+
+function setRPE(idx, valor, btn) {
     // Deseleccionar todos los botones de este ejercicio
     const ejDiv = document.getElementById(`ej-${idx}`);
     ejDiv.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
@@ -992,9 +994,6 @@ async function guardarPesoAlumno() {
     }
 }
 
-// ══════════════════════════════════════════════
-//  GUARDAR SESIÓN ALUMNO
-// ══════════════════════════════════════════════
 // ══════════════════════════════════════════════
 //  TIMER DE DESCANSO
 // ══════════════════════════════════════════════
