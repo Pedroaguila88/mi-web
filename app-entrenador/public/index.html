@@ -129,6 +129,25 @@
         .notas-wrap { margin-top: 8px; }
         .nota-input { background: #2a2a2a; border: 1px solid #444; color: #ccc; font-size: 0.8rem; padding: 8px; border-radius: 6px; width: 100%; min-height: 50px; margin: 0; }
 
+        /* === SERIES INDIVIDUALES === */
+        .series-tabla { margin-top: 10px; width: 100%; border-collapse: collapse; }
+        .series-tabla th { font-size: 0.65rem; color: #888; padding: 4px 6px; text-align: center; border-bottom: 1px solid #333; }
+        .series-tabla td { padding: 4px 4px; text-align: center; }
+        .serie-input { background: #2a2a2a; border: 1px solid #444; color: white; font-size: 0.85rem; padding: 6px 4px; border-radius: 6px; width: 100%; margin: 0; text-align: center; }
+        .serie-input:focus { border-color: var(--primary); outline: none; }
+        .serie-num { font-size: 0.7rem; color: #888; font-weight: bold; }
+        .serie-completada td { background: #1a2a00 !important; }
+        .instrucciones-profe { background: #1a1a2a; border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 8px 10px; margin-top: 8px; font-size: 0.75rem; color: #aaa; font-style: italic; }
+
+        /* === TITULO RUTINA === */
+        .rutina-titulo-box { background: linear-gradient(135deg, #1a2a00, #002a1a); border: 1px solid var(--primary); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+        .rutina-titulo-txt { font-size: 1rem; font-weight: bold; color: var(--primary); margin: 0; }
+        .rutina-subtitulo { font-size: 0.7rem; color: #888; margin-top: 2px; }
+
+        /* === MENSAJE ESPECIFICO === */
+        .mensaje-especifico { background: linear-gradient(135deg, #1a1a2a, #2a1a00); border: 1px solid #444; border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; font-size: 0.82rem; color: #ccc; position: relative; }
+        .mensaje-especifico::before { content: '📌'; position: absolute; top: -10px; left: 12px; font-size: 1.1rem; background: var(--card2); padding: 0 4px; }
+
         /* === VOLUMEN SEMANAL === */
         .volumen-box { background: var(--card); border-radius: 10px; padding: 12px; margin-top: 10px; border: 1px solid #333; }
         .volumen-num { font-size: 2rem; font-weight: bold; color: var(--accent); }
@@ -237,7 +256,8 @@
     <div class="modal-box">
         <h3>✏️ EDITAR EJERCICIO</h3>
         <input type="text" id="modal-nombre" placeholder="Nombre del ejercicio">
-        <input type="text" id="modal-series" placeholder="Series (ej: 4x12)">
+        <input type="number" id="modal-series" placeholder="Nº de series (ej: 4)" min="1" max="10">
+        <textarea id="modal-instrucciones" placeholder="Instrucciones (ej: Serie 1: 15 reps 10kg...)" style="min-height:55px;font-size:0.85rem;"></textarea>
         <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
             <div id="modal-gif-preview" style="font-size:0.75rem;color:#888;flex:1;">📹 Sin técnica</div>
             <button onclick="abrirGifVisual('modal-editar')" style="width:auto;padding:8px 12px;background:#333;color:var(--accent);border:1px solid var(--accent);font-size:0.75rem;margin:0;">📹 CAMBIAR</button>
@@ -323,7 +343,14 @@
             <div id="profe-avatar-wrap"></div>
             <h2 id="welcome-profe">Panel Profe</h2>
         </div>
-        <select id="p-nombre-alumno"></select>
+        <select id="p-nombre-alumno" onchange="cargarTituloYMensajeProfe()"></select>
+        <!-- Título de rutina y mensaje específico -->
+        <div style="background:#1a1a2a;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="font-size:0.75rem;color:var(--accent);margin-bottom:6px;font-weight:bold;">📋 DATOS DEL ALUMNO</div>
+            <input type="text" id="p-titulo-rutina" placeholder="Título de la rutina (ej: Semana 1 — Fuerza Base)" style="margin-bottom:4px;">
+            <textarea id="p-mensaje-especifico" placeholder="Mensaje específico para este alumno..." style="min-height:50px;font-size:0.85rem;margin:0;"></textarea>
+            <button onclick="guardarTituloYMensaje()" style="margin-top:6px;background:#333;color:var(--primary);font-size:0.8rem;">💾 GUARDAR TÍTULO Y MENSAJE</button>
+        </div>
         <select id="p-dia-semana">
             <option value="lunes">Lunes</option>
             <option value="martes">Martes</option>
@@ -334,12 +361,13 @@
             <option value="domingo">Domingo</option>
         </select>
         <input type="text" id="p-ejercicio-nombre" placeholder="Nombre Ejercicio">
+        <input type="number" id="p-num-series" placeholder="Nº de series (ej: 4)" min="1" max="10" style="margin-bottom:4px;">
+        <textarea id="p-instrucciones" placeholder="Instrucciones al alumno (ej: Serie 1: 15 reps 10kg, Serie 4: 8 reps 20kg...)" style="min-height:55px;font-size:0.85rem;"></textarea>
         <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
             <div id="p-gif-preview" style="font-size:0.75rem;color:#888;flex:1;">📹 Sin técnica seleccionada</div>
             <button onclick="abrirGifVisual('profe-asignar')" style="width:auto;padding:8px 12px;background:#333;color:var(--accent);border:1px solid var(--accent);font-size:0.75rem;margin:0;">📹 ELEGIR TÉCNICA</button>
         </div>
         <input type="hidden" id="p-gif-selector" value="">
-        <input type="text" id="p-series" placeholder="Series (ej: 4x12)">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
         <button onclick="abrirModalAplicarBib()" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;">📚 APLICAR RUTINA DE BIBLIOTECA</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
@@ -374,6 +402,13 @@
         </div>
         <!-- Aviso de cuota -->
         <div id="cuota-aviso-alumno" style="display:none;"></div>
+        <!-- Título de rutina -->
+        <div id="rutina-titulo-box" class="rutina-titulo-box" style="display:none;">
+            <div class="rutina-titulo-txt" id="rutina-titulo-txt"></div>
+            <div class="rutina-subtitulo" id="rutina-subtitulo-txt"></div>
+        </div>
+        <!-- Mensaje específico del profe -->
+        <div id="mensaje-especifico-box" class="mensaje-especifico" style="display:none;"></div>
         <div id="mensaje-profe-box" class="mensaje-profe hidden"></div>
 
         <!-- Stats row -->
@@ -705,7 +740,11 @@ function calcularVolumenSemana(username) {
     h.forEach(r => {
         if (!r.fecha_iso) return;
         const f = new Date(r.fecha_iso);
-        if (f >= inicioSemana) total += parseFloat(r.peso || 0);
+        if (f >= inicioSemana) {
+            const peso = parseFloat(r.peso || 0);
+            const reps = parseInt(r.reps || 1);
+            total += peso * reps;
+        }
     });
     return Math.round(total);
 }
@@ -726,7 +765,10 @@ function actualizarProgreso() {
     const u = sessionStorage.getItem('active_user');
     const r = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
     const total = r.length;
-    const completos = r.filter(e => e.peso && parseFloat(e.peso) > 0).length;
+    const completos = r.filter(e => {
+        if (Array.isArray(e.series)) return e.series.some(s => s.peso && s.reps);
+        return e.peso && parseFloat(e.peso) > 0;
+    }).length;
     const pct = total > 0 ? Math.round((completos / total) * 100) : 0;
     document.getElementById('progress-fill').style.width = pct + '%';
     document.getElementById('progress-txt').innerText = `${completos} / ${total} ejercicios`;
@@ -784,6 +826,9 @@ function cargarDiaAlumno(dia, btn) {
         btn.classList.add('active-day');
     }
 
+    // Mostrar título y mensaje específico
+    renderTituloYMensajeAlumno(u);
+
     if (!r.length) {
         cont.innerHTML = "<p style='text-align:center;padding:20px;color:gray;'>🛋️ Hoy descansás.</p>";
         actualizarProgreso();
@@ -792,12 +837,39 @@ function cargarDiaAlumno(dia, btn) {
 
     cont.innerHTML = '';
     r.forEach((item, idx) => {
-        const recordActual = recordes[item.nombre] || 0;
-        const esRecord = item.peso && parseFloat(item.peso) > 0 && parseFloat(item.peso) >= recordActual;
-        const rpeActual = item.rpe || 0;
-        const notaActual = item.nota || '';
+        const recordes2 = recordes[item.nombre] || 0;
 
-        // Construir estrellas RPE
+        // Soporte para formato viejo (series string) y nuevo (series array)
+        const seriesArr = Array.isArray(item.series)
+            ? item.series
+            : Array.from({ length: parseInt(item.series) || 3 }, (_, i) => ({ num: i+1, peso: item.peso || '', reps: '' }));
+
+        // Tabla de series
+        let seriesHTML = `<table class="series-tabla">
+            <thead><tr>
+                <th style="width:30px;">SERIE</th>
+                <th>REPS</th>
+                <th>PESO (kg)</th>
+            </tr></thead><tbody>`;
+
+        seriesArr.forEach((s, si) => {
+            const completada = s.peso && s.reps ? 'serie-completada' : '';
+            seriesHTML += `<tr class="${completada}" id="serie-row-${idx}-${si}">
+                <td><span class="serie-num">${s.num || si+1}</span></td>
+                <td><input type="number" class="serie-input reps-input" min="0" max="100"
+                    data-ej="${idx}" data-serie="${si}" data-field="reps"
+                    value="${s.reps || ''}" placeholder="—"
+                    oninput="onSerieChange(this)"></td>
+                <td><input type="number" class="serie-input peso-serie-input" min="0" max="999" step="0.5"
+                    data-ej="${idx}" data-serie="${si}" data-field="peso" data-nombre="${item.nombre}"
+                    value="${s.peso || ''}" placeholder="—"
+                    oninput="onSerieChange(this)"></td>
+            </tr>`;
+        });
+        seriesHTML += '</tbody></table>';
+
+        // RPE al final
+        const rpeActual = item.rpe || 0;
         let rpeHTML = '<div class="rpe-wrap"><div class="rpe-label">😓 Esfuerzo percibido (RPE)</div><div class="rpe-stars">';
         for (let i = 1; i <= 10; i++) {
             rpeHTML += `<button class="rpe-btn ${rpeActual == i ? 'active' : ''}" onclick="setRPE(${idx}, ${i}, this)">${i}</button>`;
@@ -805,19 +877,20 @@ function cargarDiaAlumno(dia, btn) {
         rpeHTML += '</div></div>';
 
         cont.innerHTML += `<div class="rutina-item" id="ej-${idx}">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
                 <strong>${item.nombre.toUpperCase()}</strong>
-                <span class="badge">${item.series}</span>
-                ${recordActual > 0 ? `<span style="font-size:0.65rem;color:#888;">🏆 Récord: ${recordActual}kg</span>` : ''}
+                <span class="badge">${seriesArr.length} series</span>
+                ${recordes2 > 0 ? `<span style="font-size:0.65rem;color:#888;">🏆 Récord: ${recordes2}kg</span>` : ''}
             </div>
+            ${item.instrucciones ? `<div class="instrucciones-profe">📋 ${item.instrucciones}</div>` : ''}
             ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
-            <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-                <input type="number" min="0" max="999" step="0.5" class="peso-input" data-idx="${idx}" data-nombre="${item.nombre}" placeholder="Peso Kg" value="${item.peso || ''}" style="flex:1;margin:0;" oninput="onPesoChange(this)">
-                <button onclick="iniciarTimer(60)" style="width:auto;padding:8px 12px;background:#333;color:var(--primary);font-size:0.75rem;margin:0;">⏱️</button>
+            ${seriesHTML}
+            <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+                <button onclick="iniciarTimer(60)" style="width:auto;padding:6px 14px;background:#333;color:var(--primary);font-size:0.75rem;margin:0;">⏱️ DESCANSO</button>
             </div>
             ${rpeHTML}
             <div class="notas-wrap">
-                <textarea class="nota-input" data-idx="${idx}" placeholder="📝 Nota (sensaciones, ajustes...)">${notaActual}</textarea>
+                <textarea class="nota-input" data-idx="${idx}" placeholder="📝 Nota personal...">${item.nota || ''}</textarea>
             </div>
         </div>`;
     });
@@ -825,11 +898,89 @@ function cargarDiaAlumno(dia, btn) {
     actualizarProgreso();
 }
 
-function onPesoChange(input) {
+function onSerieChange(input) {
+    const ejIdx   = parseInt(input.getAttribute('data-ej'));
+    const serieIdx = parseInt(input.getAttribute('data-serie'));
+    const field   = input.getAttribute('data-field');
+    const u = sessionStorage.getItem('active_user');
+    const ej = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno]?.[ejIdx];
+    if (!ej || !Array.isArray(ej.series)) return;
+    ej.series[serieIdx][field] = field === 'peso' ? parseFloat(input.value) || '' : parseInt(input.value) || '';
+    // Marcar fila como completada visualmente
+    const row = document.getElementById(`serie-row-${ejIdx}-${serieIdx}`);
+    if (row) {
+        const s = ej.series[serieIdx];
+        row.className = (s.peso && s.reps) ? 'serie-completada' : '';
+    }
     actualizarProgreso();
 }
 
-function setRPE(idx, valor, btn) {
+function onPesoChange(input) { actualizarProgreso(); }
+
+async function guardarPesoAlumno() {
+    setLoading('btn-guardar', true);
+    try {
+        const u          = sessionStorage.getItem('active_user');
+        const fechaIso   = getFechaHoy();
+        const fechaDisplay = getFechaDisplay();
+        let huboCambios  = false;
+        let nuevoRecord  = false;
+
+        if (!DATOS_GLOBALES.recordes[u]) DATOS_GLOBALES.recordes[u] = {};
+        if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
+
+        const rutina = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
+
+        rutina.forEach((ej, ejIdx) => {
+            // Guardar nota
+            const notaEl = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
+            if (notaEl) ej.nota = notaEl.value;
+
+            // Procesar series
+            if (!Array.isArray(ej.series)) return;
+            ej.series.forEach((s, si) => {
+                if (!s.peso || !s.reps) return;
+                const peso = parseFloat(s.peso);
+                const reps = parseInt(s.reps);
+                if (isNaN(peso) || isNaN(reps) || peso <= 0 || reps <= 0) return;
+
+                // Record: máximo peso por ejercicio
+                const recordAnterior = DATOS_GLOBALES.recordes[u][ej.nombre] || 0;
+                if (peso > recordAnterior) {
+                    DATOS_GLOBALES.recordes[u][ej.nombre] = peso;
+                    nuevoRecord = true;
+                }
+
+                // Guardar en historial
+                DATOS_GLOBALES.historial[u].push({
+                    fecha:     fechaDisplay,
+                    fecha_iso: fechaIso,
+                    ejercicio: ej.nombre,
+                    serie:     s.num || si+1,
+                    peso,
+                    reps,
+                    rpe:       ej.rpe || 0
+                });
+                huboCambios = true;
+            });
+        });
+
+        if (huboCambios) {
+            await subirALaRed();
+            await descargarDeLaRed();
+            cargarDiaAlumno(diaActualAlumno);
+            renderStatsAlumno(u);
+            renderBadges(u);
+            actualizarProgreso();
+            if (nuevoRecord) toast('🏆 ¡NUEVO RÉCORD PERSONAL! ¡Brutal!', 'var(--warning)', 3500);
+            else toast('¡Sesión guardada! 💪', 'var(--success)');
+        } else {
+            toast('Completá al menos una serie con peso y reps', '#888');
+        }
+    } finally {
+        setLoading('btn-guardar', false);
+    }
+}
     // Deseleccionar todos los botones de este ejercicio
     const ejDiv = document.getElementById(`ej-${idx}`);
     ejDiv.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('active'));
@@ -1113,25 +1264,41 @@ function renderHistorialEjercicio(user, tipo, ejercicio) {
         cont.innerHTML += '<p style="color:#555;font-size:0.75rem;">Sin registros aún.</p>';
         return;
     }
-    filtrado.slice(0, 20).forEach(r => {
-        const rpeTag = r.rpe ? `<span style="color:#ff9900;font-size:0.65rem;"> RPE:${r.rpe}</span>` : '';
-        const esRecord = parseFloat(r.peso) === record && record > 0 ? '🏆 ' : '';
-        cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:3px 0;font-size:0.75rem;">${r.fecha} — ${esRecord}<span style="color:var(--primary)">${r.peso}kg</span>${rpeTag}</div>`;
+
+    // Agrupar por fecha
+    const porFecha = {};
+    filtrado.forEach(r => {
+        const key = r.fecha_iso || r.fecha;
+        if (!porFecha[key]) porFecha[key] = { fecha: r.fecha, series: [] };
+        porFecha[key].series.push(r);
+    });
+
+    Object.values(porFecha).slice(0, 10).forEach(grupo => {
+        cont.innerHTML += `<div style="border-bottom:1px solid #222;padding:5px 0;">`;
+        cont.innerHTML += `<div style="font-size:0.7rem;color:#888;margin-bottom:3px;">📅 ${grupo.fecha}</div>`;
+        grupo.series.forEach(r => {
+            const esRecord = parseFloat(r.peso) === record && record > 0 ? '🏆 ' : '';
+            const rpeTag = r.rpe ? `<span style="color:#ff9900;"> RPE:${r.rpe}</span>` : '';
+            const serieTag = r.serie ? `Serie ${r.serie}: ` : '';
+            const repsTag = r.reps ? `${r.reps} reps × ` : '';
+            cont.innerHTML += `<div style="font-size:0.75rem;padding:1px 0;">${serieTag}${esRecord}${repsTag}<span style="color:var(--primary)">${r.peso}kg</span>${rpeTag}</div>`;
+        });
+        cont.innerHTML += `</div>`;
     });
 }
 
 function renderHistorialGeneral(user, tipo) {
-    // Solo muestra historial cuando no hay ejercicio seleccionado
     const selId = tipo === 'profe' ? 'select-ejercicio-profe' : 'select-ejercicio-alumno';
     const sel = document.getElementById(selId);
-    if (sel?.value) return; // Ya está filtrando por ejercicio
+    if (sel?.value) return;
     const histId = tipo === 'profe' ? 'historial-profe' : 'historial-alumno';
     const h = DATOS_GLOBALES.historial?.[user] || [];
     const cont = document.getElementById(histId);
     cont.innerHTML = '<strong>Últimos movimientos:</strong><br>';
     [...h].reverse().slice(0, 15).forEach(r => {
         const rpeTag = r.rpe ? `<span style="color:#ff9900;font-size:0.65rem;"> RPE:${r.rpe}</span>` : '';
-        cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:3px 0;font-size:0.75rem;">${r.fecha} — ${r.ejercicio}: <span style="color:var(--primary)">${r.peso}kg</span>${rpeTag}</div>`;
+        const repsTag = r.reps ? `${r.reps}×` : '';
+        cont.innerHTML += `<div style="border-bottom:1px solid #333;padding:3px 0;font-size:0.75rem;">${r.fecha} — ${r.ejercicio}: <span style="color:var(--primary)">${repsTag}${r.peso}kg</span>${rpeTag}</div>`;
     });
 }
 
@@ -1270,16 +1437,29 @@ function renderMasterUsers() {
 //  PANEL PROFE — RUTINAS
 // ══════════════════════════════════════════════
 async function asignarRutina() {
-    const al  = document.getElementById('p-nombre-alumno').value;
-    const dia = document.getElementById('p-dia-semana').value;
-    const ej  = document.getElementById('p-ejercicio-nombre').value;
-    const gif = document.getElementById('p-gif-selector').value;
-    const se  = document.getElementById('p-series').value;
-    if (!ej) return;
+    const al           = document.getElementById('p-nombre-alumno').value;
+    const dia          = document.getElementById('p-dia-semana').value;
+    const ej           = document.getElementById('p-ejercicio-nombre').value.trim();
+    const gif          = document.getElementById('p-gif-selector').value;
+    const numSeries    = parseInt(document.getElementById('p-num-series').value) || 3;
+    const instrucciones = document.getElementById('p-instrucciones').value.trim();
+    if (!ej) return toast('Escribí el nombre del ejercicio', 'var(--danger)');
     if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
-    DATOS_GLOBALES.rutinas[al][dia].push({ nombre: ej, series: se, peso: '', gif, rpe: 0, nota: '' });
+
+    // Crear array de series vacías
+    const series = Array.from({ length: numSeries }, (_, i) => ({ num: i+1, peso: '', reps: '' }));
+
+    DATOS_GLOBALES.rutinas[al][dia].push({
+        nombre: ej,
+        series,
+        instrucciones,
+        gif,
+        nota: ''
+    });
     await subirALaRed();
     document.getElementById('p-ejercicio-nombre').value = '';
+    document.getElementById('p-num-series').value = '';
+    document.getElementById('p-instrucciones').value = '';
     document.getElementById('p-gif-selector').value = '';
     document.getElementById('p-gif-preview').innerText = '📹 Sin técnica seleccionada';
     toast('Ejercicio asignado ✅');
@@ -1320,8 +1500,10 @@ function cambiarDiaVisor(dia, btn) {
 
     r.forEach((item, idx) => {
         const rec = recordes[item.nombre] || 0;
+        const numSeries = Array.isArray(item.series) ? item.series.length : (parseInt(item.series) || '?');
         lista.innerHTML += `<div class="ejercicio-visor-item">
-            <span style="flex:1;">${item.nombre} — <b>${item.peso || 0}kg</b>${rec > 0 ? `<span style="font-size:0.65rem;color:var(--warning);margin-left:4px;">🏆${rec}kg</span>` : ''}
+            <span style="flex:1;">${item.nombre} — <b>${numSeries} series</b>${rec > 0 ? `<span style="font-size:0.65rem;color:var(--warning);margin-left:4px;">🏆${rec}kg</span>` : ''}
+            ${item.instrucciones ? `<br><span style="font-size:0.65rem;color:var(--accent);font-style:italic;">📋 ${item.instrucciones}</span>` : ''}
             ${item.nota ? `<br><span style="font-size:0.65rem;color:#888;font-style:italic;">"${item.nota}"</span>` : ''}
             ${item.rpe ? `<span style="font-size:0.65rem;color:#ff9900;margin-left:4px;">RPE:${item.rpe}</span>` : ''}
             </span>
@@ -1375,22 +1557,30 @@ function editEj(al, dia, idx) {
     const ej = DATOS_GLOBALES.rutinas[al][dia][idx];
     _editEjAl = al; _editEjDia = dia; _editEjIdx = idx;
     document.getElementById('modal-nombre').value = ej.nombre || '';
-    document.getElementById('modal-series').value = ej.series || '';
+    const numSeries = Array.isArray(ej.series) ? ej.series.length : (parseInt(ej.series) || 3);
+    document.getElementById('modal-series').value = numSeries;
     document.getElementById('modal-gif').value = ej.gif || '';
     const nombre = gifNombreDesdeRuta(ej.gif);
     document.getElementById('modal-gif-preview').innerText = nombre ? `📹 ${nombre}` : '📹 Sin técnica';
+    // Instrucciones
+    const instrEl = document.getElementById('modal-instrucciones');
+    if (instrEl) instrEl.value = ej.instrucciones || '';
     document.getElementById('modal-edit-ej').style.display = 'flex';
 }
 
 async function guardarEditEj() {
-    const nN  = document.getElementById('modal-nombre').value.trim();
-    const nS  = document.getElementById('modal-series').value.trim();
+    const nN   = document.getElementById('modal-nombre').value.trim();
+    const nS   = parseInt(document.getElementById('modal-series').value) || 3;
     const nGif = document.getElementById('modal-gif').value;
-    if (!nN || !nS) { toast('Completá nombre y series', 'var(--danger)'); return; }
+    const nInstr = document.getElementById('modal-instrucciones')?.value.trim() || '';
+    if (!nN) { toast('Completá el nombre', 'var(--danger)'); return; }
     const ej = DATOS_GLOBALES.rutinas[_editEjAl][_editEjDia][_editEjIdx];
     ej.nombre = nN;
-    ej.series = nS;
     ej.gif    = nGif;
+    ej.instrucciones = nInstr;
+    // Reconstruir series manteniendo datos ya cargados
+    const oldSeries = Array.isArray(ej.series) ? ej.series : [];
+    ej.series = Array.from({ length: nS }, (_, i) => oldSeries[i] || { num: i+1, peso: '', reps: '' });
     await subirALaRed();
     cerrarModalEj();
     cambiarDiaVisor(_editEjDia);
@@ -1438,6 +1628,48 @@ function actualizarSelectAlumnosProfe(profe) {
     sel.innerHTML = '';
     for (const u in DATOS_GLOBALES.users) {
         if (DATOS_GLOBALES.users[u].profe_asignado === profe) sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
+    }
+    // Cargar título y mensaje del primer alumno
+    if (sel.options.length > 0) cargarTituloYMensajeProfe();
+}
+
+function cargarTituloYMensajeProfe() {
+    const al = document.getElementById('p-nombre-alumno')?.value;
+    if (!al) return;
+    const datos = DATOS_GLOBALES.rutinas?.[al]?._meta || {};
+    document.getElementById('p-titulo-rutina').value = datos.titulo || '';
+    document.getElementById('p-mensaje-especifico').value = datos.mensajeEspecifico || '';
+}
+
+async function guardarTituloYMensaje() {
+    const al = document.getElementById('p-nombre-alumno').value;
+    const titulo = document.getElementById('p-titulo-rutina').value.trim();
+    const mensajeEspecifico = document.getElementById('p-mensaje-especifico').value.trim();
+    if (!al) return;
+    if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
+    DATOS_GLOBALES.rutinas[al]._meta = { titulo, mensajeEspecifico };
+    await subirALaRed();
+    toast('Título y mensaje guardados ✅');
+}
+
+function renderTituloYMensajeAlumno(username) {
+    const meta = DATOS_GLOBALES.rutinas?.[username]?._meta || {};
+    const tituloBox = document.getElementById('rutina-titulo-box');
+    const mensajeBox = document.getElementById('mensaje-especifico-box');
+
+    if (meta.titulo) {
+        tituloBox.style.display = 'block';
+        document.getElementById('rutina-titulo-txt').innerText = meta.titulo;
+        document.getElementById('rutina-subtitulo-txt').innerText = `Plan de ${username.toUpperCase()}`;
+    } else {
+        tituloBox.style.display = 'none';
+    }
+
+    if (meta.mensajeEspecifico) {
+        mensajeBox.style.display = 'block';
+        mensajeBox.innerText = meta.mensajeEspecifico;
+    } else {
+        mensajeBox.style.display = 'none';
     }
 }
 
@@ -1720,8 +1952,11 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'apertura_banca_mancuerna_pectoral.gif',         nombre: 'Apertura Banca Mancuerna' },
         { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',nombre: 'Apertura Banca Inclinada' },
         { archivo: 'press_banca_barra.gif',                          nombre: 'Press Banca Barra' },
+        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
         { archivo: 'cierre_maquina_pectoral.gif',                    nombre: 'Cierre Máquina Pectoral' },
         { archivo: 'pullover_pectoral.gif',                          nombre: 'Pullover Pectoral' },
+        { archivo: 'Prensa Horizontal.gif',                          nombre: 'Prensa Horizontal' },
+        { archivo: 'Prensa 45.gif',                                  nombre: 'Prensa 45°' },
     ],
     '🦴 Espalda': [
         { archivo: 'jalón_posterior_polea_deltoides.gif',                                          nombre: 'Jalón Posterior Polea' },
@@ -1747,7 +1982,6 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'elev_lat_polea_deltoides.gif',               nombre: 'Elev. Lateral Polea' },
         { archivo: 'elevación_frontal_mancuernas_deltoides.gif', nombre: 'Elev. Frontal Mancuernas' },
         { archivo: 'elevacion_frontal_disco_deltoides.jpg',      nombre: 'Elev. Frontal Disco' },
-        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
     ],
     '🍑 Glúteos': [
         { archivo: 'bulgara_mancuernas_gluteos.gif',            nombre: 'Búlgara Mancuernas' },
@@ -1762,9 +1996,7 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'sentadilla con mancuernas.gif',      nombre: 'Sentadilla Mancuernas' },
         { archivo: 'sentadilla en la smite.gif',         nombre: 'Sentadilla Smith' },
         { archivo: 'Silla de Extensiones Cuadriceps.gif',nombre: 'Silla Extensiones Cuádriceps' },
-        { archivo: 'Zancadas desplazamiento.jpg',        nombre: 'Zancadas' },
-        { archivo: 'Prensa Horizontal.gif',              nombre: 'Prensa Horizontal' },
-        { archivo: 'Prensa 45.gif',                      nombre: 'Prensa 45°' },
+        { archivo: 'Zancadas desplazamiento.jpg',         nombre: 'Zancadas' },
     ],
     '🦿 Isquiotibiales': [
         { archivo: 'Camilla de extension de ilsquios.gif',                        nombre: 'Camilla Extensión Isquios' },
@@ -1777,10 +2009,13 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'extensión_pantorrila_sonre step.jpg', nombre: 'Extensión Pantorrilla Step' },
     ],
     '🧘 Abdomen/Core': [
+        { archivo: 'Crunch.gif',                                               nombre: 'Crunch' },
         { archivo: 'Crunchabdomen.gif',                                        nombre: 'Crunch Abdomen' },
         { archivo: 'activo_suelo_abdomen.gif',                                 nombre: 'Activo Suelo Abdomen' },
         { archivo: 'rotación_troncal_sedestación_abdomen.gif',                 nombre: 'Rotación Troncal Sedestación' },
+        { archivo: 'rotación_tronco.gif',                                      nombre: 'Rotación Tronco' },
         { archivo: 'plancha_frontal_antebrazos_poyo_bipodal.jpg',              nombre: 'Plancha Frontal Antebrazos' },
+        { archivo: 'rotación_tronco_sedestación_Inclinación_posterior.gif',    nombre: 'Rotación Tronco Inclinación' },
     ],
 };
 
