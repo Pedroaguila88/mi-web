@@ -871,7 +871,9 @@ function actualizarProgreso() {
     const r = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
     const total = r.length;
     const completos = r.filter(e => {
-        if (Array.isArray(e.series)) return e.series.some(s => s.peso && s.reps);
+        if (Array.isArray(e.series)) return e.series.length > 0 && e.series.every(s =>
+            s.peso !== '' && s.peso !== null && s.peso !== undefined &&
+            s.reps !== '' && s.reps !== null && s.reps !== undefined);
         return e.peso && parseFloat(e.peso) > 0;
     }).length;
     const pct = total > 0 ? Math.round((completos / total) * 100) : 0;
@@ -958,7 +960,7 @@ function cargarDiaAlumno(dia, btn) {
             </tr></thead><tbody>`;
 
         seriesArr.forEach((s, si) => {
-            const completada = s.peso && s.reps ? 'serie-completada' : '';
+            const completada = (s.peso !== '' && s.peso !== undefined && s.reps !== '' && s.reps !== undefined) ? 'serie-completada' : '';
             seriesHTML += `<tr class="${completada}" id="serie-row-${idx}-${si}">
                 <td><span class="serie-num">${s.num || si+1}</span></td>
                 <td><input type="number" class="serie-input reps-input" min="0" max="100"
@@ -1010,12 +1012,17 @@ function onSerieChange(input) {
     const u = sessionStorage.getItem('active_user');
     const ej = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno]?.[ejIdx];
     if (!ej || !Array.isArray(ej.series)) return;
-    ej.series[serieIdx][field] = field === 'peso' ? parseFloat(input.value) || '' : parseInt(input.value) || '';
+    const val = input.value;
+    if (val === '' || val === null) {
+        ej.series[serieIdx][field] = '';
+    } else {
+        ej.series[serieIdx][field] = field === 'peso' ? parseFloat(val) : parseInt(val);
+    }
     // Marcar fila como completada visualmente
     const row = document.getElementById(`serie-row-${ejIdx}-${serieIdx}`);
     if (row) {
         const s = ej.series[serieIdx];
-        row.className = (s.peso && s.reps) ? 'serie-completada' : '';
+        row.className = (s.peso !== '' && s.peso !== undefined && s.reps !== '' && s.reps !== undefined) ? 'serie-completada' : '';
     }
     actualizarProgreso();
 }
@@ -1041,37 +1048,39 @@ async function guardarPesoAlumno() {
             const notaEl = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
             if (notaEl) ej.nota = notaEl.value;
 
-            // Procesar series
+            // Procesar series — guardar siempre, incluso vacías
             if (!Array.isArray(ej.series)) return;
             ej.series.forEach((s, si) => {
-                if (!s.peso || !s.reps) return;
-                const peso = parseFloat(s.peso);
-                const reps = parseInt(s.reps);
-                if (isNaN(peso) || isNaN(reps) || peso <= 0 || reps <= 0) return;
+                const peso = (s.peso !== '' && s.peso !== null && s.peso !== undefined) ? parseFloat(s.peso) : null;
+                const reps = (s.reps !== '' && s.reps !== null && s.reps !== undefined) ? parseInt(s.reps) : null;
 
-                // Record: máximo peso por ejercicio
-                const recordAnterior = DATOS_GLOBALES.recordes[u][ej.nombre] || 0;
-                if (peso > recordAnterior) {
-                    DATOS_GLOBALES.recordes[u][ej.nombre] = peso;
-                    nuevoRecord = true;
+                // Record: solo si tiene peso válido mayor a 0
+                if (peso !== null && peso > 0) {
+                    const recordAnterior = DATOS_GLOBALES.recordes[u][ej.nombre] || 0;
+                    if (peso > recordAnterior) {
+                        DATOS_GLOBALES.recordes[u][ej.nombre] = peso;
+                        nuevoRecord = true;
+                    }
                 }
 
-                // Guardar en historial
-                DATOS_GLOBALES.historial[u].push({
-                    fecha:     fechaDisplay,
-                    fecha_iso: fechaIso,
-                    ejercicio: ej.nombre,
-                    serie:     s.num || si+1,
-                    peso,
-                    reps,
-                    rpe:       ej.rpe || 0,
-                    nota:      ej.nota || ''
-                });
-                huboCambios = true;
+                // Guardar en historial solo si hay al menos algo
+                if (peso !== null || reps !== null || ej.rpe || ej.nota) {
+                    DATOS_GLOBALES.historial[u].push({
+                        fecha:     fechaDisplay,
+                        fecha_iso: fechaIso,
+                        ejercicio: ej.nombre,
+                        serie:     s.num || si+1,
+                        peso:      peso !== null ? peso : '',
+                        reps:      reps !== null ? reps : '',
+                        rpe:       ej.rpe || 0,
+                        nota:      ej.nota || ''
+                    });
+                }
             });
+            huboCambios = true; // siempre guardar si hay ejercicios
         });
 
-        if (huboCambios) {
+        if (rutina.length > 0) {
             await subirALaRed();
             await descargarDeLaRed();
             cargarDiaAlumno(diaActualAlumno);
@@ -1081,7 +1090,7 @@ async function guardarPesoAlumno() {
             if (nuevoRecord) toast('🏆 ¡NUEVO RÉCORD PERSONAL! ¡Brutal!', 'var(--warning)', 3500);
             else toast('¡Sesión guardada! 💪', 'var(--success)');
         } else {
-            toast('Completá al menos una serie con peso y reps', '#888');
+            toast('No hay ejercicios para guardar', '#888');
         }
     } finally {
         setLoading('btn-guardar', false);
@@ -2290,7 +2299,7 @@ function abrirDetalleDia(fechaStr, entrenado) {
         series.forEach((s, i) => {
             const vol = (parseFloat(s.peso || 0) * parseInt(s.reps || 0)).toFixed(0);
             const esMax = parseFloat(s.peso) === record && record > 0;
-            html += `<tr class="${s.peso && s.reps ? 'completada' : ''}">
+            html += `<tr class="${(s.peso !== '' && s.peso !== undefined && s.reps !== '' && s.reps !== undefined) ? 'completada' : ''}">
                 <td>${s.serie || i+1}</td>
                 <td>${s.reps || '—'}</td>
                 <td>${s.peso ? s.peso + ' kg' : '—'} ${esMax ? '🏆' : ''}</td>
