@@ -321,10 +321,22 @@
 </div>
 
 <!-- MODAL SELECTOR VISUAL DE GIFS -->
+<!-- MODAL SELECTOR VISUAL DE GIFS -->
 <div id="modal-gif-visual" style="display:none;">
+    <div class="gif-visual-header">
+        <h3>📹 ELEGÍ LA TÉCNICA</h3>
+        <button onclick="cerrarModalGifVisual()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
+    </div>
+    <div class="gif-musculo-tabs" id="gif-tabs"></div>
+    <div class="gif-grid" id="gif-grid"></div>
+    <div class="gif-confirm-bar">
+        <button onclick="confirmarGifVisual()" style="flex:1;margin:0;">✅ CONFIRMAR</button>
+        <button onclick="quitarGifVisual()" style="flex:1;margin:0;background:#444;color:white;">❌ SIN TÉCNICA</button>
+    </div>
+</div>
 
 <!-- MODAL CALENDARIO -->
-<div id="modal-calendario">
+<div id="modal-calendario" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2500;flex-direction:column;overflow:hidden;">
     <div class="cal-header">
         <h3>📅 CALENDARIO DE ENTRENAMIENTO</h3>
         <button onclick="cerrarCalendario()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
@@ -354,7 +366,7 @@
 </div>
 
 <!-- MODAL DETALLE DÍA -->
-<div id="modal-dia-detalle">
+<div id="modal-dia-detalle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:2600;align-items:flex-end;justify-content:center;">
     <div class="dia-detalle-box">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
             <div>
@@ -364,17 +376,6 @@
             <button onclick="cerrarDetalleDia()" style="width:auto;padding:5px 12px;background:#333;color:white;font-size:0.8rem;margin:0;">✖</button>
         </div>
         <div id="detalle-contenido"></div>
-    </div>
-</div>
-    <div class="gif-visual-header">
-        <h3>📹 ELEGÍ LA TÉCNICA</h3>
-        <button onclick="cerrarModalGifVisual()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
-    </div>
-    <div class="gif-musculo-tabs" id="gif-tabs"></div>
-    <div class="gif-grid" id="gif-grid"></div>
-    <div class="gif-confirm-bar">
-        <button onclick="confirmarGifVisual()" style="flex:1;margin:0;">✅ CONFIRMAR</button>
-        <button onclick="quitarGifVisual()" style="flex:1;margin:0;background:#444;color:white;">❌ SIN TÉCNICA</button>
     </div>
 </div>
 
