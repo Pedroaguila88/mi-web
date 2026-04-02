@@ -125,6 +125,41 @@
         .gif-card-nombre { font-size:0.65rem;padding:5px 7px;color:#ccc;text-align:center;line-height:1.3; }
         .gif-confirm-bar { padding:12px;background:#1a1a1a;border-top:1px solid #333;flex-shrink:0;display:flex;gap:8px; }
 
+        /* === CALENDARIO === */
+        #modal-calendario { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2500;display:none;flex-direction:column;overflow:hidden; }
+        .cal-header { display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#1a1a1a;border-bottom:1px solid #333;flex-shrink:0; }
+        .cal-header h3 { margin:0;color:var(--primary);font-size:0.95rem; }
+        .cal-nav { display:flex;align-items:center;gap:10px; }
+        .cal-nav button { width:auto;padding:5px 12px;font-size:0.8rem;margin:0;background:#333;color:white; }
+        .cal-nav span { font-size:0.85rem;font-weight:bold;color:var(--accent);min-width:130px;text-align:center; }
+        .cal-body { flex:1;overflow-y:auto;padding:12px; }
+        .cal-dias-semana { display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px; }
+        .cal-dia-lbl { text-align:center;font-size:0.6rem;color:#666;font-weight:bold;padding:4px 0; }
+        .cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:3px; }
+        .cal-dia { aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1px solid #2a2a2a;background:#1a1a1a;transition:0.15s;position:relative; }
+        .cal-dia:active { transform:scale(0.93); }
+        .cal-dia.vacio { background:transparent;border-color:transparent;cursor:default; }
+        .cal-dia.hoy { border-color:var(--accent) !important;border-width:2px; }
+        .cal-dia.entrenado { background:#1a3a00;border-color:#2a5a00; }
+        .cal-dia.entrenado .cal-num { color:var(--primary); }
+        .cal-dia.no-entrenado { background:#1a1a1a;border-color:#2a2a2a; }
+        .cal-num { font-size:0.75rem;font-weight:bold;color:#888;line-height:1; }
+        .cal-punto { width:5px;height:5px;border-radius:50%;background:var(--primary);margin-top:2px; }
+        .cal-punto-gris { width:5px;height:5px;border-radius:50%;background:#444;margin-top:2px; }
+
+        /* === DETALLE DÍA === */
+        #modal-dia-detalle { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:2600;display:none;align-items:flex-end;justify-content:center; }
+        .dia-detalle-box { background:var(--card2);border-radius:20px 20px 0 0;border-top:4px solid var(--primary);padding:20px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto; }
+        .dia-detalle-titulo { font-size:1rem;font-weight:bold;color:var(--primary);margin-bottom:4px; }
+        .dia-detalle-sub { font-size:0.75rem;color:#888;margin-bottom:14px; }
+        .detalle-ejercicio { background:var(--card);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--primary); }
+        .detalle-ej-nombre { font-weight:bold;font-size:0.9rem;margin-bottom:6px; }
+        .detalle-series-tabla { width:100%;border-collapse:collapse;font-size:0.78rem; }
+        .detalle-series-tabla th { color:#888;padding:3px 6px;text-align:center;border-bottom:1px solid #333;font-size:0.65rem; }
+        .detalle-series-tabla td { padding:4px 6px;text-align:center;color:#ccc; }
+        .detalle-series-tabla tr.completada td { color:var(--primary); }
+        .no-entrenado-msg { text-align:center;padding:30px 20px;color:#555;font-size:0.9rem; }
+
         /* === LOADING OVERLAY === */
         #loading-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px; }
         .loading-mancuerna { font-size:3rem;animation:swing 0.7s ease-in-out infinite alternate; }
@@ -287,6 +322,50 @@
 
 <!-- MODAL SELECTOR VISUAL DE GIFS -->
 <div id="modal-gif-visual" style="display:none;">
+
+<!-- MODAL CALENDARIO -->
+<div id="modal-calendario">
+    <div class="cal-header">
+        <h3>📅 CALENDARIO DE ENTRENAMIENTO</h3>
+        <button onclick="cerrarCalendario()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
+    </div>
+    <div style="padding:8px 12px;background:#111;border-bottom:1px solid #222;flex-shrink:0;font-size:0.72rem;color:#888;display:flex;align-items:center;gap:12px;">
+        <span id="cal-nombre-usuario" style="color:var(--accent);font-weight:bold;"></span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#1a3a00;border:1px solid #2a5a00;border-radius:3px;display:inline-block;"></span> Entrenó</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:3px;display:inline-block;"></span> Sin registro</span>
+    </div>
+    <div class="cal-body">
+        <div class="cal-nav" style="justify-content:center;margin-bottom:12px;">
+            <button onclick="calCambiarMes(-1)">◀</button>
+            <span id="cal-mes-lbl"></span>
+            <button onclick="calCambiarMes(1)">▶</button>
+        </div>
+        <div class="cal-dias-semana">
+            <div class="cal-dia-lbl">DOM</div>
+            <div class="cal-dia-lbl">LUN</div>
+            <div class="cal-dia-lbl">MAR</div>
+            <div class="cal-dia-lbl">MIÉ</div>
+            <div class="cal-dia-lbl">JUE</div>
+            <div class="cal-dia-lbl">VIE</div>
+            <div class="cal-dia-lbl">SÁB</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+    </div>
+</div>
+
+<!-- MODAL DETALLE DÍA -->
+<div id="modal-dia-detalle">
+    <div class="dia-detalle-box">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+            <div>
+                <div class="dia-detalle-titulo" id="detalle-titulo"></div>
+                <div class="dia-detalle-sub" id="detalle-sub"></div>
+            </div>
+            <button onclick="cerrarDetalleDia()" style="width:auto;padding:5px 12px;background:#333;color:white;font-size:0.8rem;margin:0;">✖</button>
+        </div>
+        <div id="detalle-contenido"></div>
+    </div>
+</div>
     <div class="gif-visual-header">
         <h3>📹 ELEGÍ LA TÉCNICA</h3>
         <button onclick="cerrarModalGifVisual()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
@@ -386,6 +465,7 @@
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
         <button onclick="abrirModalAplicarBib()" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;">📚 APLICAR RUTINA DE BIBLIOTECA</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
+        <button class="secondary" style="background:#1a1a3a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;" onclick="abrirCalendarioProfe()">📅 CALENDARIO DEL ALUMNO</button>
         <div id="visor-progreso-profe" class="hidden">
             <div id="dias-selector-profe" style="display:flex;overflow-x:auto;padding:10px 0;">
                 <button class="btn-day" onclick="cambiarDiaVisor('lunes',this)">LUN</button>
@@ -473,6 +553,7 @@
         <!-- Botones acción -->
         <button id="btn-guardar" style="background:var(--success);color:white;margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR SESIÓN</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
+        <button class="secondary" style="background:#1a1a3a;color:var(--primary);border:1px solid var(--primary);" onclick="abrirCalendario(sessionStorage.getItem('active_user'))">📅 CALENDARIO DE ENTRENAMIENTO</button>
 
         <!-- Badges -->
         <div style="margin-top:15px;">
@@ -982,7 +1063,8 @@ async function guardarPesoAlumno() {
                     serie:     s.num || si+1,
                     peso,
                     reps,
-                    rpe:       ej.rpe || 0
+                    rpe:       ej.rpe || 0,
+                    nota:      ej.nota || ''
                 });
                 huboCambios = true;
             });
@@ -2066,6 +2148,171 @@ function aplicarGifSeleccionado(ruta) {
 function cerrarModalGifVisual() {
     document.getElementById('modal-gif-visual').style.display = 'none';
     _gifTarget = null;
+}
+
+// ══════════════════════════════════════════════
+//  CALENDARIO DE ENTRENAMIENTO
+// ══════════════════════════════════════════════
+let _calUser    = null;
+let _calAnio    = new Date().getFullYear();
+let _calMes     = new Date().getMonth(); // 0-11
+
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_SEMANA_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+function abrirCalendario(username) {
+    _calUser = username;
+    _calAnio = new Date().getFullYear();
+    _calMes  = new Date().getMonth();
+    document.getElementById('cal-nombre-usuario').innerText = username.toUpperCase();
+    const modal = document.getElementById('modal-calendario');
+    modal.style.display = 'flex';
+    renderCalendario();
+}
+
+function abrirCalendarioProfe() {
+    const al = document.getElementById('p-nombre-alumno').value;
+    if (!al) { toast('Seleccioná un alumno primero', 'var(--danger)'); return; }
+    abrirCalendario(al);
+}
+
+function cerrarCalendario() {
+    document.getElementById('modal-calendario').style.display = 'none';
+    _calUser = null;
+}
+
+function calCambiarMes(dir) {
+    _calMes += dir;
+    if (_calMes < 0)  { _calMes = 11; _calAnio--; }
+    if (_calMes > 11) { _calMes = 0;  _calAnio++; }
+    renderCalendario();
+}
+
+function renderCalendario() {
+    // Label mes/año
+    document.getElementById('cal-mes-lbl').innerText = `${MESES_ES[_calMes]} ${_calAnio}`;
+
+    // Obtener fechas con entrenamiento del usuario
+    const historial = DATOS_GLOBALES.historial?.[_calUser] || [];
+    const fechasEntrenadas = new Set(historial.filter(r => r.fecha_iso).map(r => r.fecha_iso));
+
+    // Calcular días del mes
+    const primerDia = new Date(_calAnio, _calMes, 1).getDay(); // 0=dom
+    const diasEnMes = new Date(_calAnio, _calMes + 1, 0).getDate();
+    const hoyStr    = new Date().toISOString().split('T')[0];
+
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+
+    // Celdas vacías al inicio
+    for (let i = 0; i < primerDia; i++) {
+        grid.innerHTML += `<div class="cal-dia vacio"></div>`;
+    }
+
+    // Días del mes
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fechaStr = `${_calAnio}-${String(_calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const entrenado = fechasEntrenadas.has(fechaStr);
+        const esHoy     = fechaStr === hoyStr;
+        const esFuturo  = fechaStr > hoyStr;
+
+        let clases = 'cal-dia';
+        if (entrenado) clases += ' entrenado';
+        else if (!esFuturo) clases += ' no-entrenado';
+        if (esHoy) clases += ' hoy';
+
+        const punto = entrenado
+            ? `<div class="cal-punto"></div>`
+            : (!esFuturo ? `<div class="cal-punto-gris"></div>` : '');
+
+        grid.innerHTML += `<div class="${clases}" onclick="abrirDetalleDia('${fechaStr}', ${entrenado})">
+            <span class="cal-num">${d}</span>
+            ${punto}
+        </div>`;
+    }
+}
+
+function abrirDetalleDia(fechaStr, entrenado) {
+    const [anio, mes, dia] = fechaStr.split('-');
+    const fecha = new Date(fechaStr + 'T12:00:00');
+    const diaNombre = DIAS_SEMANA_ES[fecha.getDay()];
+    const mesNombre = MESES_ES[parseInt(mes) - 1];
+    const tituloFecha = `${diaNombre} ${parseInt(dia)} de ${mesNombre} ${anio}`;
+
+    document.getElementById('detalle-titulo').innerText = `📅 ${tituloFecha}`;
+
+    const historial = DATOS_GLOBALES.historial?.[_calUser] || [];
+    const registros = historial.filter(r => r.fecha_iso === fechaStr);
+
+    const contenido = document.getElementById('detalle-contenido');
+
+    if (!entrenado || !registros.length) {
+        const esHoy    = fechaStr === new Date().toISOString().split('T')[0];
+        const esFuturo = fechaStr > new Date().toISOString().split('T')[0];
+        document.getElementById('detalle-sub').innerText = '';
+        contenido.innerHTML = `<div class="no-entrenado-msg">
+            ${esFuturo ? '📆 Este día aún no llegó.' : esHoy ? '⏳ Aún no entrenaste hoy.' : '😴 No se registró entrenamiento este día.'}
+        </div>`;
+        document.getElementById('modal-dia-detalle').style.display = 'flex';
+        return;
+    }
+
+    // Agrupar registros por ejercicio
+    const porEjercicio = {};
+    registros.forEach(r => {
+        if (!porEjercicio[r.ejercicio]) porEjercicio[r.ejercicio] = [];
+        porEjercicio[r.ejercicio].push(r);
+    });
+
+    const totalSeries = registros.length;
+    const totalKg     = registros.reduce((a, r) => a + (parseFloat(r.peso || 0) * parseInt(r.reps || 1)), 0);
+    document.getElementById('detalle-sub').innerText =
+        `${Object.keys(porEjercicio).length} ejercicios · ${totalSeries} series · ${Math.round(totalKg)} kg volumen`;
+
+    let html = '';
+    for (const ejNombre in porEjercicio) {
+        const series = porEjercicio[ejNombre];
+        const record = DATOS_GLOBALES.recordes?.[_calUser]?.[ejNombre] || 0;
+
+        html += `<div class="detalle-ejercicio">
+            <div class="detalle-ej-nombre">
+                ${ejNombre.toUpperCase()}
+                ${record > 0 ? `<span style="font-size:0.65rem;background:var(--warning);color:black;padding:1px 6px;border-radius:4px;margin-left:5px;">🏆 ${record}kg</span>` : ''}
+            </div>
+            <table class="detalle-series-tabla">
+                <thead><tr>
+                    <th>SERIE</th><th>REPS</th><th>PESO</th><th>VOLUMEN</th>
+                    ${series[0]?.rpe ? '<th>RPE</th>' : ''}
+                </tr></thead>
+                <tbody>`;
+
+        series.forEach((s, i) => {
+            const vol = (parseFloat(s.peso || 0) * parseInt(s.reps || 0)).toFixed(0);
+            const esMax = parseFloat(s.peso) === record && record > 0;
+            html += `<tr class="${s.peso && s.reps ? 'completada' : ''}">
+                <td>${s.serie || i+1}</td>
+                <td>${s.reps || '—'}</td>
+                <td>${s.peso ? s.peso + ' kg' : '—'} ${esMax ? '🏆' : ''}</td>
+                <td style="color:#888;">${s.reps && s.peso ? vol + ' kg' : '—'}</td>
+                ${series[0]?.rpe ? `<td style="color:var(--warning);">${s.rpe || '—'}</td>` : ''}
+            </tr>`;
+        });
+
+        html += `</tbody></table>`;
+
+        // Nota del ejercicio si existe
+        const nota = series[0]?.nota;
+        if (nota) html += `<div style="font-size:0.72rem;color:#888;font-style:italic;margin-top:6px;">📝 ${nota}</div>`;
+
+        html += `</div>`;
+    }
+
+    contenido.innerHTML = html;
+    document.getElementById('modal-dia-detalle').style.display = 'flex';
+}
+
+function cerrarDetalleDia() {
+    document.getElementById('modal-dia-detalle').style.display = 'none';
 }
 
 window.onload = descargarDeLaRed;
