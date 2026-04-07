@@ -1035,26 +1035,35 @@ async function guardarPesoAlumno() {
         const u          = sessionStorage.getItem('active_user');
         const fechaIso   = getFechaHoy();
         const fechaDisplay = getFechaDisplay();
-        let huboCambios  = false;
         let nuevoRecord  = false;
 
         if (!DATOS_GLOBALES.recordes[u]) DATOS_GLOBALES.recordes[u] = {};
         if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
 
         const rutina = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
+        if (rutina.length === 0) { toast('No hay ejercicios para guardar', '#888'); return; }
 
         rutina.forEach((ej, ejIdx) => {
-            // Guardar nota
+            // Guardar nota desde el DOM
             const notaEl = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
-            if (notaEl) ej.nota = notaEl.value;
+            const notaVal = notaEl ? notaEl.value : (ej.nota || '');
 
-            // Procesar series — guardar siempre, incluso vacías
+            // Leer series DESDE EL DOM (fuente de verdad)
             if (!Array.isArray(ej.series)) return;
             ej.series.forEach((s, si) => {
-                const peso = (s.peso !== '' && s.peso !== null && s.peso !== undefined) ? parseFloat(s.peso) : null;
-                const reps = (s.reps !== '' && s.reps !== null && s.reps !== undefined) ? parseInt(s.reps) : null;
+                const inputPeso = document.querySelector(`.peso-serie-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
+                const inputReps = document.querySelector(`.reps-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
 
-                // Record: solo si tiene peso válido mayor a 0
+                const pesoVal = inputPeso ? inputPeso.value : '';
+                const repsVal = inputReps ? inputReps.value : '';
+
+                const peso = pesoVal !== '' ? parseFloat(pesoVal) : null;
+                const reps = repsVal !== '' ? parseInt(repsVal)   : null;
+
+                // Solo guardar en historial si hay algo
+                if (peso === null && reps === null && !ej.rpe && !notaVal) return;
+
+                // Record
                 if (peso !== null && peso > 0) {
                     const recordAnterior = DATOS_GLOBALES.recordes[u][ej.nombre] || 0;
                     if (peso > recordAnterior) {
@@ -1063,33 +1072,35 @@ async function guardarPesoAlumno() {
                     }
                 }
 
-                // Guardar en historial solo si hay al menos algo
-                if (peso !== null || reps !== null || ej.rpe || ej.nota) {
-                    DATOS_GLOBALES.historial[u].push({
-                        fecha:     fechaDisplay,
-                        fecha_iso: fechaIso,
-                        ejercicio: ej.nombre,
-                        serie:     s.num || si+1,
-                        peso:      peso !== null ? peso : '',
-                        reps:      reps !== null ? reps : '',
-                        rpe:       ej.rpe || 0,
-                        nota:      ej.nota || ''
-                    });
-                }
+                DATOS_GLOBALES.historial[u].push({
+                    fecha:     fechaDisplay,
+                    fecha_iso: fechaIso,
+                    ejercicio: ej.nombre,
+                    serie:     s.num || si + 1,
+                    peso:      peso !== null ? peso : '',
+                    reps:      reps !== null ? reps : '',
+                    rpe:       ej.rpe || 0,
+                    nota:      notaVal
+                });
             });
-            huboCambios = true; // siempre guardar si hay ejercicios
+
+            // Guardar nota en rutina y resetear series a vacío
+            ej.nota = notaVal;
+            ej.rpe  = ej.rpe || 0;
+            ej.series = ej.series.map(s => ({ num: s.num, peso: '', reps: '' }));
         });
 
-        if (rutina.length > 0) {
-            await subirALaRed();
-            renderStatsAlumno(u);
-            renderBadges(u);
-            actualizarProgreso();
-            if (nuevoRecord) toast('🏆 ¡NUEVO RÉCORD PERSONAL! ¡Brutal!', 'var(--warning)', 3500);
-            else toast('¡Sesión guardada! 💪', 'var(--success)');
-        } else {
-            toast('No hay ejercicios para guardar', '#888');
-        }
+        await subirALaRed();
+
+        // Re-renderizar el día para mostrar series limpias
+        cargarDiaAlumno(diaActualAlumno);
+        renderStatsAlumno(u);
+        renderBadges(u);
+        actualizarProgreso();
+
+        if (nuevoRecord) toast('🏆 ¡NUEVO RÉCORD PERSONAL! ¡Brutal!', 'var(--warning)', 3500);
+        else toast('¡Sesión guardada! 💪', 'var(--success)');
+
     } finally {
         setLoading('btn-guardar', false);
     }
