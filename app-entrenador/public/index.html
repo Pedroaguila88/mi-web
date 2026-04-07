@@ -1082,8 +1082,6 @@ async function guardarPesoAlumno() {
 
         if (rutina.length > 0) {
             await subirALaRed();
-            await descargarDeLaRed();
-            cargarDiaAlumno(diaActualAlumno);
             renderStatsAlumno(u);
             renderBadges(u);
             actualizarProgreso();
