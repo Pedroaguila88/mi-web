@@ -635,7 +635,12 @@ function setLoading(btnId, loading) {
 function setStatus(msg) { document.getElementById('cloud-status').innerText = msg; }
 
 function getFechaHoy() {
-    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    // Usar fecha local, no UTC (evita problema de zona horaria)
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const d = String(hoy.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 function getFechaDisplay() {
@@ -1032,10 +1037,11 @@ function onPesoChange(input) { actualizarProgreso(); }
 async function guardarPesoAlumno() {
     setLoading('btn-guardar', true);
     try {
-        const u          = sessionStorage.getItem('active_user');
-        const fechaIso   = getFechaHoy();
+        const u            = sessionStorage.getItem('active_user');
+        const fechaIso     = getFechaHoy();
         const fechaDisplay = getFechaDisplay();
-        let nuevoRecord  = false;
+        let nuevoRecord    = false;
+        let hayDatos       = false; // hubo al menos un valor real
 
         if (!DATOS_GLOBALES.recordes[u]) DATOS_GLOBALES.recordes[u] = {};
         if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
@@ -1043,25 +1049,37 @@ async function guardarPesoAlumno() {
         const rutina = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
         if (rutina.length === 0) { toast('No hay ejercicios para guardar', '#888'); return; }
 
+        // Verificar que no exista ya una sesión guardada hoy para no duplicar
+        const yaTieneHoy = DATOS_GLOBALES.historial[u].some(r => r.fecha_iso === fechaIso);
+        if (yaTieneHoy) {
+            // Eliminar registros de hoy para reemplazarlos con los nuevos
+            DATOS_GLOBALES.historial[u] = DATOS_GLOBALES.historial[u].filter(r => r.fecha_iso !== fechaIso);
+        }
+
         rutina.forEach((ej, ejIdx) => {
-            // Guardar nota desde el DOM
-            const notaEl = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
+            const notaEl  = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
             const notaVal = notaEl ? notaEl.value : (ej.nota || '');
 
-            // Leer series DESDE EL DOM (fuente de verdad)
-            if (!Array.isArray(ej.series)) return;
+            if (!Array.isArray(ej.series)) {
+                // Ejercicio sin series array — guardar entrada mínima para marcar el día
+                DATOS_GLOBALES.historial[u].push({
+                    fecha: fechaDisplay, fecha_iso: fechaIso,
+                    ejercicio: ej.nombre, serie: 1,
+                    peso: '', reps: '', rpe: ej.rpe || 0, nota: notaVal
+                });
+                hayDatos = true;
+                return;
+            }
+
             ej.series.forEach((s, si) => {
                 const inputPeso = document.querySelector(`.peso-serie-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
                 const inputReps = document.querySelector(`.reps-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
 
-                const pesoVal = inputPeso ? inputPeso.value : '';
-                const repsVal = inputReps ? inputReps.value : '';
+                const pesoVal = inputPeso ? inputPeso.value.trim() : '';
+                const repsVal = inputReps ? inputReps.value.trim() : '';
 
                 const peso = pesoVal !== '' ? parseFloat(pesoVal) : null;
                 const reps = repsVal !== '' ? parseInt(repsVal)   : null;
-
-                // Solo guardar en historial si hay algo
-                if (peso === null && reps === null && !ej.rpe && !notaVal) return;
 
                 // Record
                 if (peso !== null && peso > 0) {
@@ -1072,6 +1090,7 @@ async function guardarPesoAlumno() {
                     }
                 }
 
+                // Siempre guardar cada serie (aunque esté vacía) para registrar la sesión
                 DATOS_GLOBALES.historial[u].push({
                     fecha:     fechaDisplay,
                     fecha_iso: fechaIso,
@@ -1082,17 +1101,16 @@ async function guardarPesoAlumno() {
                     rpe:       ej.rpe || 0,
                     nota:      notaVal
                 });
+                hayDatos = true;
             });
 
-            // Guardar nota en rutina y resetear series a vacío
-            ej.nota = notaVal;
-            ej.rpe  = ej.rpe || 0;
+            // Guardar nota y resetear series a vacío en rutinas
+            ej.nota   = notaVal;
+            ej.rpe    = ej.rpe || 0;
             ej.series = ej.series.map(s => ({ num: s.num, peso: '', reps: '' }));
         });
 
         await subirALaRed();
-
-        // Re-renderizar el día para mostrar series limpias
         cargarDiaAlumno(diaActualAlumno);
         renderStatsAlumno(u);
         renderBadges(u);
