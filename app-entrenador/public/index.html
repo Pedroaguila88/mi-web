@@ -1041,7 +1041,6 @@ async function guardarPesoAlumno() {
         const fechaIso     = getFechaHoy();
         const fechaDisplay = getFechaDisplay();
         let nuevoRecord    = false;
-        let hayDatos       = false; // hubo al menos un valor real
 
         if (!DATOS_GLOBALES.recordes[u]) DATOS_GLOBALES.recordes[u] = {};
         if (!DATOS_GLOBALES.historial[u]) DATOS_GLOBALES.historial[u] = [];
@@ -1049,27 +1048,35 @@ async function guardarPesoAlumno() {
         const rutina = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno] || [];
         if (rutina.length === 0) { toast('No hay ejercicios para guardar', '#888'); return; }
 
-        // Verificar que no exista ya una sesión guardada hoy para no duplicar
-        const yaTieneHoy = DATOS_GLOBALES.historial[u].some(r => r.fecha_iso === fechaIso);
-        if (yaTieneHoy) {
-            // Eliminar registros de hoy para reemplazarlos con los nuevos
-            DATOS_GLOBALES.historial[u] = DATOS_GLOBALES.historial[u].filter(r => r.fecha_iso !== fechaIso);
+        // Detectar cuáles ejercicios tienen datos en el DOM ahora mismo
+        const ejerciciosConDatos = [];
+        rutina.forEach((ej, ejIdx) => {
+            if (!Array.isArray(ej.series)) return;
+            const tieneDatos = ej.series.some((s, si) => {
+                const inputPeso = document.querySelector(`.peso-serie-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
+                const inputReps = document.querySelector(`.reps-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
+                return (inputPeso?.value.trim() !== '') || (inputReps?.value.trim() !== '');
+            });
+            const notaEl = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
+            const tieneNota = notaEl && notaEl.value.trim() !== '';
+            if (tieneDatos || tieneNota || ej.rpe) ejerciciosConDatos.push(ej.nombre);
+        });
+
+        // Solo borrar del historial de hoy los ejercicios que vamos a reemplazar
+        if (ejerciciosConDatos.length > 0) {
+            DATOS_GLOBALES.historial[u] = DATOS_GLOBALES.historial[u].filter(r =>
+                !(r.fecha_iso === fechaIso && ejerciciosConDatos.includes(r.ejercicio))
+            );
         }
 
         rutina.forEach((ej, ejIdx) => {
             const notaEl  = document.querySelector(`.nota-input[data-idx="${ejIdx}"]`);
             const notaVal = notaEl ? notaEl.value : (ej.nota || '');
 
-            if (!Array.isArray(ej.series)) {
-                // Ejercicio sin series array — guardar entrada mínima para marcar el día
-                DATOS_GLOBALES.historial[u].push({
-                    fecha: fechaDisplay, fecha_iso: fechaIso,
-                    ejercicio: ej.nombre, serie: 1,
-                    peso: '', reps: '', rpe: ej.rpe || 0, nota: notaVal
-                });
-                hayDatos = true;
-                return;
-            }
+            if (!Array.isArray(ej.series)) return;
+
+            // Solo procesar este ejercicio si tiene datos o nota
+            if (!ejerciciosConDatos.includes(ej.nombre)) return;
 
             ej.series.forEach((s, si) => {
                 const inputPeso = document.querySelector(`.peso-serie-input[data-ej="${ejIdx}"][data-serie="${si}"]`);
@@ -1090,7 +1097,6 @@ async function guardarPesoAlumno() {
                     }
                 }
 
-                // Siempre guardar cada serie (aunque esté vacía) para registrar la sesión
                 DATOS_GLOBALES.historial[u].push({
                     fecha:     fechaDisplay,
                     fecha_iso: fechaIso,
@@ -1101,10 +1107,9 @@ async function guardarPesoAlumno() {
                     rpe:       ej.rpe || 0,
                     nota:      notaVal
                 });
-                hayDatos = true;
             });
 
-            // Guardar nota y resetear series a vacío en rutinas
+            // Resetear solo las series de ejercicios guardados
             ej.nota   = notaVal;
             ej.rpe    = ej.rpe || 0;
             ej.series = ej.series.map(s => ({ num: s.num, peso: '', reps: '' }));
