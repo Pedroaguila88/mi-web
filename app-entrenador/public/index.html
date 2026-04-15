@@ -1518,6 +1518,8 @@ async function editProfeAlumno(username) {
         } else toast('Error al actualizar', 'var(--danger)');
     } catch(e) { toast('Error de conexión', 'var(--danger)'); }
 }
+
+async function editFoto(u) {
     const fotoActual = DATOS_GLOBALES.users?.[u]?.foto || '';
     const newFoto = prompt('Nombre de foto (ej: juan.jpg):', fotoActual);
     if (newFoto === null) return;
