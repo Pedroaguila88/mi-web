@@ -196,7 +196,7 @@ app.post('/api/usuarios', async (req, res) => {
 app.put('/api/usuarios/:user', async (req, res) => {
     try {
         const oldU = req.params.user;
-        const { nuevoUsuario, nuevaPassword, foto, fechaInicio, bloqueado } = req.body;
+        const { nuevoUsuario, nuevaPassword, foto, fechaInicio, bloqueado, profe_asignado } = req.body;
         const newU = nuevoUsuario.toLowerCase().trim();
         const datos = await leerBin();
         const cuenta = datos.users[oldU];
@@ -208,9 +208,10 @@ app.put('/api/usuarios/:user', async (req, res) => {
 
         if (newU !== oldU) {
             datos.users[newU] = { ...cuenta, passHash,
-                foto:        foto        !== undefined ? foto        : cuenta.foto,
-                fechaInicio: fechaInicio !== undefined ? fechaInicio : cuenta.fechaInicio,
-                bloqueado:   bloqueado   !== undefined ? bloqueado   : cuenta.bloqueado
+                foto:           foto           !== undefined ? foto           : cuenta.foto,
+                fechaInicio:    fechaInicio    !== undefined ? fechaInicio    : cuenta.fechaInicio,
+                bloqueado:      bloqueado      !== undefined ? bloqueado      : cuenta.bloqueado,
+                profe_asignado: profe_asignado !== undefined ? profe_asignado : cuenta.profe_asignado
             };
             if (datos.rutinas[oldU])   { datos.rutinas[newU]   = datos.rutinas[oldU];   delete datos.rutinas[oldU]; }
             if (datos.historial[oldU]) { datos.historial[newU] = datos.historial[oldU]; delete datos.historial[oldU]; }
@@ -218,9 +219,10 @@ app.put('/api/usuarios/:user', async (req, res) => {
             delete datos.users[oldU];
         } else {
             datos.users[oldU].passHash = passHash;
-            if (foto        !== undefined) datos.users[oldU].foto        = foto;
-            if (fechaInicio !== undefined) datos.users[oldU].fechaInicio = fechaInicio;
-            if (bloqueado   !== undefined) datos.users[oldU].bloqueado   = bloqueado;
+            if (foto           !== undefined) datos.users[oldU].foto           = foto;
+            if (fechaInicio    !== undefined) datos.users[oldU].fechaInicio    = fechaInicio;
+            if (bloqueado      !== undefined) datos.users[oldU].bloqueado      = bloqueado;
+            if (profe_asignado !== undefined) datos.users[oldU].profe_asignado = profe_asignado;
         }
 
         await escribirBin(datos);

@@ -1468,7 +1468,56 @@ async function editUser(oldU) {
     if (data.ok) { await descargarDeLaRed(); renderMasterUsers(); toast('Usuario actualizado ✅'); }
 }
 
-async function editFoto(u) {
+async function editProfeAlumno(username) {
+    const user = DATOS_GLOBALES.users?.[username];
+    if (!user) return;
+
+    // Construir opciones de profes disponibles
+    const profes = Object.entries(DATOS_GLOBALES.users)
+        .filter(([, u]) => u.role === 'profe')
+        .map(([nombre]) => nombre);
+
+    const actual = user.profe_asignado || '';
+    let opciones = '— Sin profe —\n';
+    profes.forEach((p, i) => opciones += `${i + 1}. ${p.toUpperCase()}\n`);
+
+    const input = prompt(
+        `Profe actual de ${username.toUpperCase()}: ${actual ? actual.toUpperCase() : 'Sin profe'}\n\n` +
+        `Profes disponibles:\n${opciones}\n` +
+        `Escribí el nombre del profe o dejá vacío para "Sin profe":`,
+        actual
+    );
+
+    if (input === null) return; // canceló
+
+    const nuevoProfe = input.trim().toLowerCase() || null;
+
+    // Validar que el profe exista (si no es vacío)
+    if (nuevoProfe && !profes.map(p => p.toLowerCase()).includes(nuevoProfe)) {
+        toast(`No existe el profe "${nuevoProfe}"`, 'var(--danger)'); return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/usuarios/${encodeURIComponent(username)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nuevoUsuario: username,
+                nuevaPassword: '_KEEP_',
+                profe_asignado: nuevoProfe
+            })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            renderMasterUsers();
+            toast(nuevoProfe
+                ? `✅ ${username.toUpperCase()} asignado a ${nuevoProfe.toUpperCase()}`
+                : `✅ ${username.toUpperCase()} queda sin profe`
+            );
+        } else toast('Error al actualizar', 'var(--danger)');
+    } catch(e) { toast('Error de conexión', 'var(--danger)'); }
+}
     const fotoActual = DATOS_GLOBALES.users?.[u]?.foto || '';
     const newFoto = prompt('Nombre de foto (ej: juan.jpg):', fotoActual);
     if (newFoto === null) return;
@@ -1542,6 +1591,7 @@ function renderMasterUsers() {
                         <b>${u.toUpperCase()}</b>
                         <span style="font-size:0.65rem;color:#888;margin-left:5px;">${user.role}</span>
                         ${cuotaBadge}
+                        ${user.role === 'alumno' ? `<div style="font-size:0.6rem;color:${user.profe_asignado ? '#00d4ff' : '#888'};margin-top:2px;">👤 ${user.profe_asignado ? user.profe_asignado.toUpperCase() : 'Sin profe'}</div>` : ''}
                         ${foto ? `<div style="font-size:0.6rem;color:#555;">${foto}</div>` : '<div style="font-size:0.6rem;color:#555;">sin foto</div>'}
                         ${user.fechaInicio && user.role !== 'dev' ? `<div style="font-size:0.6rem;color:#555;">📅 Vence: ${venceStr}</div>` : ''}
                     </div>
@@ -1552,6 +1602,7 @@ function renderMasterUsers() {
                 <button class="btn-log-as" onclick="loginAs('${u}')">ENTRAR</button>
                 <button class="btn-edit-user" onclick="editUser('${u}')">EDITAR</button>
                 <button class="btn-foto" onclick="editFoto('${u}')">📸 FOTO</button>
+                ${user.role === 'alumno' ? `<button onclick="editProfeAlumno('${u}')" style="background:#1a2a3a;color:var(--accent);border:1px solid var(--accent);width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;margin:0;">👤 PROFE</button>` : ''}
                 ${user.role !== 'dev' ? `
                 <button onclick="renovarCuota('${u}')" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;margin:0;">💳 CUOTA</button>
                 <button onclick="toggleBloqueo('${u}')" style="background:${user.bloqueado ? 'var(--success)' : '#444'};color:white;width:auto;padding:5px 8px;font-size:0.65rem;border-radius:4px;margin:0;">${user.bloqueado ? '🔓 ACTIVAR' : '🔒 BLOQUEAR'}</button>
@@ -1746,7 +1797,7 @@ function toggleProfeSelector() {
 
 function actualizarSelectProfes() {
     const sel = document.getElementById('reg-profe-asignado');
-    sel.innerHTML = '';
+    sel.innerHTML = '<option value="">— Sin profe —</option>';
     for (const u in DATOS_GLOBALES.users) {
         if (DATOS_GLOBALES.users[u].role === 'profe') sel.innerHTML += `<option value="${u}">${u.toUpperCase()}</option>`;
     }
