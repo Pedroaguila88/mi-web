@@ -556,7 +556,7 @@
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
         <button class="secondary" style="background:#1a1a3a;color:var(--primary);border:1px solid var(--primary);" onclick="abrirCalendario(sessionStorage.getItem('active_user'))">📅 CALENDARIO DE ENTRENAMIENTO</button>
         <div id="btn-generar-rutina-wrap" style="display:none;">
-            <button style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;margin-top:5px;" onclick="abrirGeneradorRutina()">🤖 GENERAR RUTINA CON IA</button>
+            <button style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;margin-top:5px;" onclick="abrirGeneradorRutina()">⚡ GENERAR RUTINA</button>
         </div>
 
         <!-- Badges -->
@@ -612,7 +612,7 @@
             <textarea id="gen-notas-usuario" placeholder="Ej: tengo dolor en la rodilla, quiero enfocarse en fuerza, solo 30 minutos..." style="min-height:60px;font-size:0.82rem;background:#222;border:1px solid #444;color:#ccc;border-radius:8px;padding:8px;width:100%;margin:0;resize:none;"></textarea>
         </div>
 
-        <button onclick="generarRutinaIA()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;font-weight:bold;font-size:0.95rem;border-radius:10px;margin:0;" id="btn-gen-ia">✨ GENERAR MI RUTINA</button>
+        <button onclick="generarRutinaIA()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;font-weight:bold;font-size:0.95rem;border-radius:10px;margin:0;" id="btn-gen-ia">⚡ GENERAR RUTINA</button>
     </div>
 
     <!-- PASO 2: Resultado -->
@@ -2607,24 +2607,23 @@ Reglas:
 - instrucciones: máximo 1 línea, práctica y motivadora`;
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch(`${API_URL}/api/generar-rutina`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1000,
-                messages: [{ role: 'user', content: prompt }]
+                nivel: _genNivel,
+                musculos: musculosTexto,
+                notasUsuario,
+                ejerciciosDisponibles: ejerciciosDisponibles.map(e => `${e.nombre} (${e.musculo})`)
             })
         });
 
         const data = await response.json();
-        const texto = data.content?.map(i => i.text || '').join('') || '';
+        if (!data.ok) throw new Error(data.msg || 'Error del servidor');
 
-        // Limpiar y parsear JSON
-        const jsonLimpio = texto.replace(/```json|```/g, '').trim();
-        const rutina = JSON.parse(jsonLimpio);
+        const rutina = data.rutina;
 
-        // Enriquecer con GIF y validar nombres
+        // Enriquecer con GIF
         _genRutinaGenerada = rutina.map(ej => {
             const ejercicioReal = ejerciciosDisponibles.find(e =>
                 e.nombre.toLowerCase() === ej.nombre.toLowerCase()

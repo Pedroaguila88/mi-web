@@ -119,6 +119,51 @@ app.put('/api/datos', async (req, res) => {
     }
 });
 
+// GENERAR RUTINA CON IA
+app.post('/api/generar-rutina', async (req, res) => {
+    try {
+        const { nivel, musculos, notasUsuario, ejerciciosDisponibles } = req.body;
+
+        const prompt = `Sos un entrenador personal experto. Generá una rutina de gimnasio.
+
+Nivel: ${nivel}
+Músculos a trabajar: ${musculos}
+${notasUsuario ? `Indicaciones: ${notasUsuario}` : ''}
+
+Ejercicios disponibles (usá solo estos, con nombre exacto):
+${ejerciciosDisponibles.join('\n')}
+
+Devolvé SOLO JSON válido, sin texto extra ni backticks:
+[{"nombre":"nombre exacto","series":4,"reps":"10-12","instrucciones":"instrucción breve"}]
+
+Reglas: 4-7 ejercicios, series 3 o 4, reps según nivel, instrucción máximo 1 línea.`;
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 1000,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        const data = await response.json();
+        const texto = data.content?.map(i => i.text || '').join('') || '';
+        const jsonLimpio = texto.replace(/```json|```/g, '').trim();
+        const rutina = JSON.parse(jsonLimpio);
+
+        res.json({ ok: true, rutina });
+    } catch (e) {
+        console.error('Error generar rutina:', e);
+        res.status(500).json({ ok: false, msg: 'Error al generar rutina' });
+    }
+});
+
 // CREAR RUTINA EN BIBLIOTECA (solo dev)
 app.post('/api/biblioteca', async (req, res) => {
     try {
