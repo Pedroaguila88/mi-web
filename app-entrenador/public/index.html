@@ -2640,16 +2640,25 @@ Reglas:
         mostrarResultadoRutina();
 
     } catch(e) {
+        console.error('Error generando rutina:', e);
         document.getElementById('gen-loading').style.display = 'none';
         document.getElementById('gen-paso1').style.display = 'block';
-        toast('Error al generar rutina. Intentá de nuevo.', 'var(--danger)', 3000);
+        toast(`Error: ${e.message || 'Intentá de nuevo'}`, 'var(--danger)', 4000);
     }
 }
 
 function mostrarResultadoRutina() {
     document.getElementById('gen-loading').style.display = 'none';
+    document.getElementById('gen-paso2').style.display = 'none'; // reset
 
     const cont = document.getElementById('gen-resultado');
+
+    if (!_genRutinaGenerada || _genRutinaGenerada.length === 0) {
+        document.getElementById('gen-paso1').style.display = 'block';
+        toast('No se generaron ejercicios. Intentá de nuevo.', 'var(--danger)', 3000);
+        return;
+    }
+
     cont.innerHTML = _genRutinaGenerada.map((ej, i) => `
         <div style="background:#1a1a2a;border:1px solid #333;border-left:3px solid #7c3aed;border-radius:10px;padding:12px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -2660,7 +2669,10 @@ function mostrarResultadoRutina() {
             ${ej.gif ? `<div style="font-size:0.7rem;color:#7c3aed;margin-top:4px;">📹 Técnica incluida</div>` : ''}
         </div>`).join('');
 
-    document.getElementById('gen-paso2').style.display = 'flex';
+    // Mostrar paso2 como flex con columna
+    const paso2 = document.getElementById('gen-paso2');
+    paso2.style.display = 'flex';
+    paso2.style.flexDirection = 'column';
 }
 
 function volverPaso1Generador() {
