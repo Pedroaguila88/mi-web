@@ -555,6 +555,9 @@
         <button id="btn-guardar" style="background:var(--success);color:white;margin-top:15px;" onclick="guardarPesoAlumno()">✅ GUARDAR SESIÓN</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('alumno')">VER MI PROGRESO 📈</button>
         <button class="secondary" style="background:#1a1a3a;color:var(--primary);border:1px solid var(--primary);" onclick="abrirCalendario(sessionStorage.getItem('active_user'))">📅 CALENDARIO DE ENTRENAMIENTO</button>
+        <div id="btn-generar-rutina-wrap" style="display:none;">
+            <button style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;margin-top:5px;" onclick="abrirGeneradorRutina()">🤖 GENERAR RUTINA CON IA</button>
+        </div>
 
         <!-- Badges -->
         <div style="margin-top:15px;">
@@ -583,9 +586,56 @@
     </div>
 </div>
 
+<!-- MODAL GENERADOR DE RUTINA IA -->
+<div id="modal-generar-rutina" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.93);z-index:2700;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1a1a2a;border-bottom:2px solid #7c3aed;flex-shrink:0;">
+        <h3 style="margin:0;color:#a78bfa;font-size:0.95rem;">🤖 GENERADOR DE RUTINA IA</h3>
+        <button onclick="cerrarGeneradorRutina()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
+    </div>
+
+    <!-- PASO 1: Elegir músculos -->
+    <div id="gen-paso1" style="flex:1;overflow-y:auto;padding:16px;">
+        <div style="font-size:0.8rem;color:#aaa;margin-bottom:12px;">Elegí los músculos que querés trabajar hoy:</div>
+        <div id="gen-musculos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
+
+        <div style="background:#1a1a2a;border-radius:10px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">⚡ Nivel de intensidad</div>
+            <div style="display:flex;gap:6px;">
+                <button onclick="seleccionarNivel('principiante',this)" style="flex:1;padding:8px;font-size:0.75rem;background:#333;color:white;margin:0;border:1px solid #444;border-radius:8px;">🌱 Principiante</button>
+                <button onclick="seleccionarNivel('intermedio',this)" style="flex:1;padding:8px;font-size:0.75rem;background:#333;color:white;margin:0;border:1px solid #444;border-radius:8px;">💪 Intermedio</button>
+                <button onclick="seleccionarNivel('avanzado',this)" style="flex:1;padding:8px;font-size:0.75rem;background:#333;color:white;margin:0;border:1px solid #444;border-radius:8px;">🔥 Avanzado</button>
+            </div>
+        </div>
+
+        <div style="background:#1a1a2a;border-radius:10px;padding:12px;margin-bottom:16px;">
+            <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">📝 Algo más que quieras indicar (opcional)</div>
+            <textarea id="gen-notas-usuario" placeholder="Ej: tengo dolor en la rodilla, quiero enfocarse en fuerza, solo 30 minutos..." style="min-height:60px;font-size:0.82rem;background:#222;border:1px solid #444;color:#ccc;border-radius:8px;padding:8px;width:100%;margin:0;resize:none;"></textarea>
+        </div>
+
+        <button onclick="generarRutinaIA()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;font-weight:bold;font-size:0.95rem;border-radius:10px;margin:0;" id="btn-gen-ia">✨ GENERAR MI RUTINA</button>
+    </div>
+
+    <!-- PASO 2: Resultado -->
+    <div id="gen-paso2" style="display:none;flex:1;overflow-y:auto;padding:16px;flex-direction:column;">
+        <div style="font-size:0.75rem;color:#888;margin-bottom:10px;">📋 Tu rutina generada para hoy:</div>
+        <div id="gen-resultado" style="margin-bottom:16px;"></div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="confirmarRutinaIA()" style="flex:1;background:var(--success);color:white;padding:14px;margin:0;font-size:0.9rem;">✅ AGREGAR A HOY</button>
+            <button onclick="volverPaso1Generador()" style="flex:1;background:#333;color:white;padding:14px;margin:0;font-size:0.9rem;">🔄 GENERAR OTRA</button>
+        </div>
+    </div>
+
+    <!-- Loading IA -->
+    <div id="gen-loading" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+        <div style="font-size:2.5rem;animation:swing 0.7s ease-in-out infinite alternate;">🤖</div>
+        <div style="color:#a78bfa;font-weight:bold;font-size:0.9rem;letter-spacing:1px;">Generando tu rutina...</div>
+        <div style="color:#666;font-size:0.75rem;">Esto puede tardar unos segundos</div>
+    </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
-//  COACH SYSTEM v7.0.0 — Estado global
+//  GENERADOR DE RUTINA IA
 // ══════════════════════════════════════════════
 const API_URL = 'https://mi-web-79w7.onrender.com';
 let DATOS_GLOBALES = { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {}, biblioteca: [] };
@@ -760,6 +810,7 @@ function renderDashboard(role, username) {
         cargarDiaAlumno('lunes');
         renderBadges(username);
         renderExitButtons('alumno-exit-zone');
+        actualizarBtnGenerador(username);
     }
 }
 
@@ -2355,6 +2406,248 @@ function abrirDetalleDia(fechaStr, entrenado) {
 
 function cerrarDetalleDia() {
     document.getElementById('modal-dia-detalle').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+//  GENERADOR DE RUTINA IA
+// ══════════════════════════════════════════════
+let _genMusculosSeleccionados = [];
+let _genNivel = 'intermedio';
+let _genRutinaGenerada = [];
+
+const MUSCULOS_GENERADOR = [
+    { key: 'pectoral',       label: '🏋️ Pectoral' },
+    { key: 'espalda',        label: '🦴 Espalda' },
+    { key: 'biceps',         label: '💪 Bíceps' },
+    { key: 'triceps',        label: '🔺 Tríceps' },
+    { key: 'deltoides',      label: '🏔️ Deltoides' },
+    { key: 'gluteos',        label: '🍑 Glúteos' },
+    { key: 'cuadriceps',     label: '🦵 Cuádriceps' },
+    { key: 'isquiotibiales', label: '🦿 Isquiotibiales' },
+    { key: 'pantorrilla',    label: '🦶 Pantorrilla' },
+    { key: 'abdomen',        label: '🧘 Abdomen/Core' },
+];
+
+// Mapeo músculo → ejercicios disponibles (de GIFS_POR_MUSCULO)
+const MUSCULOS_A_GIFS = {
+    pectoral:       '🏋️ Pectoral',
+    espalda:        '🦴 Espalda',
+    biceps:         '💪 Bíceps',
+    triceps:        '🔺 Tríceps',
+    deltoides:      '🏔️ Deltoides',
+    gluteos:        '🍑 Glúteos',
+    cuadriceps:     '🦵 Cuádriceps',
+    isquiotibiales: '🦿 Isquiotibiales',
+    pantorrilla:    '🦶 Pantorrilla',
+    abdomen:        '🧘 Abdomen/Core',
+};
+
+function abrirGeneradorRutina() {
+    _genMusculosSeleccionados = [];
+    _genNivel = 'intermedio';
+    _genRutinaGenerada = [];
+
+    // Renderizar grid de músculos
+    const grid = document.getElementById('gen-musculos-grid');
+    grid.innerHTML = MUSCULOS_GENERADOR.map(m => `
+        <div class="gen-musculo-btn" data-key="${m.key}" onclick="toggleMusculo('${m.key}',this)"
+            style="background:#1a1a2a;border:2px solid #333;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:0.2s;font-size:0.8rem;color:#888;">
+            ${m.label}
+        </div>`).join('');
+
+    // Reset UI
+    document.getElementById('gen-paso1').style.display = 'block';
+    document.getElementById('gen-paso2').style.display = 'none';
+    document.getElementById('gen-loading').style.display = 'none';
+    document.getElementById('gen-notas-usuario').value = '';
+
+    // Marcar nivel intermedio por defecto
+    document.querySelectorAll('#modal-generar-rutina button[onclick^="seleccionarNivel"]').forEach(b => {
+        b.style.background = '#333'; b.style.borderColor = '#444'; b.style.color = 'white';
+    });
+    const btnIntermedio = document.querySelector('#modal-generar-rutina button[onclick="seleccionarNivel(\'intermedio\',this)"]');
+    if (btnIntermedio) { btnIntermedio.style.background = '#4f46e5'; btnIntermedio.style.borderColor = '#7c3aed'; }
+
+    document.getElementById('modal-generar-rutina').style.display = 'flex';
+}
+
+function cerrarGeneradorRutina() {
+    document.getElementById('modal-generar-rutina').style.display = 'none';
+}
+
+function toggleMusculo(key, el) {
+    const idx = _genMusculosSeleccionados.indexOf(key);
+    if (idx === -1) {
+        _genMusculosSeleccionados.push(key);
+        el.style.background = '#2d1f7a';
+        el.style.borderColor = '#7c3aed';
+        el.style.color = '#a78bfa';
+    } else {
+        _genMusculosSeleccionados.splice(idx, 1);
+        el.style.background = '#1a1a2a';
+        el.style.borderColor = '#333';
+        el.style.color = '#888';
+    }
+}
+
+function seleccionarNivel(nivel, btn) {
+    _genNivel = nivel;
+    document.querySelectorAll('#modal-generar-rutina button[onclick^="seleccionarNivel"]').forEach(b => {
+        b.style.background = '#333'; b.style.borderColor = '#444'; b.style.color = 'white';
+    });
+    btn.style.background = '#4f46e5';
+    btn.style.borderColor = '#7c3aed';
+    btn.style.color = 'white';
+}
+
+async function generarRutinaIA() {
+    if (_genMusculosSeleccionados.length === 0) {
+        toast('Elegí al menos un músculo', 'var(--danger)'); return;
+    }
+
+    // Mostrar loading
+    document.getElementById('gen-paso1').style.display = 'none';
+    document.getElementById('gen-loading').style.display = 'flex';
+
+    // Construir lista de ejercicios disponibles para los músculos elegidos
+    const ejerciciosDisponibles = [];
+    _genMusculosSeleccionados.forEach(key => {
+        const musculoKey = MUSCULOS_A_GIFS[key];
+        const gifs = GIFS_POR_MUSCULO[musculoKey] || [];
+        gifs.forEach(g => {
+            ejerciciosDisponibles.push({
+                nombre: g.nombre,
+                musculo: musculoKey,
+                gif: `gifs/${g.archivo}`
+            });
+        });
+    });
+
+    const notasUsuario = document.getElementById('gen-notas-usuario').value.trim();
+    const musculosTexto = _genMusculosSeleccionados.map(k => MUSCULOS_GENERADOR.find(m => m.key === k)?.label).join(', ');
+
+    const prompt = `Sos un entrenador personal experto. Generá una rutina de gimnasio para hoy.
+
+Nivel: ${_genNivel}
+Músculos a trabajar: ${musculosTexto}
+${notasUsuario ? `Indicaciones del alumno: ${notasUsuario}` : ''}
+
+Ejercicios disponibles (solo podés usar estos, con su nombre exacto):
+${ejerciciosDisponibles.map(e => `- ${e.nombre} (${e.musculo})`).join('\n')}
+
+Devolvé SOLO un JSON válido, sin texto extra, sin markdown, sin backticks. Formato exacto:
+[
+  {
+    "nombre": "nombre exacto del ejercicio",
+    "series": 4,
+    "reps": "10-12",
+    "instrucciones": "instrucción breve y motivadora de una línea"
+  }
+]
+
+Reglas:
+- Entre 4 y 7 ejercicios en total
+- Usá solo ejercicios de la lista proporcionada
+- El campo "nombre" debe ser exactamente igual al de la lista
+- series debe ser un número (3 o 4)
+- reps puede ser "8-10", "12-15", "15-20", etc según el nivel
+- instrucciones: máximo 1 línea, práctica y motivadora`;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1000,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        const data = await response.json();
+        const texto = data.content?.map(i => i.text || '').join('') || '';
+
+        // Limpiar y parsear JSON
+        const jsonLimpio = texto.replace(/```json|```/g, '').trim();
+        const rutina = JSON.parse(jsonLimpio);
+
+        // Enriquecer con GIF y validar nombres
+        _genRutinaGenerada = rutina.map(ej => {
+            const ejercicioReal = ejerciciosDisponibles.find(e =>
+                e.nombre.toLowerCase() === ej.nombre.toLowerCase()
+            ) || ejerciciosDisponibles.find(e =>
+                e.nombre.toLowerCase().includes(ej.nombre.toLowerCase().split(' ')[0])
+            );
+            return {
+                ...ej,
+                gif: ejercicioReal?.gif || '',
+                nombre: ejercicioReal?.nombre || ej.nombre
+            };
+        }).filter(e => e.nombre);
+
+        mostrarResultadoRutina();
+
+    } catch(e) {
+        document.getElementById('gen-loading').style.display = 'none';
+        document.getElementById('gen-paso1').style.display = 'block';
+        toast('Error al generar rutina. Intentá de nuevo.', 'var(--danger)', 3000);
+    }
+}
+
+function mostrarResultadoRutina() {
+    document.getElementById('gen-loading').style.display = 'none';
+
+    const cont = document.getElementById('gen-resultado');
+    cont.innerHTML = _genRutinaGenerada.map((ej, i) => `
+        <div style="background:#1a1a2a;border:1px solid #333;border-left:3px solid #7c3aed;border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="background:#4f46e5;color:white;font-size:0.65rem;padding:2px 7px;border-radius:4px;font-weight:bold;">${ej.series} × ${ej.reps}</span>
+                <strong style="font-size:0.88rem;color:#e0e0e0;">${ej.nombre.toUpperCase()}</strong>
+            </div>
+            <div style="font-size:0.75rem;color:#888;font-style:italic;">📋 ${ej.instrucciones}</div>
+            ${ej.gif ? `<div style="font-size:0.7rem;color:#7c3aed;margin-top:4px;">📹 Técnica incluida</div>` : ''}
+        </div>`).join('');
+
+    document.getElementById('gen-paso2').style.display = 'flex';
+}
+
+function volverPaso1Generador() {
+    document.getElementById('gen-paso2').style.display = 'none';
+    document.getElementById('gen-paso1').style.display = 'block';
+    _genRutinaGenerada = [];
+}
+
+async function confirmarRutinaIA() {
+    const u = sessionStorage.getItem('active_user');
+    if (!u || !_genRutinaGenerada.length) return;
+
+    const dia = diaActualAlumno;
+    if (!DATOS_GLOBALES.rutinas[u]) DATOS_GLOBALES.rutinas[u] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
+    if (!DATOS_GLOBALES.rutinas[u][dia]) DATOS_GLOBALES.rutinas[u][dia] = [];
+
+    _genRutinaGenerada.forEach(ej => {
+        const numSeries = parseInt(ej.series) || 3;
+        DATOS_GLOBALES.rutinas[u][dia].push({
+            nombre: ej.nombre,
+            series: Array.from({ length: numSeries }, (_, i) => ({ num: i+1, peso: '', reps: '' })),
+            instrucciones: `${ej.reps} reps — ${ej.instrucciones}`,
+            gif: ej.gif || '',
+            nota: ''
+        });
+    });
+
+    await subirALaRed();
+    cerrarGeneradorRutina();
+    cargarDiaAlumno(dia);
+    toast(`✅ Rutina generada con ${_genRutinaGenerada.length} ejercicios agregada a ${dia.toUpperCase()}`, 'var(--success)', 3500);
+}
+
+// Mostrar/ocultar botón generador según si tiene profe
+function actualizarBtnGenerador(username) {
+    const user = DATOS_GLOBALES.users?.[username];
+    const sinProfe = !user?.profe_asignado;
+    const wrap = document.getElementById('btn-generar-rutina-wrap');
+    if (wrap) wrap.style.display = sinProfe ? 'block' : 'none';
 }
 
 window.onload = descargarDeLaRed;
