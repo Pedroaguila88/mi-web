@@ -17,7 +17,8 @@ const API_KEY = process.env.JSONBIN_API_KEY;
 const BIN_ID  = process.env.JSONBIN_BIN_ID;
 
 // -- MIDDLEWARES --
-app.use(cors());
+app.use(cors({ origin: '*' }));
+app.options('*', cors());
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -121,6 +122,7 @@ app.put('/api/datos', async (req, res) => {
 
 // GENERAR RUTINA CON IA
 app.post('/api/generar-rutina', async (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
     try {
         const { nivel, musculos, notasUsuario, ejerciciosDisponibles } = req.body;
 
