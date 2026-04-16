@@ -2129,14 +2129,11 @@ async function confirmarAplicarBib() {
 // ══════════════════════════════════════════════
 const GIFS_POR_MUSCULO = {
     '🏋️ Pectoral': [
-        { archivo: 'apertura_banca_mancuerna_pectoral.gif',         nombre: 'Apertura Banca Mancuerna' },
-        { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',nombre: 'Apertura Banca Inclinada' },
-        { archivo: 'press_banca_barra.gif',                          nombre: 'Press Banca Barra' },
-        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
-        { archivo: 'cierre_maquina_pectoral.gif',                    nombre: 'Cierre Máquina Pectoral' },
-        { archivo: 'pullover_pectoral.gif',                          nombre: 'Pullover Pectoral' },
-        { archivo: 'Prensa Horizontal.gif',                          nombre: 'Prensa Horizontal' },
-        { archivo: 'Prensa 45.gif',                                  nombre: 'Prensa 45°' },
+        { archivo: 'apertura_banca_mancuerna_pectoral.gif',             nombre: 'Apertura Banca Mancuerna' },
+        { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',   nombre: 'Apertura Banca Inclinada' },
+        { archivo: 'press_banca_barra.gif',                             nombre: 'Press Banca Barra' },
+        { archivo: 'cierre_maquina_pectoral.gif',                       nombre: 'Cierre Máquina Pectoral' },
+        { archivo: 'pullover_pectoral.gif',                             nombre: 'Pullover Pectoral' },
     ],
     '🦴 Espalda': [
         { archivo: 'jalón_posterior_polea_deltoides.gif',                                          nombre: 'Jalón Posterior Polea' },
@@ -2151,14 +2148,17 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'curl_alternado_biceps_pedestacion.gif', nombre: 'Curl Alternado Bíceps' },
         { archivo: 'curl_barrazeta_supino_biceps.gif',      nombre: 'Curl Barra Z Supino' },
         { archivo: 'martillo_biceps.gif',                   nombre: 'Curl Martillo' },
+        { archivo: 'biceps_cuerl_sentado.gif',              nombre: 'biceps_cuerl_sentado' },
+        { archivo: 'biceps_curl_unilateral_maquina.gif',    nombre: 'biceps_curl_unilateral_maquina' },
     ],
     '🔺 Tríceps': [
-        { archivo: 'extensión_tricesp_cuerda_polea_pedestacion.jpg', nombre: 'Extensión Cuerda Polea' },
+        { archivo: 'extensión_tricesp_cuerda_polea_pedestacion.jpg',  nombre: 'Extensión Cuerda Polea' },
         { archivo: 'curl_polea_agarre_supino_triceps.gif',            nombre: 'Curl Polea Agarre Supino' },
         { archivo: 'patada_polea_triceps.gif',                        nombre: 'Patada Polea Tríceps' },
     ],
     '🏔️ Deltoides': [
-        { archivo: 'elev_lat_pol_unila_deltoides.gif',          nombre: 'Elev. Lateral Polea Unilateral' },
+        { archivo: 'press_lineal_mancuernas_deltoides.gif',      nombre: 'Press Lineal Mancuernas' },
+        { archivo: 'elev_lat_pol_unila_deltoides.gif',           nombre: 'Elev. Lateral Polea Unilateral' },
         { archivo: 'elev_lat_polea_deltoides.gif',               nombre: 'Elev. Lateral Polea' },
         { archivo: 'elevación_frontal_mancuernas_deltoides.gif', nombre: 'Elev. Frontal Mancuernas' },
         { archivo: 'elevacion_frontal_disco_deltoides.jpg',      nombre: 'Elev. Frontal Disco' },
@@ -2173,10 +2173,12 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'sila de aducción.gif',                      nombre: 'Silla Aducción' },
     ],
     '🦵 Cuádriceps': [
+        { archivo: 'Prensa Horizontal.gif',              nombre: 'Prensa Horizontal' },
+        { archivo: 'Prensa 45.gif',                      nombre: 'Prensa 45°' },
         { archivo: 'sentadilla con mancuernas.gif',      nombre: 'Sentadilla Mancuernas' },
         { archivo: 'sentadilla en la smite.gif',         nombre: 'Sentadilla Smith' },
         { archivo: 'Silla de Extensiones Cuadriceps.gif',nombre: 'Silla Extensiones Cuádriceps' },
-        { archivo: 'Zancadas desplazamiento.jpg',         nombre: 'Zancadas' },
+        { archivo: 'Zancadas desplazamiento.jpg',        nombre: 'Zancadas' },
     ],
     '🦿 Isquiotibiales': [
         { archivo: 'Camilla de extension de ilsquios.gif',                        nombre: 'Camilla Extensión Isquios' },
@@ -2189,7 +2191,6 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'extensión_pantorrila_sonre step.jpg', nombre: 'Extensión Pantorrilla Step' },
     ],
     '🧘 Abdomen/Core': [
-        { archivo: 'Crunch.gif',                                               nombre: 'Crunch' },
         { archivo: 'Crunchabdomen.gif',                                        nombre: 'Crunch Abdomen' },
         { archivo: 'activo_suelo_abdomen.gif',                                 nombre: 'Activo Suelo Abdomen' },
         { archivo: 'rotación_troncal_sedestación_abdomen.gif',                 nombre: 'Rotación Troncal Sedestación' },
