@@ -96,7 +96,8 @@ app.get('/api/datos', async (req, res) => {
             historial:     datos.historial     || {},
             mensajeMaster: datos.mensajeMaster || '',
             recordes:      datos.recordes      || {},
-            biblioteca:    datos.biblioteca    || []
+            biblioteca:    datos.biblioteca    || [],
+            archivos:      datos.archivos      || { fotos: [], gifs: [] }
         });
     } catch (e) {
         res.status(500).json({ ok: false, msg: 'Error al leer datos' });
@@ -107,12 +108,13 @@ app.get('/api/datos', async (req, res) => {
 app.put('/api/datos', async (req, res) => {
     try {
         const datosActuales = await leerBin();
-        const { rutinas, historial, mensajeMaster, recordes, biblioteca } = req.body;
+        const { rutinas, historial, mensajeMaster, recordes, biblioteca, archivos } = req.body;
         if (rutinas       !== undefined) datosActuales.rutinas       = rutinas;
         if (historial     !== undefined) datosActuales.historial      = historial;
         if (mensajeMaster !== undefined) datosActuales.mensajeMaster  = mensajeMaster;
         if (recordes      !== undefined) datosActuales.recordes       = recordes;
         if (biblioteca    !== undefined) datosActuales.biblioteca     = biblioteca;
+        if (archivos      !== undefined) datosActuales.archivos       = archivos;
         await escribirBin(datosActuales);
         res.json({ ok: true });
     } catch (e) {

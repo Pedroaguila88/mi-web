@@ -425,6 +425,79 @@
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
 
+        <!-- GESTOR DE ARCHIVOS -->
+        <hr style="border-color:#333;margin:20px 0;">
+        <h3 style="color:var(--accent);margin:0 0 10px;">🖼️ GESTOR DE ARCHIVOS</h3>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="abrirGestorArchivos('foto')" style="flex:1;background:#1a2a3a;color:var(--accent);border:1px solid var(--accent);font-size:0.85rem;">📸 SUBIR FOTO</button>
+            <button onclick="abrirGestorArchivos('gif')" style="flex:1;background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);font-size:0.85rem;">🎬 SUBIR GIF</button>
+        </div>
+        <div id="gestor-archivos-panel" style="display:none;background:#1a1a2a;border:1px solid #333;border-radius:12px;padding:15px;margin-bottom:10px;">
+            <div id="gestor-tipo-label" style="font-size:0.8rem;color:var(--accent);font-weight:bold;margin-bottom:10px;"></div>
+
+            <!-- Drop zone -->
+            <div id="drop-zone" onclick="document.getElementById('file-input-master').click()"
+                style="border:2px dashed #444;border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:0.2s;background:#111;">
+                <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+                <div style="font-size:0.85rem;color:#888;">Tocá para elegir archivo</div>
+                <div style="font-size:0.7rem;color:#555;margin-top:4px;">Desde galería, cámara o archivos</div>
+            </div>
+            <input type="file" id="file-input-master" style="display:none;" accept="image/*,image/gif" onchange="previsualizarArchivo(this)">
+
+            <!-- Preview -->
+            <div id="preview-archivo" style="display:none;margin-top:12px;text-align:center;">
+                <img id="preview-img" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #333;object-fit:contain;background:#111;">
+                <div id="preview-nombre" style="font-size:0.75rem;color:#888;margin-top:6px;"></div>
+            </div>
+
+            <!-- Nombre personalizado -->
+            <div id="nombre-archivo-wrap" style="display:none;margin-top:10px;">
+                <div style="font-size:0.75rem;color:#888;margin-bottom:4px;">Nombre para identificarlo en la app:</div>
+                <input type="text" id="nombre-archivo-custom" placeholder="Ej: Press Banca Inclinado" style="margin:0;">
+            </div>
+
+            <!-- Músculo (solo para GIFs) -->
+            <div id="musculo-archivo-wrap" style="display:none;margin-top:8px;">
+                <div style="font-size:0.75rem;color:#888;margin-bottom:4px;">Músculo:</div>
+                <select id="musculo-archivo" style="margin:0;">
+                    <option value="🏋️ Pectoral">🏋️ Pectoral</option>
+                    <option value="🦴 Espalda">🦴 Espalda</option>
+                    <option value="💪 Bíceps">💪 Bíceps</option>
+                    <option value="🔺 Tríceps">🔺 Tríceps</option>
+                    <option value="🏔️ Deltoides">🏔️ Deltoides</option>
+                    <option value="🍑 Glúteos">🍑 Glúteos</option>
+                    <option value="🦵 Cuádriceps">🦵 Cuádriceps</option>
+                    <option value="🦿 Isquiotibiales">🦿 Isquiotibiales</option>
+                    <option value="🦶 Pantorrilla">🦶 Pantorrilla</option>
+                    <option value="🧘 Abdomen/Core">🧘 Abdomen/Core</option>
+                </select>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button id="btn-subir-archivo" onclick="subirArchivoCloudinary()" style="flex:1;background:var(--success);color:white;display:none;">☁️ SUBIR ARCHIVO</button>
+                <button onclick="cerrarGestorArchivos()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+            </div>
+
+            <!-- Progreso -->
+            <div id="upload-progress" style="display:none;margin-top:10px;">
+                <div style="font-size:0.8rem;color:#888;margin-bottom:6px;">Subiendo...</div>
+                <div style="background:#333;border-radius:10px;height:6px;overflow:hidden;">
+                    <div id="upload-bar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%;transition:width 0.3s;border-radius:10px;"></div>
+                </div>
+            </div>
+
+            <!-- Resultado -->
+            <div id="upload-resultado" style="display:none;margin-top:10px;padding:10px;background:#1a2a00;border:1px solid var(--primary);border-radius:8px;">
+                <div style="font-size:0.75rem;color:var(--primary);font-weight:bold;margin-bottom:6px;">✅ ¡Subido exitosamente!</div>
+                <div style="font-size:0.7rem;color:#888;margin-bottom:4px;">URL del archivo:</div>
+                <div id="upload-url" style="font-size:0.7rem;color:var(--accent);word-break:break-all;background:#111;padding:6px;border-radius:6px;cursor:pointer;" onclick="copiarURL()"></div>
+                <button onclick="copiarURL()" style="margin-top:8px;background:#333;color:var(--primary);font-size:0.75rem;padding:8px;">📋 COPIAR URL</button>
+            </div>
+        </div>
+
+        <!-- Lista de archivos subidos recientemente -->
+        <div id="archivos-recientes" style="margin-bottom:10px;"></div>
+
         <!-- BIBLIOTECA DE RUTINAS -->
         <hr style="border-color:#333;margin:20px 0;">
         <h3 style="color:var(--primary);margin:0 0 10px;">📚 BIBLIOTECA DE RUTINAS</h3>
@@ -712,6 +785,8 @@ async function descargarDeLaRed() {
         DATOS_GLOBALES.mensajeMaster = data.mensajeMaster || '';
         DATOS_GLOBALES.recordes      = data.recordes      || {};
         DATOS_GLOBALES.biblioteca    = data.biblioteca    || [];
+        DATOS_GLOBALES.archivos      = data.archivos      || { fotos: [], gifs: [] };
+        cargarGifsCloudinary();
         setStatus('✅ SINCRONIZADO');
     } catch (e) { setStatus('❌ ERROR RED'); }
 }
@@ -794,6 +869,7 @@ function renderDashboard(role, username) {
         renderMasterUsers();
         renderBibliotecaDev();
         document.getElementById('master-mensaje').value = DATOS_GLOBALES.mensajeMaster || '';
+        renderArchivosRecientes();
     } else if (role === 'profe') {
         document.getElementById('section-profe').classList.remove('hidden');
         document.getElementById('welcome-profe').innerText = `Profe: ${username.toUpperCase()}`;
@@ -2130,50 +2206,40 @@ async function confirmarAplicarBib() {
 const GIFS_POR_MUSCULO = {
     '🏋️ Pectoral': [
         { archivo: 'apertura_banca_mancuerna_pectoral.gif',         nombre: 'Apertura Banca Mancuerna' },
+        { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',nombre: 'Apertura Banca Inclinada' },
         { archivo: 'press_banca_barra.gif',                          nombre: 'Press Banca Barra' },
+        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
         { archivo: 'cierre_maquina_pectoral.gif',                    nombre: 'Cierre Máquina Pectoral' },
         { archivo: 'pullover_pectoral.gif',                          nombre: 'Pullover Pectoral' },
+        { archivo: 'Prensa Horizontal.gif',                          nombre: 'Prensa Horizontal' },
+        { archivo: 'Prensa 45.gif',                                  nombre: 'Prensa 45°' },
     ],
     '🦴 Espalda': [
-        { archivo: 'espalda_baja_extension_maquina.gif',                                           nombre: 'espalda_baja_extension_maquina' },
-        { archivo: 'espalda_hummer.gif',                                                           nombre: 'espalda_hummer' },
-        { archivo: 'espalda_remo_maquina.gif',                                                     nombre: 'espalda_remo_maquina' },
-        { archivo: 'espalda_remo_polea.gif',                                                       nombre: 'espalda_remo_polea' },
-        { archivo: 'esplada_remo_barra.gif',                                                      nombre: 'esplada_remo_barra' },
         { archivo: 'jalón_posterior_polea_deltoides.gif',                                          nombre: 'Jalón Posterior Polea' },
         { archivo: 'jaón_pecho_poleaalta_espalda.gif',                                             nombre: 'Jalón Pecho Polea Alta' },
         { archivo: 'Jalón en polea baja con agarrepronoespalda.gif',                               nombre: 'Jalón Polea Baja Prone' },
         { archivo: 'Jalon Unilateral arrodillado en Polea Alta con Agarre Neutro_espalda.gif',     nombre: 'Jalón Unilateral Polea Alta' },
+        { archivo: 'peso_muerto_con barra.gif',                                                    nombre: 'Peso Muerto Barra' },
         { archivo: 'remo_mancuernas_.gif',                                                         nombre: 'Remo Mancuernas' },
+        { archivo: 'vuelo_lateral_mancuernas_deltoides.gif',                                       nombre: 'Vuelo Lateral Mancuernas' },
     ],
     '💪 Bíceps': [
-        { archivo: 'biceps_cuerl_sentado.gif',              nombre: 'biceps_cuerl_sentado' },
-        { archivo: 'biceps_curl_unilateral_maquina.gif',    nombre: 'biceps_curl_unilateral_maquina' },
         { archivo: 'curl_alternado_biceps_pedestacion.gif', nombre: 'Curl Alternado Bíceps' },
         { archivo: 'curl_barrazeta_supino_biceps.gif',      nombre: 'Curl Barra Z Supino' },
         { archivo: 'martillo_biceps.gif',                   nombre: 'Curl Martillo' },
     ],
     '🔺 Tríceps': [
-        { archivo: 'triceps_poleaalta_unilateral.gif',               nombre: 'triceps_poleaalta_unilateral' },
-        { archivo: 'triceps_copa.gif',                               nombre: 'triceps_copa' },
-        { archivo: 'triceps_fondo_maquina.gif',                      nombre: 'triceps_fondo_maquina' },
-        { archivo: 'triceps_fondos_banco.gif',                       nombre: 'triceps_fondos_banco' },
-        { archivo: 'extrenciotricpes_polea_cuerda_triceps.gif',      nombre: 'extrenciotricpes_polea_cuerda_triceps' },
-        { archivo: 'extensión_tricesp_cuerda_polea.gif',             nombre: 'Extensión Cuerda Polea' },
-        { archivo: 'curl_polea_agarre_supino_triceps.gif',           nombre: 'Curl Polea Agarre Supino' },
-        { archivo: 'patada_polea_triceps.gif',                       nombre: 'Patada Polea Tríceps' },
+        { archivo: 'extensión_tricesp_cuerda_polea_pedestacion.jpg', nombre: 'Extensión Cuerda Polea' },
+        { archivo: 'curl_polea_agarre_supino_triceps.gif',            nombre: 'Curl Polea Agarre Supino' },
+        { archivo: 'patada_polea_triceps.gif',                        nombre: 'Patada Polea Tríceps' },
     ],
     '🏔️ Deltoides': [
-        { archivo: 'press_lineal_mancuernas_deltoides.gif',             nombre: 'Press Lineal Mancuernas' },
-        { archivo: 'desltoides_posterior_mancuernas_pedestacion.gif',   nombre: 'desltoides_posterior_mancuernas_pedestacion' },
-        { archivo: 'elev_lat_pol_unila_deltoides.gif',                  nombre: 'Elev. Lateral Polea Unilateral' },
-        { archivo: 'vuelo_lateral_mancuernas_deltoides.gif',            nombre: 'Vuelo Lateral Mancuernas' },
-        { archivo: 'elev_lat_polea_deltoides.gif',                      nombre: 'Elev. Lateral Polea' },
-        { archivo: 'elevación_frontal_mancuernas_deltoides.gif',        nombre: 'Elev. Frontal Mancuernas' },
-        { archivo: 'elevacion_frontal_disco_deltoides.jpg',             nombre: 'Elev. Frontal Disco' },
+        { archivo: 'elev_lat_pol_unila_deltoides.gif',          nombre: 'Elev. Lateral Polea Unilateral' },
+        { archivo: 'elev_lat_polea_deltoides.gif',               nombre: 'Elev. Lateral Polea' },
+        { archivo: 'elevación_frontal_mancuernas_deltoides.gif', nombre: 'Elev. Frontal Mancuernas' },
+        { archivo: 'elevacion_frontal_disco_deltoides.jpg',      nombre: 'Elev. Frontal Disco' },
     ],
     '🍑 Glúteos': [
-        { archivo: 'gluteo_jalon_frontal_polea.gif',            nombre: 'gluteo_jalon_frontal_polea' },
         { archivo: 'bulgara_mancuernas_gluteos.gif',            nombre: 'Búlgara Mancuernas' },
         { archivo: 'sentadilla_sumo_mancuernas_gluteos.gif',    nombre: 'Sentadilla Sumo' },
         { archivo: 'elevación_unilateral_gluteos.gif',          nombre: 'Elev. Unilateral Glúteos' },
@@ -2183,33 +2249,29 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'sila de aducción.gif',                      nombre: 'Silla Aducción' },
     ],
     '🦵 Cuádriceps': [
-        { archivo: 'Prensa Horizontal.gif',              nombre: 'Prensa Horizontal' },
-        { archivo: 'Prensa 45.gif',                      nombre: 'Prensa 45°' },
         { archivo: 'sentadilla con mancuernas.gif',      nombre: 'Sentadilla Mancuernas' },
         { archivo: 'sentadilla en la smite.gif',         nombre: 'Sentadilla Smith' },
         { archivo: 'Silla de Extensiones Cuadriceps.gif',nombre: 'Silla Extensiones Cuádriceps' },
-        { archivo: 'Zancadas desplazamiento.jpg',        nombre: 'Zancadas' },
+        { archivo: 'Zancadas desplazamiento.jpg',         nombre: 'Zancadas' },
     ],
     '🦿 Isquiotibiales': [
-        { archivo: 'camilla_extension_iIsquios.gif',                              nombre: 'camilla_extension_iIsquios' },
-        { archivo: 'peso_muerto_con barra.gif',                                   nombre: 'Peso Muerto Barra' },
+        { archivo: 'Camilla de extension de ilsquios.gif',                        nombre: 'Camilla Extensión Isquios' },
         { archivo: 'Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg',   nombre: 'Curl Femoral Mancuerna' },
         { archivo: 'unilateral_mancuerna_isquiotibiales.jpg',                     nombre: 'Unilateral Mancuerna Isquiotibiales' },
         { archivo: 'unilateral_maquina_isquiotibiales.gif',                       nombre: 'Unilateral Máquina Isquiotibiales' },
         { archivo: 'buenos_dias_barra_isquio.jpg',                                nombre: 'Buenos Días Barra' },
     ],
     '🦶 Pantorrilla': [
-        { archivo: 'pantorrilla_hack.gif', nombre: 'pantorrilla_hack' },
-        { archivo: 'pantorrilla_prensa45.gif', nombre: 'pantorrilla_prensa45' },
         { archivo: 'extensión_pantorrila_sonre step.jpg', nombre: 'Extensión Pantorrilla Step' },
     ],
     '🧘 Abdomen/Core': [
+        { archivo: 'Crunch.gif',                                               nombre: 'Crunch' },
         { archivo: 'Crunchabdomen.gif',                                        nombre: 'Crunch Abdomen' },
-        { archivo: 'abdomen_crunch_extremidades_extendidas.gif',               nombre: 'abdomen_crunch_extremidades_extendidas' },
-        { archivo: 'abdomen_piernas_extendidas_alternado.gif',                 nombre: 'abdomen_piernas_extendidas_alternado' },
         { archivo: 'activo_suelo_abdomen.gif',                                 nombre: 'Activo Suelo Abdomen' },
         { archivo: 'rotación_troncal_sedestación_abdomen.gif',                 nombre: 'Rotación Troncal Sedestación' },
+        { archivo: 'rotación_tronco.gif',                                      nombre: 'Rotación Tronco' },
         { archivo: 'plancha_frontal_antebrazos_poyo_bipodal.jpg',              nombre: 'Plancha Frontal Antebrazos' },
+        { archivo: 'rotación_tronco_sedestación_Inclinación_posterior.gif',    nombre: 'Rotación Tronco Inclinación' },
     ],
 };
 
@@ -2724,6 +2786,211 @@ function actualizarBtnGenerador(username) {
     const sinProfe = !user?.profe_asignado;
     const wrap = document.getElementById('btn-generar-rutina-wrap');
     if (wrap) wrap.style.display = sinProfe ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════
+//  GESTOR DE ARCHIVOS — CLOUDINARY
+// ══════════════════════════════════════════════
+const CLOUDINARY_CLOUD = 'dkbkgfels';
+const CLOUDINARY_PRESET = 'aguila_corp';
+let _gestorTipo = 'foto'; // 'foto' | 'gif'
+let _archivoSeleccionado = null;
+// Guardamos los archivos subidos en DATOS_GLOBALES.archivos
+// { fotos: [{nombre, url, fecha}], gifs: [{nombre, musculo, url, fecha}] }
+
+function abrirGestorArchivos(tipo) {
+    _gestorTipo = tipo;
+    _archivoSeleccionado = null;
+
+    const panel = document.getElementById('gestor-archivos-panel');
+    const label = document.getElementById('gestor-tipo-label');
+    const musculoWrap = document.getElementById('musculo-archivo-wrap');
+
+    label.innerText = tipo === 'foto' ? '📸 Subir Foto de Usuario' : '🎬 Subir GIF de Ejercicio';
+    musculoWrap.style.display = tipo === 'gif' ? 'block' : 'none';
+
+    // Reset
+    document.getElementById('preview-archivo').style.display = 'none';
+    document.getElementById('nombre-archivo-wrap').style.display = 'none';
+    document.getElementById('btn-subir-archivo').style.display = 'none';
+    document.getElementById('upload-progress').style.display = 'none';
+    document.getElementById('upload-resultado').style.display = 'none';
+    document.getElementById('nombre-archivo-custom').value = '';
+    document.getElementById('file-input-master').value = '';
+
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarGestorArchivos() {
+    document.getElementById('gestor-archivos-panel').style.display = 'none';
+    _archivoSeleccionado = null;
+}
+
+function previsualizarArchivo(input) {
+    const file = input.files[0];
+    if (!file) return;
+    _archivoSeleccionado = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('preview-nombre').innerText = file.name;
+        document.getElementById('preview-archivo').style.display = 'block';
+        document.getElementById('nombre-archivo-wrap').style.display = 'block';
+        document.getElementById('btn-subir-archivo').style.display = 'block';
+        document.getElementById('upload-resultado').style.display = 'none';
+
+        // Sugerir nombre sin extensión
+        const nombreSugerido = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+        document.getElementById('nombre-archivo-custom').value = nombreSugerido;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function subirArchivoCloudinary() {
+    if (!_archivoSeleccionado) { toast('Elegí un archivo primero', 'var(--danger)'); return; }
+
+    const nombreCustom = document.getElementById('nombre-archivo-custom').value.trim();
+    if (!nombreCustom) { toast('Poné un nombre para identificarlo', 'var(--danger)'); return; }
+
+    // Mostrar progreso
+    document.getElementById('upload-progress').style.display = 'block';
+    document.getElementById('btn-subir-archivo').disabled = true;
+    animarBarra();
+
+    const formData = new FormData();
+    formData.append('file', _archivoSeleccionado);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('folder', _gestorTipo === 'gif' ? 'aguila_corp/gifs' : 'aguila_corp/fotos');
+
+    try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.secure_url) {
+            // Guardar en DATOS_GLOBALES
+            if (!DATOS_GLOBALES.archivos) DATOS_GLOBALES.archivos = { fotos: [], gifs: [] };
+
+            const entrada = {
+                nombre: nombreCustom,
+                url: data.secure_url,
+                fecha: new Date().toLocaleDateString('es-PY')
+            };
+
+            if (_gestorTipo === 'gif') {
+                const musculo = document.getElementById('musculo-archivo').value;
+                entrada.musculo = musculo;
+
+                // Agregar al GIFS_POR_MUSCULO en memoria para uso inmediato
+                if (GIFS_POR_MUSCULO[musculo]) {
+                    GIFS_POR_MUSCULO[musculo].push({
+                        archivo: data.secure_url,
+                        nombre: nombreCustom,
+                        esCloudinary: true
+                    });
+                }
+                if (!DATOS_GLOBALES.archivos.gifs) DATOS_GLOBALES.archivos.gifs = [];
+                DATOS_GLOBALES.archivos.gifs.push(entrada);
+            } else {
+                if (!DATOS_GLOBALES.archivos.fotos) DATOS_GLOBALES.archivos.fotos = [];
+                DATOS_GLOBALES.archivos.fotos.push(entrada);
+            }
+
+            // Guardar en servidor
+            await subirArchivosAlServidor();
+
+            // Mostrar resultado
+            document.getElementById('upload-bar').style.width = '100%';
+            document.getElementById('upload-url').innerText = data.secure_url;
+            document.getElementById('upload-resultado').style.display = 'block';
+            document.getElementById('upload-progress').style.display = 'none';
+
+            renderArchivosRecientes();
+            toast(`✅ ${_gestorTipo === 'gif' ? 'GIF' : 'Foto'} subido exitosamente`, 'var(--success)', 3000);
+        } else {
+            throw new Error(data.error?.message || 'Error al subir');
+        }
+    } catch(e) {
+        document.getElementById('upload-progress').style.display = 'none';
+        toast(`Error: ${e.message}`, 'var(--danger)', 4000);
+    } finally {
+        document.getElementById('btn-subir-archivo').disabled = false;
+    }
+}
+
+function animarBarra() {
+    let w = 0;
+    const bar = document.getElementById('upload-bar');
+    const intervalo = setInterval(() => {
+        w += Math.random() * 15;
+        if (w > 90) { clearInterval(intervalo); w = 90; }
+        bar.style.width = w + '%';
+    }, 200);
+}
+
+async function subirArchivosAlServidor() {
+    try {
+        await fetch(`${API_URL}/api/datos`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ archivos: DATOS_GLOBALES.archivos })
+        });
+    } catch(e) { console.error('Error guardando archivos:', e); }
+}
+
+function copiarURL() {
+    const url = document.getElementById('upload-url').innerText;
+    navigator.clipboard.writeText(url).then(() => toast('URL copiada 📋', 'var(--accent)'));
+}
+
+function renderArchivosRecientes() {
+    const cont = document.getElementById('archivos-recientes');
+    const archivos = DATOS_GLOBALES.archivos;
+    if (!archivos) { cont.innerHTML = ''; return; }
+
+    const todos = [
+        ...(archivos.gifs || []).map(a => ({ ...a, tipo: 'gif' })),
+        ...(archivos.fotos || []).map(a => ({ ...a, tipo: 'foto' }))
+    ].reverse().slice(0, 6);
+
+    if (!todos.length) { cont.innerHTML = ''; return; }
+
+    cont.innerHTML = `<div style="font-size:0.75rem;color:#888;margin-bottom:8px;">📂 Archivos subidos recientemente:</div>` +
+        todos.map(a => `
+        <div style="display:flex;align-items:center;gap:10px;background:#1a1a2a;border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid #333;">
+            <img src="${a.url}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #444;background:#111;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:0.78rem;font-weight:bold;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nombre}</div>
+                <div style="font-size:0.65rem;color:#888;">${a.tipo === 'gif' ? '🎬 GIF · ' + (a.musculo || '') : '📸 Foto'} · ${a.fecha}</div>
+            </div>
+            <button onclick="copiarURLArchivo('${a.url}')" style="width:auto;padding:5px 8px;font-size:0.65rem;background:#333;color:var(--accent);margin:0;">📋</button>
+        </div>`).join('');
+}
+
+function copiarURLArchivo(url) {
+    navigator.clipboard.writeText(url).then(() => toast('URL copiada 📋', 'var(--accent)'));
+}
+
+// Cargar GIFs de Cloudinary al iniciar
+function cargarGifsCloudinary() {
+    const gifs = DATOS_GLOBALES.archivos?.gifs || [];
+    gifs.forEach(g => {
+        if (g.musculo && GIFS_POR_MUSCULO[g.musculo]) {
+            // Evitar duplicados
+            const yaExiste = GIFS_POR_MUSCULO[g.musculo].some(x => x.archivo === g.url);
+            if (!yaExiste) {
+                GIFS_POR_MUSCULO[g.musculo].push({
+                    archivo: g.url,
+                    nombre: g.nombre,
+                    esCloudinary: true
+                });
+            }
+        }
+    });
 }
 
 window.onload = descargarDeLaRed;
