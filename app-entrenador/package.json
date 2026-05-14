@@ -1,7 +1,7 @@
 {
   "name": "coach-system-backend",
-  "version": "1.0.0",
-  "description": "Backend seguro para Coach System",
+  "version": "8.0.0",
+  "description": "Backend Coach System con MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,6 +12,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "mongodb": "^6.7.0",
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
