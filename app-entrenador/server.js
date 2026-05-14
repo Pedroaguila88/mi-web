@@ -27,7 +27,13 @@ let db = null;
 
 async function conectarMongo() {
     if (db) return db;
-    const client = new MongoClient(MONGO_URI);
+    const client = new MongoClient(MONGO_URI, {
+        tls: true,
+        tlsAllowInvalidCertificates: true,
+        tlsAllowInvalidHostnames: true,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+    });
     await client.connect();
     db = client.db(DB_NAME);
     console.log('✅ MongoDB conectado');
