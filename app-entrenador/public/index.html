@@ -424,6 +424,7 @@
         <button onclick="masterRegister()">CREAR USUARIO</button>
         <div id="lista-usuarios-master"></div>
         <button class="secondary" onclick="logout()">Cerrar Sesión Master</button>
+        <button onclick="limpiarBaseDatos()" style="background:#2a0a0a;color:var(--danger);border:1px solid var(--danger);margin-top:8px;font-size:0.8rem;">🗑️ LIMPIAR BASE DE DATOS</button>
 
         <!-- GESTOR DE ARCHIVOS -->
         <hr style="border-color:#333;margin:20px 0;">
@@ -519,7 +520,7 @@
             <textarea id="p-mensaje-especifico" placeholder="Mensaje específico para este alumno..." style="min-height:50px;font-size:0.85rem;margin:0;"></textarea>
             <button onclick="guardarTituloYMensaje()" style="margin-top:6px;background:#333;color:var(--primary);font-size:0.8rem;">💾 GUARDAR TÍTULO Y MENSAJE</button>
         </div>
-        <select id="p-dia-semana">
+        <select id="p-dia-semana" onchange="cargarTituloYMensajeProfe()">
             <option value="lunes">Lunes</option>
             <option value="martes">Martes</option>
             <option value="miercoles">Miércoles</option>
@@ -794,6 +795,77 @@ async function descargarDeLaRed() {
 async function subirALaRed() {
     try {
         setStatus('⏳ GUARDANDO...');
+
+        // Limpiar historial: máximo 200 entradas por usuario, solo últimos 90 días
+        const historialLimpio = {};
+        const hace90dias = new Date();
+        hace90dias.setDate(hace90dias.getDate() - 90);
+        const corte = hace90dias.toISOString().split('T')[0];
+
+        for (const u in DATOS_GLOBALES.historial) {
+            let h = DATOS_GLOBALES.historial[u] || [];
+            // Filtrar solo últimos 90 días
+            h = h.filter(r => !r.fecha_iso || r.fecha_iso >= corte);
+            // Máximo 300 entradas por usuario
+            if (h.length > 300) h = h.slice(h.length - 300);
+            historialLimpio[u] = h;
+        }
+
+        await fetch(`${API_URL}/api/datos`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                rutinas:       DATOS_GLOBALES.rutinas,
+                historial:     historialLimpio,
+                mensajeMaster: DATOS_GLOBALES.mensajeMaster,
+                recordes:      DATOS_GLOBALES.recordes
+            })
+        });
+        setStatus('✅ GUARDADO');
+    } catch (e) { toast('Error al guardar', 'var(--danger)'); }
+}
+
+async function limpiarBaseDatos() {
+    if (!confirm('⚠️ Esto va a limpiar el historial viejo (más de 90 días) y entradas duplicadas.\n\nLos datos recientes y rutinas NO se borran.\n\n¿Continuar?')) return;
+
+    setStatus('⏳ LIMPIANDO...');
+    try {
+        // Limpiar historial agresivamente
+        const hace90dias = new Date();
+        hace90dias.setDate(hace90dias.getDate() - 90);
+        const corte = hace90dias.toISOString().split('T')[0];
+
+        for (const u in DATOS_GLOBALES.historial) {
+            let h = DATOS_GLOBALES.historial[u] || [];
+            // Solo últimos 90 días
+            h = h.filter(r => r.fecha_iso && r.fecha_iso >= corte);
+            // Máximo 200 por usuario
+            if (h.length > 200) h = h.slice(h.length - 200);
+            // Eliminar duplicados exactos del mismo día/ejercicio/serie
+            const vistos = new Set();
+            h = h.filter(r => {
+                const key = `${r.fecha_iso}_${r.ejercicio}_${r.serie}`;
+                if (vistos.has(key)) return false;
+                vistos.add(key);
+                return true;
+            });
+            DATOS_GLOBALES.historial[u] = h;
+        }
+
+        // Limpiar series con peso/reps vacíos de las rutinas
+        for (const u in DATOS_GLOBALES.rutinas) {
+            const rutina = DATOS_GLOBALES.rutinas[u];
+            for (const dia of ['lunes','martes','miercoles','jueves','viernes','sabado','domingo']) {
+                if (Array.isArray(rutina[dia])) {
+                    rutina[dia].forEach(ej => {
+                        if (Array.isArray(ej.series)) {
+                            ej.series = ej.series.map(s => ({ num: s.num, peso: '', reps: '' }));
+                        }
+                    });
+                }
+            }
+        }
+
         await fetch(`${API_URL}/api/datos`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -804,13 +876,16 @@ async function subirALaRed() {
                 recordes:      DATOS_GLOBALES.recordes
             })
         });
-        setStatus('✅ GUARDADO');
-    } catch (e) { toast('Error al guardar', 'var(--danger)'); }
-}
 
-// ══════════════════════════════════════════════
-//  LOGIN
-// ══════════════════════════════════════════════
+        setStatus('✅ BASE DE DATOS LIMPIADA');
+        toast('✅ Base de datos limpiada. Ya podés generar rutinas.', 'var(--success)', 4000);
+        await descargarDeLaRed();
+        renderMasterUsers();
+    } catch(e) {
+        setStatus('❌ ERROR');
+        toast('Error al limpiar: ' + e.message, 'var(--danger)', 4000);
+    }
+}
 async function login() {
     setLoading('btn-login', true);
     mostrarLoadingOverlay(true);
@@ -1890,33 +1965,35 @@ function actualizarSelectAlumnosProfe(profe) {
 }
 
 function cargarTituloYMensajeProfe() {
-    const al = document.getElementById('p-nombre-alumno')?.value;
+    const al  = document.getElementById('p-nombre-alumno')?.value;
+    const dia = document.getElementById('p-dia-semana')?.value || 'lunes';
     if (!al) return;
-    const datos = DATOS_GLOBALES.rutinas?.[al]?._meta || {};
+    const datos = DATOS_GLOBALES.rutinas?.[al]?.[`_meta_${dia}`] || {};
     document.getElementById('p-titulo-rutina').value = datos.titulo || '';
     document.getElementById('p-mensaje-especifico').value = datos.mensajeEspecifico || '';
 }
 
 async function guardarTituloYMensaje() {
-    const al = document.getElementById('p-nombre-alumno').value;
+    const al  = document.getElementById('p-nombre-alumno').value;
+    const dia = document.getElementById('p-dia-semana').value || 'lunes';
     const titulo = document.getElementById('p-titulo-rutina').value.trim();
     const mensajeEspecifico = document.getElementById('p-mensaje-especifico').value.trim();
     if (!al) return;
     if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
-    DATOS_GLOBALES.rutinas[al]._meta = { titulo, mensajeEspecifico };
+    DATOS_GLOBALES.rutinas[al][`_meta_${dia}`] = { titulo, mensajeEspecifico };
     await subirALaRed();
-    toast('Título y mensaje guardados ✅');
+    toast(`Título guardado para ${dia.toUpperCase()} ✅`);
 }
 
 function renderTituloYMensajeAlumno(username) {
-    const meta = DATOS_GLOBALES.rutinas?.[username]?._meta || {};
+    const meta = DATOS_GLOBALES.rutinas?.[username]?.[`_meta_${diaActualAlumno}`] || {};
     const tituloBox = document.getElementById('rutina-titulo-box');
     const mensajeBox = document.getElementById('mensaje-especifico-box');
 
     if (meta.titulo) {
         tituloBox.style.display = 'block';
         document.getElementById('rutina-titulo-txt').innerText = meta.titulo;
-        document.getElementById('rutina-subtitulo-txt').innerText = `Plan de ${username.toUpperCase()}`;
+        document.getElementById('rutina-subtitulo-txt').innerText = `${diaActualAlumno.charAt(0).toUpperCase() + diaActualAlumno.slice(1)} · ${username.toUpperCase()}`;
     } else {
         tituloBox.style.display = 'none';
     }
@@ -2204,52 +2281,42 @@ async function confirmarAplicarBib() {
 //  SELECTOR VISUAL DE GIFS
 // ══════════════════════════════════════════════
 const GIFS_POR_MUSCULO = {
-   '🏋️ Pectoral': [
+    '🏋️ Pectoral': [
         { archivo: 'apertura_banca_mancuerna_pectoral.gif',         nombre: 'Apertura Banca Mancuerna' },
+        { archivo: 'apertura_banca_mancuerna_inclinado_pectoral.gif',nombre: 'Apertura Banca Inclinada' },
         { archivo: 'press_banca_barra.gif',                          nombre: 'Press Banca Barra' },
+        { archivo: 'press_lineal_mancuernas_deltoides.gif',          nombre: 'Press Lineal Mancuernas' },
         { archivo: 'cierre_maquina_pectoral.gif',                    nombre: 'Cierre Máquina Pectoral' },
         { archivo: 'pullover_pectoral.gif',                          nombre: 'Pullover Pectoral' },
+        { archivo: 'Prensa Horizontal.gif',                          nombre: 'Prensa Horizontal' },
+        { archivo: 'Prensa 45.gif',                                  nombre: 'Prensa 45°' },
     ],
     '🦴 Espalda': [
-        { archivo: 'espalda_baja_extension_maquina.gif',                                           nombre: 'espalda_baja_extension_maquina' },
-        { archivo: 'espalda_hummer.gif',                                                           nombre: 'espalda_hummer' },
-        { archivo: 'espalda_remo_maquina.gif',                                                     nombre: 'espalda_remo_maquina' },
-        { archivo: 'espalda_remo_polea.gif',                                                       nombre: 'espalda_remo_polea' },
-        { archivo: 'esplada_remo_barra.gif',                                                      nombre: 'esplada_remo_barra' },
         { archivo: 'jalón_posterior_polea_deltoides.gif',                                          nombre: 'Jalón Posterior Polea' },
         { archivo: 'jaón_pecho_poleaalta_espalda.gif',                                             nombre: 'Jalón Pecho Polea Alta' },
         { archivo: 'Jalón en polea baja con agarrepronoespalda.gif',                               nombre: 'Jalón Polea Baja Prone' },
         { archivo: 'Jalon Unilateral arrodillado en Polea Alta con Agarre Neutro_espalda.gif',     nombre: 'Jalón Unilateral Polea Alta' },
+        { archivo: 'peso_muerto_con barra.gif',                                                    nombre: 'Peso Muerto Barra' },
         { archivo: 'remo_mancuernas_.gif',                                                         nombre: 'Remo Mancuernas' },
+        { archivo: 'vuelo_lateral_mancuernas_deltoides.gif',                                       nombre: 'Vuelo Lateral Mancuernas' },
     ],
     '💪 Bíceps': [
-        { archivo: 'biceps_cuerl_sentado.gif',              nombre: 'biceps_cuerl_sentado' },
-        { archivo: 'biceps_curl_unilateral_maquina.gif',    nombre: 'biceps_curl_unilateral_maquina' },
         { archivo: 'curl_alternado_biceps_pedestacion.gif', nombre: 'Curl Alternado Bíceps' },
         { archivo: 'curl_barrazeta_supino_biceps.gif',      nombre: 'Curl Barra Z Supino' },
         { archivo: 'martillo_biceps.gif',                   nombre: 'Curl Martillo' },
     ],
     '🔺 Tríceps': [
-        { archivo: 'triceps_poleaalta_unilateral.gif',               nombre: 'triceps_poleaalta_unilateral' },
-        { archivo: 'triceps_copa.gif',                               nombre: 'triceps_copa' },
-        { archivo: 'triceps_fondo_maquina.gif',                      nombre: 'triceps_fondo_maquina' },
-        { archivo: 'triceps_fondos_banco.gif',                       nombre: 'triceps_fondos_banco' },
-        { archivo: 'extrenciotricpes_polea_cuerda_triceps.gif',      nombre: 'extrenciotricpes_polea_cuerda_triceps' },
-        { archivo: 'extensión_tricesp_cuerda_polea.gif',             nombre: 'Extensión Cuerda Polea' },
-        { archivo: 'curl_polea_agarre_supino_triceps.gif',           nombre: 'Curl Polea Agarre Supino' },
-        { archivo: 'patada_polea_triceps.gif',                       nombre: 'Patada Polea Tríceps' },
+        { archivo: 'extensión_tricesp_cuerda_polea_pedestacion.jpg', nombre: 'Extensión Cuerda Polea' },
+        { archivo: 'curl_polea_agarre_supino_triceps.gif',            nombre: 'Curl Polea Agarre Supino' },
+        { archivo: 'patada_polea_triceps.gif',                        nombre: 'Patada Polea Tríceps' },
     ],
     '🏔️ Deltoides': [
-        { archivo: 'press_lineal_mancuernas_deltoides.gif',             nombre: 'Press Lineal Mancuernas' },
-        { archivo: 'desltoides_posterior_mancuernas_pedestacion.gif',   nombre: 'desltoides_posterior_mancuernas_pedestacion' },
-        { archivo: 'elev_lat_pol_unila_deltoides.gif',                  nombre: 'Elev. Lateral Polea Unilateral' },
-        { archivo: 'vuelo_lateral_mancuernas_deltoides.gif',            nombre: 'Vuelo Lateral Mancuernas' },
-        { archivo: 'elev_lat_polea_deltoides.gif',                      nombre: 'Elev. Lateral Polea' },
-        { archivo: 'elevación_frontal_mancuernas_deltoides.gif',        nombre: 'Elev. Frontal Mancuernas' },
-        { archivo: 'elevacion_frontal_disco_deltoides.jpg',             nombre: 'Elev. Frontal Disco' },
+        { archivo: 'elev_lat_pol_unila_deltoides.gif',          nombre: 'Elev. Lateral Polea Unilateral' },
+        { archivo: 'elev_lat_polea_deltoides.gif',               nombre: 'Elev. Lateral Polea' },
+        { archivo: 'elevación_frontal_mancuernas_deltoides.gif', nombre: 'Elev. Frontal Mancuernas' },
+        { archivo: 'elevacion_frontal_disco_deltoides.jpg',      nombre: 'Elev. Frontal Disco' },
     ],
     '🍑 Glúteos': [
-        { archivo: 'gluteo_jalon_frontal_polea.gif',            nombre: 'gluteo_jalon_frontal_polea' },
         { archivo: 'bulgara_mancuernas_gluteos.gif',            nombre: 'Búlgara Mancuernas' },
         { archivo: 'sentadilla_sumo_mancuernas_gluteos.gif',    nombre: 'Sentadilla Sumo' },
         { archivo: 'elevación_unilateral_gluteos.gif',          nombre: 'Elev. Unilateral Glúteos' },
@@ -2259,33 +2326,29 @@ const GIFS_POR_MUSCULO = {
         { archivo: 'sila de aducción.gif',                      nombre: 'Silla Aducción' },
     ],
     '🦵 Cuádriceps': [
-        { archivo: 'Prensa Horizontal.gif',              nombre: 'Prensa Horizontal' },
-        { archivo: 'Prensa 45.gif',                      nombre: 'Prensa 45°' },
         { archivo: 'sentadilla con mancuernas.gif',      nombre: 'Sentadilla Mancuernas' },
         { archivo: 'sentadilla en la smite.gif',         nombre: 'Sentadilla Smith' },
         { archivo: 'Silla de Extensiones Cuadriceps.gif',nombre: 'Silla Extensiones Cuádriceps' },
-        { archivo: 'Zancadas desplazamiento.jpg',        nombre: 'Zancadas' },
+        { archivo: 'Zancadas desplazamiento.jpg',         nombre: 'Zancadas' },
     ],
     '🦿 Isquiotibiales': [
-        { archivo: 'camilla_extension_iIsquios.gif',                              nombre: 'camilla_extension_iIsquios' },
-        { archivo: 'peso_muerto_con barra.gif',                                   nombre: 'Peso Muerto Barra' },
+        { archivo: 'Camilla de extension de ilsquios.gif',                        nombre: 'Camilla Extensión Isquios' },
         { archivo: 'Curl Femoral con Mancuerna bocaabajo en banco Plano l.jpg',   nombre: 'Curl Femoral Mancuerna' },
         { archivo: 'unilateral_mancuerna_isquiotibiales.jpg',                     nombre: 'Unilateral Mancuerna Isquiotibiales' },
         { archivo: 'unilateral_maquina_isquiotibiales.gif',                       nombre: 'Unilateral Máquina Isquiotibiales' },
         { archivo: 'buenos_dias_barra_isquio.jpg',                                nombre: 'Buenos Días Barra' },
     ],
     '🦶 Pantorrilla': [
-        { archivo: 'pantorrilla_hack.gif', nombre: 'pantorrilla_hack' },
-        { archivo: 'pantorrilla_prensa45.gif', nombre: 'pantorrilla_prensa45' },
         { archivo: 'extensión_pantorrila_sonre step.jpg', nombre: 'Extensión Pantorrilla Step' },
     ],
     '🧘 Abdomen/Core': [
+        { archivo: 'Crunch.gif',                                               nombre: 'Crunch' },
         { archivo: 'Crunchabdomen.gif',                                        nombre: 'Crunch Abdomen' },
-        { archivo: 'abdomen_crunch_extremidades_extendidas.gif',               nombre: 'abdomen_crunch_extremidades_extendidas' },
-        { archivo: 'abdomen_piernas_extendidas_alternado.gif',                 nombre: 'abdomen_piernas_extendidas_alternado' },
         { archivo: 'activo_suelo_abdomen.gif',                                 nombre: 'Activo Suelo Abdomen' },
         { archivo: 'rotación_troncal_sedestación_abdomen.gif',                 nombre: 'Rotación Troncal Sedestación' },
+        { archivo: 'rotación_tronco.gif',                                      nombre: 'Rotación Tronco' },
         { archivo: 'plancha_frontal_antebrazos_poyo_bipodal.jpg',              nombre: 'Plancha Frontal Antebrazos' },
+        { archivo: 'rotación_tronco_sedestación_Inclinación_posterior.gif',    nombre: 'Rotación Tronco Inclinación' },
     ],
 };
 
