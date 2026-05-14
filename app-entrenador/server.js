@@ -1,63 +1,64 @@
 // ============================================
-//  COACH SYSTEM v7.0.0 - Backend JSONBin
+//  COACH SYSTEM v8.0.0 - Backend PostgreSQL
 // ============================================
 
-const express  = require('express');
-const cors     = require('cors');
-const bcrypt   = require('bcrypt');
-const fetch    = require('node-fetch');
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
+const fetch = require('node-fetch');
+const { Pool } = require('pg');
 require('dotenv').config();
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-const API_KEY = process.env.JSONBIN_API_KEY;
-const BIN_ID  = process.env.JSONBIN_BIN_ID;
+// Configuración de la conexión a Neon
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
 
+// Middleware
 app.use(cors({ origin: '*' }));
-app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-async function leerBin() {
-    const res  = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': API_KEY }
-    });
-    const data = await res.json();
-    return data.record || { users: {}, rutinas: {}, historial: {}, mensajeMaster: '', recordes: {}, biblioteca: [], archivos: { fotos: [], gifs: [] } };
-}
+// Verificar conexión inicial
+pool.query('SELECT NOW()', (err, res) => {
+    if (err) console.error('❌ Error de conexión a Postgres:', err);
+    else console.log('✅ Coach System conectado a PostgreSQL');
+});
 
-async function escribirBin(datos) {
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-        body:    JSON.stringify(datos)
-    });
-}
-
-// LOGIN
+// --- LOGIN ---
 app.post('/api/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
         const u = usuario.toLowerCase().trim();
+
+        // 1. Verificar Usuario Maestro (Dev)
         if (u === process.env.MASTER_USER) {
             const ok = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
             if (ok) return res.json({ ok: true, role: 'dev', usuario: u });
             return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
         }
-        const datos = await leerBin();
-        const cuenta = datos.users[u];
+
+        // 2. Buscar usuario en la base de datos
+        const result = await pool.query('SELECT * FROM usuarios WHERE usuario = $1', [u]);
+        const cuenta = result.rows[0];
+
         if (!cuenta) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-        const match = await bcrypt.compare(password, cuenta.passHash);
+
+        const match = await bcrypt.compare(password, cuenta.pass_hash);
         if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
         if (cuenta.bloqueado) return res.status(401).json({ ok: false, msg: 'Acceso bloqueado. Contactá a tu coach.' });
-        if (cuenta.fechaInicio) {
-            const vence = new Date(cuenta.fechaInicio);
+
+        // Control de vencimiento de cuota
+        if (cuenta.fecha_inicio) {
+            const vence = new Date(cuenta.fecha_inicio);
             vence.setMonth(vence.getMonth() + 1);
-            vence.setHours(0,0,0,0);
-            const hoy = new Date(); hoy.setHours(0,0,0,0);
-            if (hoy >= vence) return res.status(401).json({ ok: false, msg: 'Cuota vencida. Contactá a tu coach.' });
+            if (new Date() >= vence) return res.status(401).json({ ok: false, msg: 'Cuota vencida. Contactá a tu coach.' });
         }
+
         res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
     } catch (e) {
         console.error(e);
@@ -65,158 +66,109 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// GET DATOS
+// --- OBTENER TODOS LOS DATOS (Para el Dashboard) ---
 app.get('/api/datos', async (req, res) => {
     try {
-        const datos = await leerBin();
-        const usersSeguros = {};
-        for (const u in datos.users) {
-            const { passHash, ...resto } = datos.users[u];
-            usersSeguros[u] = resto;
-        }
+        const usersRes = await pool.query('SELECT usuario, role, profe_asignado, foto, fecha_inicio, bloqueado FROM usuarios');
+        const rutinasRes = await pool.query('SELECT * FROM rutinas');
+        const bibliotecaRes = await pool.query('SELECT * FROM biblioteca');
+        
+        // Formatear la salida para que sea compatible con tu frontend anterior
+        const usersObj = {};
+        usersRes.rows.forEach(u => { usersObj[u.usuario] = u; });
+
+        const rutinasObj = {};
+        rutinasRes.rows.forEach(r => { rutinasObj[r.usuario] = r.data_json; });
+
         res.json({
-            users:         usersSeguros,
-            rutinas:       datos.rutinas       || {},
-            historial:     datos.historial     || {},
-            mensajeMaster: datos.mensajeMaster || '',
-            recordes:      datos.recordes      || {},
-            biblioteca:    datos.biblioteca    || [],
-            archivos:      datos.archivos      || { fotos: [], gifs: [] }
+            users: usersObj,
+            rutinas: rutinasObj,
+            biblioteca: bibliotecaRes.rows,
+            historial: {}, // Se puede cargar por demanda para no saturar
+            mensajeMaster: 'Sistema Activo en PostgreSQL'
         });
     } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al leer datos' });
+        console.error(e);
+        res.status(500).json({ ok: false, msg: 'Error al leer base de datos' });
     }
 });
 
-// PUT DATOS
-app.put('/api/datos', async (req, res) => {
+// --- GUARDAR O ACTUALIZAR RUTINA ---
+app.put('/api/rutinas', async (req, res) => {
     try {
-        const datosActuales = await leerBin();
-        const { rutinas, historial, mensajeMaster, recordes, biblioteca, archivos } = req.body;
-        if (rutinas       !== undefined) datosActuales.rutinas       = rutinas;
-        if (historial     !== undefined) datosActuales.historial     = historial;
-        if (mensajeMaster !== undefined) datosActuales.mensajeMaster = mensajeMaster;
-        if (recordes      !== undefined) datosActuales.recordes      = recordes;
-        if (biblioteca    !== undefined) datosActuales.biblioteca    = biblioteca;
-        if (archivos      !== undefined) datosActuales.archivos      = archivos;
-        await escribirBin(datosActuales);
+        const { usuario, ejercicios } = req.body;
+        const query = `
+            INSERT INTO rutinas (usuario, data_json) 
+            VALUES ($1, $2) 
+            ON CONFLICT (usuario) 
+            DO UPDATE SET data_json = $2`;
+        await pool.query(query, [usuario.toLowerCase(), JSON.stringify(ejercicios)]);
         res.json({ ok: true });
     } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al guardar' });
+        res.status(500).json({ ok: false, msg: 'Error al guardar rutina' });
     }
 });
 
-// GENERAR RUTINA IA
+// --- REGISTRAR EN HISTORIAL (NUEVO: Para evitar colapsos) ---
+app.post('/api/historial', async (req, res) => {
+    try {
+        const { usuario, ejercicio, peso, reps } = req.body;
+        await pool.query(
+            'INSERT INTO historial (usuario, ejercicio, peso, reps) VALUES ($1, $2, $3, $4)',
+            [usuario.toLowerCase(), ejercicio, peso, reps]
+        );
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al registrar peso' });
+    }
+});
+
+// --- GENERAR RUTINA IA ---
 app.post('/api/generar-rutina', async (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
     try {
         const { nivel, musculos, notasUsuario, ejerciciosDisponibles } = req.body;
         const prompt = `Sos un entrenador personal experto. Generá una rutina de gimnasio.
-Nivel: ${nivel}
-Músculos: ${musculos}
-${notasUsuario ? `Indicaciones: ${notasUsuario}` : ''}
-Ejercicios disponibles:
-${ejerciciosDisponibles.join('\n')}
-Devolvé SOLO JSON válido sin backticks:
-[{"nombre":"nombre exacto","series":4,"reps":"10-12","instrucciones":"instrucción breve"}]
-Reglas: 4-7 ejercicios, series 3 o 4, reps según nivel, instrucción 1 línea.`;
+        Nivel: ${nivel} | Músculos: ${musculos}
+        Indicaciones: ${notasUsuario || 'Ninguna'}
+        Ejercicios: ${ejerciciosDisponibles.join(', ')}
+        Devolvé SOLO JSON válido: [{"nombre":"ejercicio","series":4,"reps":"12","instrucciones":"..."}]`;
+
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+            headers: { 
+                'Content-Type': 'application/json', 
+                'x-api-key': process.env.ANTHROPIC_API_KEY, 
+                'anthropic-version': '2023-06-01' 
+            },
+            body: JSON.stringify({ 
+                model: 'claude-3-haiku-20240307', 
+                max_tokens: 1000, 
+                messages: [{ role: 'user', content: prompt }] 
+            })
         });
+
         const data = await response.json();
-        const texto = data.content?.map(i => i.text || '').join('') || '';
-        const rutina = JSON.parse(texto.replace(/```json|```/g, '').trim());
+        const texto = data.content[0].text;
+        const rutina = JSON.parse(texto.trim());
         res.json({ ok: true, rutina });
     } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al generar rutina' });
+        res.status(500).json({ ok: false, msg: 'Error en IA' });
     }
 });
 
-// BIBLIOTECA
-app.post('/api/biblioteca', async (req, res) => {
-    try {
-        const { nombre, descripcion, objetivo, ejercicios } = req.body;
-        const datos = await leerBin();
-        if (!datos.biblioteca) datos.biblioteca = [];
-        const nueva = { id: Date.now().toString(), nombre, descripcion: descripcion||'', objetivo: objetivo||'', ejercicios: ejercicios||[], creadaEn: new Date().toLocaleDateString('es-PY') };
-        datos.biblioteca.push(nueva);
-        await escribirBin(datos);
-        res.json({ ok: true, rutina: nueva });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al crear rutina' }); }
-});
-
-app.put('/api/biblioteca/:id', async (req, res) => {
-    try {
-        const { nombre, descripcion, objetivo, ejercicios } = req.body;
-        const datos = await leerBin();
-        const idx = (datos.biblioteca||[]).findIndex(r => r.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ ok: false, msg: 'No encontrada' });
-        datos.biblioteca[idx] = { ...datos.biblioteca[idx], nombre, descripcion, objetivo, ejercicios };
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al editar' }); }
-});
-
-app.delete('/api/biblioteca/:id', async (req, res) => {
-    try {
-        const datos = await leerBin();
-        datos.biblioteca = (datos.biblioteca||[]).filter(r => r.id !== req.params.id);
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al eliminar' }); }
-});
-
-// USUARIOS
+// --- GESTIÓN DE USUARIOS ---
 app.post('/api/usuarios', async (req, res) => {
     try {
-        const { usuario, password, role, profe_asignado, foto, fechaInicio, bloqueado } = req.body;
-        const u = usuario.toLowerCase().trim();
-        const passHash = await bcrypt.hash(password, 10);
-        const datos = await leerBin();
-        datos.users[u] = { passHash, role, profe_asignado: role==='alumno'?(profe_asignado||null):null, foto: foto||null, fechaInicio: fechaInicio||null, bloqueado: bloqueado||false };
-        await escribirBin(datos);
+        const { usuario, password, role, profe_asignado, fechaInicio } = req.body;
+        const hash = await bcrypt.hash(password, 10);
+        await pool.query(
+            'INSERT INTO usuarios (usuario, pass_hash, role, profe_asignado, fecha_inicio) VALUES ($1, $2, $3, $4, $5)',
+            [usuario.toLowerCase().trim(), hash, role, profe_asignado, fechaInicio]
+        );
         res.json({ ok: true });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al crear usuario' }); }
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: 'Error al crear usuario' });
+    }
 });
 
-app.put('/api/usuarios/:user', async (req, res) => {
-    try {
-        const oldU = req.params.user;
-        const { nuevoUsuario, nuevaPassword, foto, fechaInicio, bloqueado, profe_asignado } = req.body;
-        const newU = nuevoUsuario.toLowerCase().trim();
-        const datos = await leerBin();
-        const cuenta = datos.users[oldU];
-        if (!cuenta) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
-        const passHash = nuevaPassword === '_KEEP_' ? cuenta.passHash : await bcrypt.hash(nuevaPassword, 10);
-        if (newU !== oldU) {
-            datos.users[newU] = { ...cuenta, passHash, foto: foto!==undefined?foto:cuenta.foto, fechaInicio: fechaInicio!==undefined?fechaInicio:cuenta.fechaInicio, bloqueado: bloqueado!==undefined?bloqueado:cuenta.bloqueado, profe_asignado: profe_asignado!==undefined?profe_asignado:cuenta.profe_asignado };
-            if (datos.rutinas[oldU])   { datos.rutinas[newU]=datos.rutinas[oldU];     delete datos.rutinas[oldU]; }
-            if (datos.historial[oldU]) { datos.historial[newU]=datos.historial[oldU]; delete datos.historial[oldU]; }
-            if (datos.recordes[oldU])  { datos.recordes[newU]=datos.recordes[oldU];   delete datos.recordes[oldU]; }
-            delete datos.users[oldU];
-        } else {
-            datos.users[oldU].passHash = passHash;
-            if (foto!==undefined)           datos.users[oldU].foto           = foto;
-            if (fechaInicio!==undefined)    datos.users[oldU].fechaInicio    = fechaInicio;
-            if (bloqueado!==undefined)      datos.users[oldU].bloqueado      = bloqueado;
-            if (profe_asignado!==undefined) datos.users[oldU].profe_asignado = profe_asignado;
-        }
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al editar usuario' }); }
-});
-
-app.delete('/api/usuarios/:user', async (req, res) => {
-    try {
-        const u = req.params.user;
-        const datos = await leerBin();
-        delete datos.users[u];
-        delete datos.recordes[u];
-        await escribirBin(datos);
-        res.json({ ok: true });
-    } catch (e) { res.status(500).json({ ok: false, msg: 'Error al eliminar usuario' }); }
-});
-
-app.listen(PORT, () => console.log(`✅ Coach System v7.0.0 en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Coach System v8.0.0 corriendo en puerto ${PORT}`));
