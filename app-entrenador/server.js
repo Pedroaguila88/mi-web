@@ -1,5 +1,5 @@
 // ============================================
-//  COACH SYSTEM v8.2.0 - Backend PostgreSQL
+//  COACH SYSTEM v8.3.0 - DIAGNÓSTICO TOTAL
 // ============================================
 
 const express = require('express');
@@ -12,23 +12,34 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Configuración de la conexión a PostgreSQL (Neon)
+// 1. Configuración de PostgreSQL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// 2. Middlewares (Importante el limit para las fotos pesadas)
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '10mb' }));
+// 2. Middlewares (Aumentamos el límite para fotos pesadas)
+app.use(cors());
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
-// Verificar conexión con la base de datos al arrancar
+// 3. Verificación de conexión inicial
 pool.query('SELECT NOW()', (err, res) => {
     if (err) {
-        console.error('❌ Error crítico: No se pudo conectar a PostgreSQL:', err.message);
+        console.error('❌ ERROR DE CONEXIÓN A POSTGRES:', err.message);
     } else {
-        console.log('✅ Coach System v8.2.0 conectado exitosamente a PostgreSQL');
+        console.log('✅ CONECTADO A NEON POSTGRESQL');
+    }
+});
+
+// --- RUTA DE PRUEBA: Escribe tu-url.com/api/test en el navegador ---
+app.get('/api/test', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT current_database(), (SELECT count(*) FROM usuarios) as total_users');
+        res.json({ ok: true, database: result.rows[0].current_database, total_usuarios: result.rows[0].total_users });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
     }
 });
 
@@ -37,41 +48,33 @@ app.post('/api/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
         const userClean = usuario.toLowerCase().trim();
+        console.log(`🔑 Intento de login: ${userClean}`);
 
         if (userClean === process.env.MASTER_USER) {
             const match = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
             if (match) return res.json({ ok: true, role: 'dev', usuario: userClean });
-            return res.status(401).json({ ok: false, msg: 'Contraseña maestra incorrecta' });
         }
 
         const result = await pool.query('SELECT * FROM usuarios WHERE usuario = $1', [userClean]);
         const cuenta = result.rows[0];
 
-        if (!cuenta) return res.status(401).json({ ok: false, msg: 'Usuario no encontrado' });
+        if (!cuenta) return res.status(401).json({ ok: false, msg: 'No existe el usuario' });
 
         const passMatch = await bcrypt.compare(password, cuenta.pass_hash);
-        if (!passMatch) return res.status(401).json({ ok: false, msg: 'Contraseña incorrecta' });
-        
-        if (cuenta.bloqueado) return res.status(401).json({ ok: false, msg: 'Cuenta bloqueada' });
+        if (!passMatch) return res.status(401).json({ ok: false, msg: 'Password mal' });
 
-        res.json({ 
-            ok: true, 
-            role: cuenta.role, 
-            usuario: userClean, 
-            profe_asignado: cuenta.profe_asignado 
-        });
+        res.json({ ok: true, role: cuenta.role, usuario: userClean, profe_asignado: cuenta.profe_asignado });
     } catch (e) {
-        console.error('Error en login:', e.message);
-        res.status(500).json({ ok: false, msg: 'Error interno en el servidor' });
+        console.error('Error Login:', e.message);
+        res.status(500).send('Error');
     }
 });
 
-// --- RUTA: OBTENER DATOS ---
+// --- RUTA: OBTENER TODO (Dashboard) ---
 app.get('/api/datos', async (req, res) => {
     try {
         const usersRes = await pool.query('SELECT * FROM usuarios');
         const rutinasRes = await pool.query('SELECT * FROM rutinas');
-        const bibliotecaRes = await pool.query('SELECT * FROM biblioteca');
         
         const usersObj = {};
         usersRes.rows.forEach(u => { usersObj[u.usuario] = u; });
@@ -79,114 +82,71 @@ app.get('/api/datos', async (req, res) => {
         const rutinasObj = {};
         rutinasRes.rows.forEach(r => { rutinasObj[r.usuario] = r.data_json; });
 
-        res.json({
-            users: usersObj,
-            rutinas: rutinasObj,
-            biblioteca: bibliotecaRes.rows
-        });
+        console.log(`📊 Datos enviados: ${usersRes.rowCount} usuarios, ${rutinasRes.rowCount} rutinas`);
+        res.json({ users: usersObj, rutinas: rutinasObj, biblioteca: [] });
     } catch (e) {
-        console.error('Error al obtener datos:', e.message);
-        res.status(500).json({ ok: false, msg: 'Error al leer la base de datos' });
+        console.error('Error Datos:', e.message);
+        res.status(500).json({ ok: false });
     }
 });
 
-// --- RUTA: CREAR USUARIO ---
+// --- RUTA: CREAR / ACTUALIZAR USUARIO (Incluye FOTO) ---
 app.post('/api/usuarios', async (req, res) => {
     try {
         const { usuario, password, role, profe_asignado, fechaInicio, foto } = req.body;
-        const hash = await bcrypt.hash(password, 10);
+        console.log(`👤 Creando/Actualizando: ${usuario} (Foto: ${foto ? 'SÍ' : 'NO'})`);
         
+        const hash = await bcrypt.hash(password || '123456', 10);
+        const userClean = usuario.toLowerCase().trim();
+
         const query = `
             INSERT INTO usuarios (usuario, pass_hash, role, profe_asignado, fecha_inicio, foto) 
-            VALUES ($1, $2, $3, $4, $5, $6)`;
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (usuario) 
+            DO UPDATE SET 
+                role = EXCLUDED.role, 
+                profe_asignado = EXCLUDED.profe_asignado,
+                foto = COALESCE(EXCLUDED.foto, usuarios.foto),
+                fecha_inicio = COALESCE(EXCLUDED.fecha_inicio, usuarios.fecha_inicio)`;
         
-        await pool.query(query, [
-            usuario.toLowerCase().trim(), 
-            hash, 
-            role, 
-            profe_asignado, 
-            fechaInicio || null, 
-            foto || null
-        ]);
-        
+        await pool.query(query, [userClean, hash, role, profe_asignado, fechaInicio || null, foto || null]);
         res.json({ ok: true });
     } catch (e) {
-        console.error('Error al crear usuario:', e.message);
-        res.status(500).json({ ok: false, msg: 'Error: El usuario ya existe o la tabla no está lista' });
+        console.error('❌ Error Usuarios:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
     }
 });
 
-// --- RUTA NUEVA: ACTUALIZAR USUARIO (Foto, bloqueo, fecha) ---
-app.put('/api/usuarios/:nombre', async (req, res) => {
-    try {
-        const { nombre } = req.params;
-        const { foto, bloqueado, fecha_inicio } = req.body;
-
-        const query = `
-            UPDATE usuarios 
-            SET foto = COALESCE($1, foto), 
-                bloqueado = COALESCE($2, bloqueado),
-                fecha_inicio = COALESCE($3, fecha_inicio)
-            WHERE usuario = $4`;
-
-        await pool.query(query, [foto, bloqueado, fecha_inicio, nombre.toLowerCase().trim()]);
-        res.json({ ok: true, msg: 'Usuario actualizado correctamente' });
-    } catch (e) {
-        console.error('❌ Error al actualizar usuario:', e.message);
-        res.status(500).json({ ok: false, msg: 'No se pudo actualizar el usuario' });
-    }
-});
-
-// --- RUTA: GUARDAR RUTINAS (Versión Detective) ---
+// --- RUTA: GUARDAR RUTINAS (Muy flexible) ---
 app.put('/api/rutinas', async (req, res) => {
     try {
         const { usuario, ejercicios, rutina, data } = req.body;
-        const datosReales = ejercicios || rutina || data;
+        const contenido = ejercicios || rutina || data;
+        const userClean = usuario.toLowerCase().trim();
 
-        console.log(`--- Intento de guardado para: ${usuario} ---`);
+        console.log(`📝 Guardando rutina para: ${userClean}`);
 
-        if (!usuario || !datosReales) {
-            console.error("❌ Error: Faltan datos críticos en el body");
-            return res.status(400).json({ ok: false, msg: 'Datos incompletos' });
-        }
+        if (!contenido) throw new Error("La rutina llegó vacía");
 
-        const query = `
-            INSERT INTO rutinas (usuario, data_json) 
-            VALUES ($1, $2) 
-            ON CONFLICT (usuario) 
-            DO UPDATE SET data_json = $2`;
-        
-        await pool.query(query, [usuario.toLowerCase().trim(), JSON.stringify(datosReales)]);
-        
-        console.log("✅ Rutina guardada exitosamente");
-        res.json({ ok: true });
-    } catch (e) {
-        console.error('❌ Error técnico en rutinas:', e.message);
-        res.status(500).json({ ok: false, msg: 'Error al procesar la rutina' });
-    }
-});
-
-// --- RUTA: HISTORIAL DE PESOS ---
-app.post('/api/historial', async (req, res) => {
-    try {
-        const { usuario, ejercicio, peso, reps } = req.body;
         await pool.query(
-            'INSERT INTO historial (usuario, ejercicio, peso, reps) VALUES ($1, $2, $3, $4)',
-            [usuario.toLowerCase(), ejercicio, peso, reps]
+            `INSERT INTO rutinas (usuario, data_json) VALUES ($1, $2) 
+             ON CONFLICT (usuario) DO UPDATE SET data_json = $2`,
+            [userClean, JSON.stringify(contenido)]
         );
+        
+        console.log("✅ Rutina guardada");
         res.json({ ok: true });
     } catch (e) {
-        console.error('Error en historial:', e.message);
-        res.status(500).json({ ok: false, msg: 'Error al registrar peso' });
+        console.error('❌ Error Rutinas:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
     }
 });
 
-// --- RUTA: IA GENERADORA ---
+// --- RUTA: IA ---
 app.post('/api/generar-rutina', async (req, res) => {
     try {
         const { nivel, musculos, notasUsuario, ejerciciosDisponibles } = req.body;
-        
-        const prompt = `Actúa como entrenador. Genera rutina JSON. Nivel: ${nivel}. Músculos: ${musculos}. Notas: ${notasUsuario}. Ejercicios: ${ejerciciosDisponibles.join(',')}. Responde SOLO el JSON array.`;
+        const prompt = `Rutina JSON para ${nivel}, musculos: ${musculos}. Notas: ${notasUsuario}. Solo JSON.`;
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -203,14 +163,13 @@ app.post('/api/generar-rutina', async (req, res) => {
         });
 
         const data = await response.json();
-        const rutina = JSON.parse(data.content[0].text.trim());
-        res.json({ ok: true, rutina });
+        res.json({ ok: true, rutina: JSON.parse(data.content[0].text) });
     } catch (e) {
-        console.error('IA Error:', e.message);
+        console.error('Error IA:', e.message);
         res.status(500).json({ ok: false });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Coach System v8.2.0 corriendo en puerto ${PORT}`);
+    console.log(`🚀 SERVIDOR v8.3.0 ACTIVO EN PUERTO ${PORT}`);
 });
