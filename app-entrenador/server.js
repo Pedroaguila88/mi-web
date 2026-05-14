@@ -1,5 +1,5 @@
 // ============================================
-//  COACH SYSTEM v8.0.0 - Backend PostgreSQL
+//  COACH SYSTEM v8.1.0 - Backend PostgreSQL
 // ============================================
 
 const express = require('express');
@@ -12,68 +12,70 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de la conexión a Neon
+// 1. Configuración de la conexión a PostgreSQL (Neon)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Middleware
+// 2. Middlewares
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// Verificar conexión inicial
+// Verificar conexión con la base de datos al arrancar
 pool.query('SELECT NOW()', (err, res) => {
-    if (err) console.error('❌ Error de conexión a Postgres:', err);
-    else console.log('✅ Coach System conectado a PostgreSQL');
-});
-
-// --- LOGIN ---
-app.post('/api/login', async (req, res) => {
-    try {
-        const { usuario, password } = req.body;
-        const u = usuario.toLowerCase().trim();
-
-        // 1. Verificar Usuario Maestro (Dev)
-        if (u === process.env.MASTER_USER) {
-            const ok = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
-            if (ok) return res.json({ ok: true, role: 'dev', usuario: u });
-            return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-        }
-
-        // 2. Buscar usuario en la base de datos
-        const result = await pool.query('SELECT * FROM usuarios WHERE usuario = $1', [u]);
-        const cuenta = result.rows[0];
-
-        if (!cuenta) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-
-        const match = await bcrypt.compare(password, cuenta.pass_hash);
-        if (!match) return res.status(401).json({ ok: false, msg: 'Acceso denegado' });
-        if (cuenta.bloqueado) return res.status(401).json({ ok: false, msg: 'Acceso bloqueado. Contactá a tu coach.' });
-
-        // Control de vencimiento de cuota
-        if (cuenta.fecha_inicio) {
-            const vence = new Date(cuenta.fecha_inicio);
-            vence.setMonth(vence.getMonth() + 1);
-            if (new Date() >= vence) return res.status(401).json({ ok: false, msg: 'Cuota vencida. Contactá a tu coach.' });
-        }
-
-        res.json({ ok: true, role: cuenta.role, usuario: u, profe_asignado: cuenta.profe_asignado });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ ok: false, msg: 'Error interno' });
+    if (err) {
+        console.error('❌ Error crítico: No se pudo conectar a PostgreSQL:', err.message);
+    } else {
+        console.log('✅ Coach System conectado exitosamente a PostgreSQL');
     }
 });
 
-// --- OBTENER TODOS LOS DATOS (Para el Dashboard) ---
+// --- RUTA: LOGIN ---
+app.post('/api/login', async (req, res) => {
+    try {
+        const { usuario, password } = req.body;
+        const userClean = usuario.toLowerCase().trim();
+
+        // Verificación de Usuario Maestro (Dev)
+        if (userClean === process.env.MASTER_USER) {
+            const match = await bcrypt.compare(password, process.env.MASTER_PASS_HASH);
+            if (match) return res.json({ ok: true, role: 'dev', usuario: userClean });
+            return res.status(401).json({ ok: false, msg: 'Contraseña maestra incorrecta' });
+        }
+
+        // Búsqueda de usuario en la base de datos
+        const result = await pool.query('SELECT * FROM usuarios WHERE usuario = $1', [userClean]);
+        const cuenta = result.rows[0];
+
+        if (!cuenta) return res.status(401).json({ ok: false, msg: 'Usuario no encontrado' });
+
+        const passMatch = await bcrypt.compare(password, cuenta.pass_hash);
+        if (!passMatch) return res.status(401).json({ ok: false, msg: 'Contraseña incorrecta' });
+        
+        if (cuenta.bloqueado) return res.status(401).json({ ok: false, msg: 'Cuenta bloqueada' });
+
+        res.json({ 
+            ok: true, 
+            role: cuenta.role, 
+            usuario: userClean, 
+            profe_asignado: cuenta.profe_asignado 
+        });
+    } catch (e) {
+        console.error('Error en login:', e.message);
+        res.status(500).json({ ok: false, msg: 'Error interno en el servidor' });
+    }
+});
+
+// --- RUTA: OBTENER DATOS (Dashboard) ---
 app.get('/api/datos', async (req, res) => {
     try {
-        const usersRes = await pool.query('SELECT usuario, role, profe_asignado, foto, fecha_inicio, bloqueado FROM usuarios');
+        const usersRes = await pool.query('SELECT * FROM usuarios');
         const rutinasRes = await pool.query('SELECT * FROM rutinas');
         const bibliotecaRes = await pool.query('SELECT * FROM biblioteca');
         
-        // Formatear la salida para que sea compatible con tu frontend anterior
+        // Formatear para compatibilidad con el frontend
         const usersObj = {};
         usersRes.rows.forEach(u => { usersObj[u.usuario] = u; });
 
@@ -84,16 +86,42 @@ app.get('/api/datos', async (req, res) => {
             users: usersObj,
             rutinas: rutinasObj,
             biblioteca: bibliotecaRes.rows,
-            historial: {}, // Se puede cargar por demanda para no saturar
-            mensajeMaster: 'Sistema Activo en PostgreSQL'
+            mensajeMaster: 'Datos cargados desde PostgreSQL'
         });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ ok: false, msg: 'Error al leer base de datos' });
+        console.error('Error al obtener datos:', e.message);
+        res.status(500).json({ ok: false, msg: 'Error al leer la base de datos' });
     }
 });
 
-// --- GUARDAR O ACTUALIZAR RUTINA ---
+// --- RUTA: CREAR USUARIO ---
+app.post('/api/usuarios', async (req, res) => {
+    try {
+        const { usuario, password, role, profe_asignado, fechaInicio, foto } = req.body;
+        const hash = await bcrypt.hash(password, 10);
+        
+        const query = `
+            INSERT INTO usuarios (usuario, pass_hash, role, profe_asignado, fecha_inicio, foto) 
+            VALUES ($1, $2, $3, $4, $5, $6)`;
+        
+        await pool.query(query, [
+            usuario.toLowerCase().trim(), 
+            hash, 
+            role, 
+            profe_asignado, 
+            fechaInicio || null, 
+            foto || null
+        ]);
+        
+        console.log(`👤 Nuevo usuario creado: ${usuario}`);
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Error al crear usuario:', e.message);
+        res.status(500).json({ ok: false, msg: 'Error: El usuario ya existe o faltan columnas' });
+    }
+});
+
+// --- RUTA: GUARDAR/ACTUALIZAR RUTINA ---
 app.put('/api/rutinas', async (req, res) => {
     try {
         const { usuario, ejercicios } = req.body;
@@ -102,14 +130,16 @@ app.put('/api/rutinas', async (req, res) => {
             VALUES ($1, $2) 
             ON CONFLICT (usuario) 
             DO UPDATE SET data_json = $2`;
+        
         await pool.query(query, [usuario.toLowerCase(), JSON.stringify(ejercicios)]);
         res.json({ ok: true });
     } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al guardar rutina' });
+        console.error('Error al guardar rutina:', e.message);
+        res.status(500).json({ ok: false, msg: 'Error al actualizar rutina' });
     }
 });
 
-// --- REGISTRAR EN HISTORIAL (NUEVO: Para evitar colapsos) ---
+// --- RUTA: REGISTRAR PESO (Historial) ---
 app.post('/api/historial', async (req, res) => {
     try {
         const { usuario, ejercicio, peso, reps } = req.body;
@@ -119,19 +149,20 @@ app.post('/api/historial', async (req, res) => {
         );
         res.json({ ok: true });
     } catch (e) {
+        console.error('Error en historial:', e.message);
         res.status(500).json({ ok: false, msg: 'Error al registrar peso' });
     }
 });
 
-// --- GENERAR RUTINA IA ---
+// --- RUTA: GENERAR RUTINA CON IA ---
 app.post('/api/generar-rutina', async (req, res) => {
     try {
         const { nivel, musculos, notasUsuario, ejerciciosDisponibles } = req.body;
-        const prompt = `Sos un entrenador personal experto. Generá una rutina de gimnasio.
-        Nivel: ${nivel} | Músculos: ${musculos}
-        Indicaciones: ${notasUsuario || 'Ninguna'}
-        Ejercicios: ${ejerciciosDisponibles.join(', ')}
-        Devolvé SOLO JSON válido: [{"nombre":"ejercicio","series":4,"reps":"12","instrucciones":"..."}]`;
+        
+        const prompt = `Actúa como entrenador experto. Genera una rutina en JSON.
+        Nivel: ${nivel}. Músculos: ${musculos}. Notas: ${notasUsuario}.
+        Ejercicios permitidos: ${ejerciciosDisponibles.join(', ')}.
+        Responde SOLO el JSON: [{"nombre":"X","series":3,"reps":"12","instrucciones":"..."}]`;
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -148,27 +179,15 @@ app.post('/api/generar-rutina', async (req, res) => {
         });
 
         const data = await response.json();
-        const texto = data.content[0].text;
-        const rutina = JSON.parse(texto.trim());
+        const rutina = JSON.parse(data.content[0].text.trim());
         res.json({ ok: true, rutina });
     } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error en IA' });
+        console.error('Error con IA:', e.message);
+        res.status(500).json({ ok: false, msg: 'La IA no pudo generar la rutina' });
     }
 });
 
-// --- GESTIÓN DE USUARIOS ---
-app.post('/api/usuarios', async (req, res) => {
-    try {
-        const { usuario, password, role, profe_asignado, fechaInicio } = req.body;
-        const hash = await bcrypt.hash(password, 10);
-        await pool.query(
-            'INSERT INTO usuarios (usuario, pass_hash, role, profe_asignado, fecha_inicio) VALUES ($1, $2, $3, $4, $5)',
-            [usuario.toLowerCase().trim(), hash, role, profe_asignado, fechaInicio]
-        );
-        res.json({ ok: true });
-    } catch (e) {
-        res.status(500).json({ ok: false, msg: 'Error al crear usuario' });
-    }
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
-
-app.listen(PORT, () => console.log(`🚀 Coach System v8.0.0 corriendo en puerto ${PORT}`));
