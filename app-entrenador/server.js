@@ -324,4 +324,75 @@ app.delete('/api/usuarios/:user', async (req, res) => {
     } catch (e) { res.status(500).json({ ok: false, msg: 'Error al eliminar usuario' }); }
 });
 
+// ── MIGRACIÓN TEMPORAL (borrar después de usar) ──────────────────
+app.get('/api/migrar-desde-jsonbin', async (req, res) => {
+    const secret = req.query.secret;
+    if (secret !== 'aguila2025') return res.status(403).json({ ok: false, msg: 'No autorizado' });
+
+    try {
+        const API_KEY = process.env.JSONBIN_API_KEY;
+        const BIN_ID  = process.env.JSONBIN_BIN_ID;
+
+        if (!API_KEY || !BIN_ID) return res.status(500).json({ ok: false, msg: 'Faltan JSONBIN_API_KEY o JSONBIN_BIN_ID' });
+
+        console.log('📦 Leyendo JSONBin...');
+        const jsonRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': API_KEY }
+        });
+        const json  = await jsonRes.json();
+        const datos = json.record;
+        if (!datos) return res.status(500).json({ ok: false, msg: 'JSONBin vacío o key inválida', raw: json });
+
+        const log = [];
+        log.push(`✅ JSONBin leído: ${Object.keys(datos.users||{}).length} usuarios`);
+
+        // Usuarios
+        const colUsers = await getCol('users');
+        for (const [u, user] of Object.entries(datos.users || {})) {
+            await colUsers.updateOne({ _id: u }, { $set: { _id: u, ...user } }, { upsert: true });
+            log.push(`👤 ${u} (${user.role})`);
+        }
+
+        // Rutinas
+        const colRutinas = await getCol('rutinas');
+        for (const [u, rutina] of Object.entries(datos.rutinas || {})) {
+            await colRutinas.updateOne({ _id: u }, { $set: { _id: u, ...rutina } }, { upsert: true });
+            log.push(`📋 Rutinas de ${u}`);
+        }
+
+        // Historial
+        const colHistorial = await getCol('historial');
+        for (const [u, registros] of Object.entries(datos.historial || {})) {
+            await colHistorial.updateOne({ _id: u }, { $set: { _id: u, registros: registros || [] } }, { upsert: true });
+            log.push(`📊 Historial de ${u}: ${(registros||[]).length} registros`);
+        }
+
+        // Récords
+        const colRecordes = await getCol('recordes');
+        for (const [u, recordes] of Object.entries(datos.recordes || {})) {
+            await colRecordes.updateOne({ _id: u }, { $set: { _id: u, datos: recordes } }, { upsert: true });
+            log.push(`🏆 Récords de ${u}`);
+        }
+
+        // Config
+        const colConfig = await getCol('config');
+        await colConfig.updateOne(
+            { _id: 'global' },
+            { $set: {
+                _id: 'global',
+                mensajeMaster: datos.mensajeMaster || '',
+                biblioteca:    datos.biblioteca    || [],
+                archivos:      datos.archivos      || { fotos: [], gifs: [] }
+            }},
+            { upsert: true }
+        );
+        log.push('⚙️ Config global migrada');
+        log.push('🎉 MIGRACIÓN COMPLETADA');
+
+        res.json({ ok: true, log });
+    } catch (e) {
+        res.status(500).json({ ok: false, msg: e.message });
+    }
+});
+
 app.listen(PORT, () => console.log(`✅ Coach System v8.0.0 en puerto ${PORT}`));
