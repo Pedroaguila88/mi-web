@@ -60,15 +60,42 @@ const DDL = [
         clave TEXT PRIMARY KEY,
         valor JSONB
     )`,
-    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN DEFAULT FALSE`
+    // Garantizamos columnas críticas aunque las tablas ya hayan existido con otro schema
+    `ALTER TABLE usuarios   ADD COLUMN IF NOT EXISTS bloqueado      BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE usuarios   ADD COLUMN IF NOT EXISTS profe_asignado TEXT`,
+    `ALTER TABLE usuarios   ADD COLUMN IF NOT EXISTS foto           TEXT`,
+    `ALTER TABLE usuarios   ADD COLUMN IF NOT EXISTS fecha_inicio   TEXT`,
+    `ALTER TABLE usuarios   ADD COLUMN IF NOT EXISTS role           TEXT`,
+    `ALTER TABLE rutinas    ADD COLUMN IF NOT EXISTS data_json      JSONB`,
+    `ALTER TABLE historial  ADD COLUMN IF NOT EXISTS data_json      JSONB`,
+    `ALTER TABLE recordes   ADD COLUMN IF NOT EXISTS data_json      JSONB`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS nombre         TEXT`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS objetivo       TEXT`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS descripcion    TEXT`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS ejercicios     JSONB DEFAULT '[]'::jsonb`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS creada_en      TEXT`
 ];
+
+async function logSchema() {
+    const tablas = ['usuarios', 'rutinas', 'historial', 'recordes', 'biblioteca', 'app_config'];
+    for (const t of tablas) {
+        try {
+            const r = await pool.query(
+                `SELECT column_name FROM information_schema.columns WHERE table_name = $1 ORDER BY ordinal_position`,
+                [t]
+            );
+            console.log(`🔎 ${t}: [${r.rows.map(x => x.column_name).join(', ')}]`);
+        } catch (e) { console.warn(`⚠️ No se pudo inspeccionar ${t}: ${e.message}`); }
+    }
+}
 
 async function initDB() {
     for (const sql of DDL) {
         try { await pool.query(sql); }
-        catch (e) { console.error('❌ DDL fallo:', e.message, '\n   SQL:', sql.slice(0, 80)); }
+        catch (e) { console.error('❌ DDL fallo:', e.message, '\n   SQL:', sql.slice(0, 100)); }
     }
     console.log('✅ Tablas verificadas/creadas en Neon');
+    await logSchema();
 }
 
 // ─── Helpers ───────────────────────────────────
@@ -472,6 +499,6 @@ app.post('/api/generar-rutina', async (req, res) => {
     }
     await initDB();
     app.listen(PORT, () => {
-        console.log(`🚀 SERVIDOR v9.0.1 ACTIVO EN PUERTO ${PORT}`);
+        console.log(`🚀 SERVIDOR v9.0.2 ACTIVO EN PUERTO ${PORT}`);
     });
 })();
