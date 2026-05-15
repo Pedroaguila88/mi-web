@@ -24,56 +24,52 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
-// 3. Inicialización: crear tablas que falten
-async function initDB() {
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS usuarios (
-                usuario        TEXT PRIMARY KEY,
-                pass_hash      TEXT NOT NULL,
-                role           TEXT,
-                profe_asignado TEXT,
-                foto           TEXT,
-                fecha_inicio   TEXT,
-                bloqueado      BOOLEAN DEFAULT FALSE
-            );
-            CREATE TABLE IF NOT EXISTS rutinas (
-                usuario   TEXT PRIMARY KEY,
-                data_json JSONB NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS historial (
-                usuario   TEXT PRIMARY KEY,
-                data_json JSONB NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS recordes (
-                usuario   TEXT PRIMARY KEY,
-                data_json JSONB NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS biblioteca (
-                id          TEXT PRIMARY KEY,
-                nombre      TEXT NOT NULL,
-                objetivo    TEXT,
-                descripcion TEXT,
-                ejercicios  JSONB NOT NULL DEFAULT '[]'::jsonb,
-                creada_en   TEXT
-            );
-            CREATE TABLE IF NOT EXISTS app_config (
-                clave TEXT PRIMARY KEY,
-                valor JSONB
-            );
-        `);
-        // Asegurar columna 'bloqueado' por si la tabla ya existía sin ella
-        await pool.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN DEFAULT FALSE`);
-        console.log('✅ Tablas verificadas/creadas en Neon');
-    } catch (e) {
-        console.error('❌ Error creando tablas:', e.message);
-    }
-}
+// 3. Inicialización: crear tablas que falten. Se ejecuta una por una para que un
+//    fallo aislado no impida las demás.
+const DDL = [
+    `CREATE TABLE IF NOT EXISTS usuarios (
+        usuario        TEXT PRIMARY KEY,
+        pass_hash      TEXT NOT NULL,
+        role           TEXT,
+        profe_asignado TEXT,
+        foto           TEXT,
+        fecha_inicio   TEXT,
+        bloqueado      BOOLEAN DEFAULT FALSE
+    )`,
+    `CREATE TABLE IF NOT EXISTS rutinas (
+        usuario   TEXT PRIMARY KEY,
+        data_json JSONB NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS historial (
+        usuario   TEXT PRIMARY KEY,
+        data_json JSONB NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS recordes (
+        usuario   TEXT PRIMARY KEY,
+        data_json JSONB NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS biblioteca (
+        id          TEXT PRIMARY KEY,
+        nombre      TEXT NOT NULL,
+        objetivo    TEXT,
+        descripcion TEXT,
+        ejercicios  JSONB NOT NULL DEFAULT '[]'::jsonb,
+        creada_en   TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_config (
+        clave TEXT PRIMARY KEY,
+        valor JSONB
+    )`,
+    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN DEFAULT FALSE`
+];
 
-pool.query('SELECT NOW()', (err) => {
-    if (err) console.error('❌ ERROR CONEXIÓN POSTGRES:', err.message);
-    else { console.log('✅ CONECTADO A NEON POSTGRESQL'); initDB(); }
-});
+async function initDB() {
+    for (const sql of DDL) {
+        try { await pool.query(sql); }
+        catch (e) { console.error('❌ DDL fallo:', e.message, '\n   SQL:', sql.slice(0, 80)); }
+    }
+    console.log('✅ Tablas verificadas/creadas en Neon');
+}
 
 // ─── Helpers ───────────────────────────────────
 function userClean(u) { return (u || '').toString().toLowerCase().trim(); }
@@ -135,31 +131,42 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Helper: corre una query y devuelve [] si la tabla no existe o falla
+async function safeRows(sql, params = []) {
+    try {
+        const r = await pool.query(sql, params);
+        return r.rows;
+    } catch (e) {
+        console.warn(`⚠️ safeRows fallo: ${e.message}`);
+        return [];
+    }
+}
+
 // ─── GET TODOS LOS DATOS ───────────────────────
 app.get('/api/datos', async (req, res) => {
     try {
-        const [usersR, rutinasR, historialR, recordesR, bibR, configR] = await Promise.all([
-            pool.query('SELECT usuario, role, profe_asignado, foto, fecha_inicio, bloqueado FROM usuarios'),
-            pool.query('SELECT usuario, data_json FROM rutinas'),
-            pool.query('SELECT usuario, data_json FROM historial'),
-            pool.query('SELECT usuario, data_json FROM recordes'),
-            pool.query('SELECT * FROM biblioteca ORDER BY creada_en DESC NULLS LAST'),
-            pool.query(`SELECT clave, valor FROM app_config WHERE clave IN ('mensajeMaster','archivos')`)
+        const [usersRows, rutinasRows, historialRows, recordesRows, bibRows, configRows] = await Promise.all([
+            safeRows('SELECT usuario, role, profe_asignado, foto, fecha_inicio, bloqueado FROM usuarios'),
+            safeRows('SELECT usuario, data_json FROM rutinas'),
+            safeRows('SELECT usuario, data_json FROM historial'),
+            safeRows('SELECT usuario, data_json FROM recordes'),
+            safeRows('SELECT * FROM biblioteca ORDER BY creada_en DESC NULLS LAST'),
+            safeRows(`SELECT clave, valor FROM app_config WHERE clave IN ('mensajeMaster','archivos')`)
         ]);
 
         const users = {};
-        usersR.rows.forEach(u => { users[u.usuario] = mapUserRow(u); });
+        usersRows.forEach(u => { users[u.usuario] = mapUserRow(u); });
 
         const rutinas = {};
-        rutinasR.rows.forEach(r => { rutinas[r.usuario] = r.data_json; });
+        rutinasRows.forEach(r => { rutinas[r.usuario] = r.data_json; });
 
         const historial = {};
-        historialR.rows.forEach(r => { historial[r.usuario] = r.data_json; });
+        historialRows.forEach(r => { historial[r.usuario] = r.data_json; });
 
         const recordes = {};
-        recordesR.rows.forEach(r => { recordes[r.usuario] = r.data_json; });
+        recordesRows.forEach(r => { recordes[r.usuario] = r.data_json; });
 
-        const biblioteca = bibR.rows.map(r => ({
+        const biblioteca = bibRows.map(r => ({
             id:          r.id,
             nombre:      r.nombre,
             objetivo:    r.objetivo,
@@ -169,9 +176,9 @@ app.get('/api/datos', async (req, res) => {
         }));
 
         const cfg = {};
-        configR.rows.forEach(r => { cfg[r.clave] = r.valor; });
+        configRows.forEach(r => { cfg[r.clave] = r.valor; });
 
-        console.log(`📊 GET /api/datos → ${usersR.rowCount} users, ${rutinasR.rowCount} rutinas, ${bibR.rowCount} biblioteca`);
+        console.log(`📊 GET /api/datos → ${usersRows.length} users, ${rutinasRows.length} rutinas, ${bibRows.length} biblioteca`);
         res.json({
             users,
             rutinas,
@@ -455,6 +462,16 @@ app.post('/api/generar-rutina', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 SERVIDOR v9.0.0 ACTIVO EN PUERTO ${PORT}`);
-});
+// Arranque controlado: probamos conexión, creamos tablas, y recién ahí escuchamos
+(async () => {
+    try {
+        await pool.query('SELECT NOW()');
+        console.log('✅ CONECTADO A NEON POSTGRESQL');
+    } catch (e) {
+        console.error('❌ ERROR CONEXIÓN POSTGRES:', e.message);
+    }
+    await initDB();
+    app.listen(PORT, () => {
+        console.log(`🚀 SERVIDOR v9.0.1 ACTIVO EN PUERTO ${PORT}`);
+    });
+})();
