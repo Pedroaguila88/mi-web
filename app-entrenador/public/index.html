@@ -825,6 +825,104 @@ async function subirALaRed() {
     } catch (e) { toast('Error al guardar', 'var(--danger)'); }
 }
 
+// ══════════════════════════════════════════════
+//  AUTO-REFRESH (POLLING) — sincronización pasiva
+// ══════════════════════════════════════════════
+let _pollTimer = null;
+const POLL_INTERVAL_MS = 20000;
+
+// Captura los valores que el alumno tiene cargados en pantalla pero todavía
+// no apretó "Guardar". Devuelve un objeto para restaurar después del fetch.
+function snapshotInputsLocales() {
+    const snap = { peso: {}, reps: {}, nota: {}, rpe: {} };
+    document.querySelectorAll('.peso-serie-input').forEach(inp => {
+        if (inp.value !== '') snap.peso[`${inp.dataset.ej}_${inp.dataset.serie}`] = inp.value;
+    });
+    document.querySelectorAll('.reps-input').forEach(inp => {
+        if (inp.value !== '') snap.reps[`${inp.dataset.ej}_${inp.dataset.serie}`] = inp.value;
+    });
+    document.querySelectorAll('.nota-input').forEach(inp => {
+        if (inp.value.trim() !== '') snap.nota[inp.dataset.idx] = inp.value;
+    });
+    return snap;
+}
+
+// Reinyecta los inputs locales sobre DATOS_GLOBALES.rutinas para no perderlos.
+function restaurarInputsLocales(snap) {
+    const u = sessionStorage.getItem('active_user');
+    if (!u) return;
+    const rutina = DATOS_GLOBALES.rutinas?.[u]?.[diaActualAlumno];
+    if (!Array.isArray(rutina)) return;
+    Object.entries(snap.peso).forEach(([key, val]) => {
+        const [ej, si] = key.split('_').map(Number);
+        if (rutina[ej]?.series?.[si]) rutina[ej].series[si].peso = parseFloat(val);
+    });
+    Object.entries(snap.reps).forEach(([key, val]) => {
+        const [ej, si] = key.split('_').map(Number);
+        if (rutina[ej]?.series?.[si]) rutina[ej].series[si].reps = parseInt(val);
+    });
+    Object.entries(snap.nota).forEach(([idx, val]) => {
+        if (rutina[idx]) rutina[idx].nota = val;
+    });
+}
+
+// Re-renderiza la vista activa según el rol del usuario logueado.
+function rerenderVistaActiva() {
+    const role = SESSION?.role;
+    if (!role) return;
+    if (role === 'dev') {
+        renderMasterUsers();
+        renderBibliotecaDev();
+        renderArchivosRecientes();
+    } else if (role === 'profe') {
+        const al = document.getElementById('p-nombre-alumno')?.value;
+        if (al) cambiarDiaVisor(diaActualVisor);
+    } else {
+        const u = sessionStorage.getItem('active_user');
+        if (u) {
+            renderStatsAlumno(u);
+            cargarDiaAlumno(diaActualAlumno);
+            renderTituloYMensajeAlumno(u);
+        }
+    }
+}
+
+// Tick del polling: baja datos preservando inputs en pantalla y re-renderiza.
+async function refrescarPreservandoLocal() {
+    if (!SESSION?.role) return;
+    const snap = snapshotInputsLocales();
+    try {
+        const res = await fetch(`${API_URL}/api/datos`);
+        if (!res.ok) return;
+        const data = await res.json();
+        DATOS_GLOBALES.users         = data.users         || {};
+        DATOS_GLOBALES.rutinas       = data.rutinas       || {};
+        DATOS_GLOBALES.historial     = data.historial     || {};
+        DATOS_GLOBALES.mensajeMaster = data.mensajeMaster || '';
+        DATOS_GLOBALES.recordes      = data.recordes      || {};
+        DATOS_GLOBALES.biblioteca    = data.biblioteca    || [];
+        DATOS_GLOBALES.archivos      = data.archivos      || { fotos: [], gifs: [] };
+        cargarGifsCloudinary();
+        restaurarInputsLocales(snap);
+        rerenderVistaActiva();
+    } catch (e) { console.warn('Auto-refresh:', e.message); }
+}
+
+function onVisibilityChange() {
+    if (!document.hidden) refrescarPreservandoLocal();
+}
+
+function iniciarAutoRefresh() {
+    detenerAutoRefresh();
+    _pollTimer = setInterval(refrescarPreservandoLocal, POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+function detenerAutoRefresh() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+}
+
 async function limpiarBaseDatos() {
     if (!confirm('⚠️ Esto va a limpiar el historial viejo (más de 90 días) y entradas duplicadas.\n\nLos datos recientes y rutinas NO se borran.\n\n¿Continuar?')) return;
 
@@ -920,6 +1018,7 @@ async function login() {
 
         mostrarLoadingOverlay(false);
         renderDashboard(data.role, data.usuario);
+        iniciarAutoRefresh();
     } catch (e) {
         mostrarLoadingOverlay(false);
         if (e.name === 'AbortError') toast('Timeout — intentá de nuevo ⏱️', 'var(--danger)');
@@ -974,7 +1073,7 @@ function renderExitButtons(containerId) {
 
 function volverAlMaster() { renderDashboard('dev', SESSION.usuario); }
 function loginAs(user)     { renderDashboard(DATOS_GLOBALES.users[user].role, user); }
-function logout()          { esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
+function logout()          { detenerAutoRefresh(); esMasterSession = false; SESSION = {}; sessionStorage.clear(); location.reload(); }
 
 // ══════════════════════════════════════════════
 //  AVATAR DE USUARIO
