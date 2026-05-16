@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup 3 — Opción C · SaaS Profesional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa;
+  --bg-elev: #ffffff;
+  --bg-sidebar: #18181b;
+  --bg-sidebar-hover: #27272a;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-dim: #71717a;
+  --text-faint: #a1a1aa;
+  --text-invert: #fafafa;
+  --text-invert-dim: #a1a1aa;
+  --brand: #6366f1;
+  --brand-hover: #4f46e5;
+  --brand-soft: #eef2ff;
+  --success: #10b981;
+  --success-soft: #d1fae5;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+  --danger: #ef4444;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.banner {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+  background: var(--text);
+  color: var(--text-invert);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg-sidebar);
+  color: var(--text-invert);
+  padding: 18px 12px;
+  position: sticky; top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 16px;
+}
+.brand-logo .mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--brand), #818cf8);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 16px;
+}
+.brand-logo .name { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.brand-logo .sub { font-size: 11px; color: var(--text-invert-dim); }
+
+.nav-section { margin-top: 20px; }
+.nav-label {
+  font-size: 10px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 0 10px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--text-invert-dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg-sidebar-hover); color: var(--text-invert); }
+.nav-item.active {
+  background: var(--bg-sidebar-hover);
+  color: var(--text-invert);
+}
+.nav-item .ic { font-size: 16px; opacity: 0.7; width: 18px; }
+.nav-item.active .ic { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--brand);
+  color: white;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.sidebar-user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid var(--bg-sidebar-hover);
+}
+.sidebar-user .av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+.sidebar-user .info { flex: 1; min-width: 0; }
+.sidebar-user .nm { font-size: 13px; font-weight: 600; }
+.sidebar-user .em { font-size: 11px; color: var(--text-invert-dim); }
+
+/* Main */
+.main {
+  padding: 0;
+  overflow-x: hidden;
+}
+.topbar {
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0;
+  z-index: 10;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.crumbs .sep { color: var(--text-faint); }
+.crumbs .now { color: var(--text); font-weight: 500; }
+.topbar-actions { display: flex; gap: 8px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.btn.ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
+.btn.ghost:hover { background: var(--bg); color: var(--text); }
+.btn.primary {
+  background: var(--text);
+  color: var(--text-invert);
+}
+.btn.primary:hover { background: #000; }
+
+.content { padding: 24px 28px; max-width: 1100px; }
+
+/* Page header */
+.page-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.page-sub { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+/* Stats grid */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stat-name { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+.stat-ic {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.stat-num { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.stat-delta.up { background: var(--success-soft); color: var(--success); }
+
+/* Two column */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+/* Section */
+.section {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.section-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section-title { font-size: 15px; font-weight: 600; }
+.section-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+/* Day tabs */
+.day-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.day-tab {
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.day-tab:hover { color: var(--text); }
+.day-tab.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+  background: var(--bg-elev);
+}
+
+/* Progress */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--brand); width: 33%; transition: width 0.4s; }
+.progress-pct { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Exercise list */
+.ex-list { padding: 8px; }
+.ex-row {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 8px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.ex-row:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.ex-row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ex-row-title-wrap { display: flex; align-items: center; gap: 10px; }
+.ex-num {
+  width: 28px; height: 28px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ex-title { font-size: 14px; font-weight: 600; }
+.ex-sub { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+.ex-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.tag.record { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
+.tag.success { background: var(--success-soft); color: var(--success); border-color: transparent; }
+
+.instr-box {
+  background: var(--brand-soft);
+  border-left: 3px solid var(--brand);
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: var(--brand-hover);
+  margin: 8px 0;
+}
+
+.btn-gif {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-gif:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+
+.series-table {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+  overflow: hidden;
+}
+.series-table th {
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.series-table th:not(:first-child) { text-align: center; }
+.series-table td {
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+}
+.series-table td:not(:first-child) { text-align: center; }
+.serie-num-cell {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.serie-done .serie-num-cell { color: var(--success); }
+.serie-done td:first-child::before {
+  content: '✓ ';
+  color: var(--success);
+  font-weight: 700;
+}
+.serie-input {
+  width: 60px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.serie-input:hover { background: var(--bg); }
+.serie-input:focus {
+  outline: none;
+  border-color: var(--brand);
+  background: white;
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+/* RPE */
+.rpe-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rpe-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+.rpe-stars { display: flex; gap: 3px; }
+.rpe-btn {
+  width: 26px; height: 26px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rpe-btn:hover { color: var(--text); }
+.rpe-btn.active { background: var(--warning); border-color: var(--warning); color: white; }
+
+.nota-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.nota-row-ic { color: var(--text-faint); font-size: 14px; }
+.nota-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  min-height: 18px;
+}
+.nota-input::placeholder { color: var(--text-faint); }
+
+/* Sidebar right */
+.aside-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.aside-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.coach-msg {
+  background: var(--brand-soft);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12.5px;
+  color: var(--brand-hover);
+  font-style: italic;
+  line-height: 1.5;
+}
+.coach-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-dim); }
+.coach-av {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge-pill {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cta-bar {
+  position: sticky;
+  bottom: 16px;
+  margin-top: 24px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+.cta-info { font-size: 12.5px; color: var(--text-dim); }
+.cta-info b { color: var(--text); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .two-col { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="banner">🚀 MOCKUP 3 — OPCIÓN C · SAAS PROFESIONAL</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <div class="mark">A</div>
+      <div>
+        <div class="name">Aguila Corp</div>
+        <div class="sub">Coach System</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Entrenamiento</div>
+      <div class="nav-item active">
+        <span class="ic">🏋️</span>
+        <span>Mi rutina</span>
+      </div>
+      <div class="nav-item">
+        <span class="ic">📊</span>
+        <span>Progreso</span>
+      </div>
+      <div class="nav-item">
+        <span class="ic">🏆</span>
+        <span>Récords</span>
+        <span class="nav-badge">2</span>
+      </div>
+      <div class="nav-item">
+        <span class="ic">📅</span>
+        <span>Calendario</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Cuenta</div>
+      <div class="nav-item">
+        <span class="ic">⚙️</span>
+        <span>Configuración</span>
+      </div>
+      <div class="nav-item">
+        <span class="ic">💬</span>
+        <span>Mensajes</span>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="av">JP</div>
+      <div class="info">
+        <div class="nm">Juan Pérez</div>
+        <div class="em">juan@example.com</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Entrenamiento</span>
+        <span class="sep">/</span>
+        <span class="now">Mi rutina</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn ghost">📅 Hoy</button>
+        <button class="btn primary">💾 Guardar</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Push Day — Pecho · Hombros · Tríceps</div>
+          <div class="page-sub">Martes 16 de mayo · Semana 3 · Plan asignado por Pedro</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-name">Racha</span>
+            <span class="stat-ic">🔥</span>
+          </div>
+          <div class="stat-num">5 días</div>
+          <span class="stat-delta up">↑ +2 vs semana pasada</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-name">Sesiones</span>
+            <span class="stat-ic">🏋️</span>
+          </div>
+          <div class="stat-num">23</div>
+          <span class="stat-delta up">↑ +4 este mes</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-name">Volumen sem.</span>
+            <span class="stat-ic">📊</span>
+          </div>
+          <div class="stat-num">12,450 <span style="font-size:13px;color:var(--text-dim);">kg</span></div>
+          <span class="stat-delta up">↑ +8%</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-name">Hoy</span>
+            <span class="stat-ic">✓</span>
+          </div>
+          <div class="stat-num">33%</div>
+          <div class="stat-delta" style="background:var(--bg);color:var(--text-dim);">1 / 3 ejercicios</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="section">
+          <div class="day-tabs">
+            <div class="day-tab">Lun</div>
+            <div class="day-tab active">Mar</div>
+            <div class="day-tab">Mié</div>
+            <div class="day-tab">Jue</div>
+            <div class="day-tab">Vie</div>
+            <div class="day-tab">Sáb</div>
+            <div class="day-tab">Dom</div>
+          </div>
+          <div class="progress-row">
+            <span style="color:var(--text-dim);">Progreso del día</span>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <span class="progress-pct">33%</span>
+          </div>
+
+          <div class="ex-list">
+            <div class="ex-row">
+              <div class="ex-row-head">
+                <div class="ex-row-title-wrap">
+                  <div class="ex-num">1</div>
+                  <div>
+                    <div class="ex-title">Press Banca Barra</div>
+                    <div class="ex-sub">4 series · descanso 90s</div>
+                  </div>
+                </div>
+                <div class="ex-chips">
+                  <span class="tag record">🏆 85 kg</span>
+                  <button class="btn-gif">📹 Técnica</button>
+                </div>
+              </div>
+              <div class="instr-box">📋 Serie 1: calentamiento al 50%, después subir progresivo</div>
+              <table class="series-table">
+                <thead><tr><th style="width:60px;">#</th><th>Reps</th><th>Peso (kg)</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr class="serie-done">
+                    <td class="serie-num-cell">1</td>
+                    <td><input class="serie-input" value="10"></td>
+                    <td><input class="serie-input" value="60"></td>
+                    <td><span class="tag success">Completa</span></td>
+                  </tr>
+                  <tr class="serie-done">
+                    <td class="serie-num-cell">2</td>
+                    <td><input class="serie-input" value="8"></td>
+                    <td><input class="serie-input" value="75"></td>
+                    <td><span class="tag success">Completa</span></td>
+                  </tr>
+                  <tr>
+                    <td class="serie-num-cell">3</td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                  <tr>
+                    <td class="serie-num-cell">4</td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="rpe-row">
+                <span class="rpe-label">RPE</span>
+                <div class="rpe-stars">
+                  <button class="rpe-btn">1</button>
+                  <button class="rpe-btn">2</button>
+                  <button class="rpe-btn">3</button>
+                  <button class="rpe-btn">4</button>
+                  <button class="rpe-btn">5</button>
+                  <button class="rpe-btn">6</button>
+                  <button class="rpe-btn active">7</button>
+                  <button class="rpe-btn">8</button>
+                  <button class="rpe-btn">9</button>
+                  <button class="rpe-btn">10</button>
+                </div>
+              </div>
+              <div class="nota-row">
+                <span class="nota-row-ic">📝</span>
+                <textarea class="nota-input" placeholder="Agregá una nota personal...">Hoy me sentí fuerte</textarea>
+              </div>
+            </div>
+
+            <div class="ex-row">
+              <div class="ex-row-head">
+                <div class="ex-row-title-wrap">
+                  <div class="ex-num">2</div>
+                  <div>
+                    <div class="ex-title">Apertura Mancuerna Inclinada</div>
+                    <div class="ex-sub">3 series · descanso 60s</div>
+                  </div>
+                </div>
+                <div class="ex-chips">
+                  <button class="btn-gif">📹 Técnica</button>
+                </div>
+              </div>
+              <table class="series-table">
+                <thead><tr><th style="width:60px;">#</th><th>Reps</th><th>Peso (kg)</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="serie-num-cell">1</td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                  <tr>
+                    <td class="serie-num-cell">2</td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                  <tr>
+                    <td class="serie-num-cell">3</td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><input class="serie-input" placeholder="—"></td>
+                    <td><span class="tag">Pendiente</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="ex-row">
+              <div class="ex-row-head">
+                <div class="ex-row-title-wrap">
+                  <div class="ex-num">3</div>
+                  <div>
+                    <div class="ex-title">Fondos en Banco</div>
+                    <div class="ex-sub">3 series · al fallo</div>
+                  </div>
+                </div>
+                <div class="ex-chips">
+                  <button class="btn-gif">📹 Técnica</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aside -->
+        <aside>
+          <div class="aside-card" style="margin-bottom:16px;">
+            <h4>💬 Mensaje del coach</h4>
+            <div class="coach-msg">"Foco hoy en press banca, sentí cada repetición. Si el peso te queda corto, subí 5kg."</div>
+            <div class="coach-foot">
+              <div class="coach-av">P</div>
+              <div>
+                <div style="font-weight:600;color:var(--text);">Pedro</div>
+                <div style="font-size:11px;">Hace 2 horas</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="aside-card">
+            <h4>🏆 Logros recientes</h4>
+            <div class="badges">
+              <span class="badge-pill">🔥 5 días</span>
+              <span class="badge-pill">💪 20 sesiones</span>
+              <span class="badge-pill">📈 +10kg PB</span>
+              <span class="badge-pill">🎯 Semana completa</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="cta-bar">
+        <div class="cta-info">
+          <b>1 de 3</b> ejercicios completados · sin guardar
+        </div>
+        <button class="btn primary">💾 Guardar entrenamiento</button>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
