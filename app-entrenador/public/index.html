@@ -2778,11 +2778,31 @@ const GIFS_POR_MUSCULO = {
 let _gifTarget = null;
 let _gifSeleccionado = null;
 
+// Devuelve un src usable por <img>: URL absoluta tal cual, o filename con prefijo gifs/
+function _gifSrc(archivo) {
+    if (!archivo) return '';
+    return /^https?:/.test(archivo) ? archivo : `gifs/${archivo}`;
+}
+
+// Devuelve el valor a guardar en item.gif: URL absoluta tal cual, o filename con prefijo gifs/
+function _gifValue(archivo) {
+    if (!archivo) return '';
+    return /^https?:/.test(archivo) ? archivo : `gifs/${archivo}`;
+}
+
+// Quita el prefijo gifs/ si está delante de una URL absoluta (datos viejos buggeados)
+function _normalizeItemGif(g) {
+    if (!g) return '';
+    if (/^gifs\/https?:/.test(g)) return g.replace(/^gifs\//, '');
+    return g;
+}
+
 function gifNombreDesdeRuta(ruta) {
     if (!ruta) return '';
-    const archivo = ruta.replace('gifs/', '');
+    const norm = _normalizeItemGif(ruta);
+    const archivo = norm.replace(/^gifs\//, '');
     for (const musculo in GIFS_POR_MUSCULO) {
-        const found = GIFS_POR_MUSCULO[musculo].find(g => g.archivo === archivo);
+        const found = GIFS_POR_MUSCULO[musculo].find(g => g.archivo === archivo || g.archivo === norm);
         if (found) return found.nombre;
     }
     return archivo;
@@ -2823,10 +2843,18 @@ function gifCambiarMusculo(musculo, tab) {
 function renderGifGrid(musculo) {
     const gifs = GIFS_POR_MUSCULO[musculo] || [];
     const grid = document.getElementById('gif-grid');
+    const puedeEditar = esMasterSession === true;
     grid.innerHTML = gifs.map(g => {
         const seleccionado = _gifSeleccionado === g.archivo ? 'seleccionado' : '';
-        return `<div class="gif-card ${seleccionado}" onclick="seleccionarGifCard('${g.archivo}', this)">
-            <img src="gifs/${g.archivo}" alt="${g.nombre}" loading="lazy" onerror="this.style.display='none'">
+        const archivoEsc = g.archivo.replace(/'/g, "\\'");
+        const controles = puedeEditar ? `
+            <div style="position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2;">
+                <button onclick="event.stopPropagation();editarGifBiblioteca('${archivoEsc}','${musculo}')" style="width:auto;padding:3px 6px;font-size:0.7rem;background:rgba(0,0,0,0.7);color:var(--accent);border:1px solid var(--accent);margin:0;border-radius:4px;" title="Editar">✏️</button>
+                <button onclick="event.stopPropagation();eliminarGifBiblioteca('${archivoEsc}','${musculo}')" style="width:auto;padding:3px 6px;font-size:0.7rem;background:rgba(0,0,0,0.7);color:var(--danger);border:1px solid var(--danger);margin:0;border-radius:4px;" title="Eliminar">🗑️</button>
+            </div>` : '';
+        return `<div class="gif-card ${seleccionado}" style="position:relative;" onclick="seleccionarGifCard('${archivoEsc}', this)">
+            ${controles}
+            <img src="${_gifSrc(g.archivo)}" alt="${g.nombre}" loading="lazy" onerror="this.style.display='none'">
             <div class="gif-card-nombre">${g.nombre}</div>
         </div>`;
     }).join('');
