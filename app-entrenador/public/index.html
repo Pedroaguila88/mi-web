@@ -384,6 +384,35 @@
     </div>
 </div>
 
+<!-- MODAL EDITAR GIF DE LA BIBLIOTECA (solo dev/master) -->
+<div id="modal-editar-gif-bib" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.93);z-index:2200;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal-box">
+        <h3>✏️ EDITAR GIF</h3>
+        <div style="text-align:center;margin-bottom:10px;">
+            <img id="editgif-preview" src="" style="max-width:160px;max-height:160px;border-radius:8px;border:1px solid #333;background:#111;">
+        </div>
+        <div style="font-size:0.7rem;color:#888;margin-bottom:4px;">Nombre:</div>
+        <input type="text" id="editgif-nombre" placeholder="Nombre del ejercicio">
+        <div style="font-size:0.7rem;color:#888;margin:6px 0 4px;">Músculo:</div>
+        <select id="editgif-musculo" style="margin:0;">
+            <option value="🏋️ Pectoral">🏋️ Pectoral</option>
+            <option value="🦴 Espalda">🦴 Espalda</option>
+            <option value="💪 Bíceps">💪 Bíceps</option>
+            <option value="🔺 Tríceps">🔺 Tríceps</option>
+            <option value="🏔️ Deltoides">🏔️ Deltoides</option>
+            <option value="🍑 Glúteos">🍑 Glúteos</option>
+            <option value="🦵 Cuádriceps">🦵 Cuádriceps</option>
+            <option value="🦿 Isquiotibiales">🦿 Isquiotibiales</option>
+            <option value="🦶 Pantorrilla">🦶 Pantorrilla</option>
+            <option value="🧘 Abdomen/Core">🧘 Abdomen/Core</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="guardarEdicionGifBib()" style="flex:1;background:var(--success);color:white;">💾 GUARDAR</button>
+            <button onclick="cerrarModalEditarGif()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL CALENDARIO -->
 <div id="modal-calendario" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2500;flex-direction:column;overflow:hidden;">
     <div class="cal-header">
@@ -1360,7 +1389,7 @@ function cargarDiaAlumno(dia, btn) {
                 ${toolbarEdicion}
             </div>
             ${item.instrucciones ? `<div class="instrucciones-profe">📋 ${item.instrucciones}</div>` : ''}
-            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
+            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${_normalizeItemGif(item.gif)}"></div>` : ''}
             ${seriesHTML}
             <div style="display:flex;justify-content:flex-end;margin-top:6px;">
                 <button onclick="iniciarTimer(60)" style="width:auto;padding:6px 14px;background:#333;color:var(--primary);font-size:0.75rem;margin:0;">⏱️ DESCANSO</button>
@@ -2047,7 +2076,7 @@ function cambiarDiaVisor(dia, btn) {
                 </div>
             </div>
             ${item.instrucciones ? `<div class="instrucciones-profe">📋 ${item.instrucciones}</div>` : ''}
-            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${item.gif}"></div>` : ''}
+            ${item.gif ? `<div class="btn-ver-gif" onclick="toggleGif(this)">📹 TÉCNICA</div><div class="gif-container"><img src="${_normalizeItemGif(item.gif)}"></div>` : ''}
             ${seriesHTML}
             ${item.nota ? `<div style="margin-top:6px;padding:6px 8px;background:#1a1a2a;border-left:3px solid #888;border-radius:4px;font-size:0.7rem;color:#aaa;font-style:italic;">📝 Nota del alumno: "${item.nota}"</div>` : ''}
         </div>`;
@@ -2868,7 +2897,7 @@ function seleccionarGifCard(archivo, el) {
 
 function confirmarGifVisual() {
     if (!_gifSeleccionado) { toast('Seleccioná un ejercicio o tocá SIN TÉCNICA', '#888'); return; }
-    aplicarGifSeleccionado(`gifs/${_gifSeleccionado}`);
+    aplicarGifSeleccionado(_gifValue(_gifSeleccionado));
     cerrarModalGifVisual();
 }
 
@@ -3287,7 +3316,7 @@ async function generarRutinaIA() {
             ejerciciosDisponibles.push({
                 nombre: g.nombre,
                 musculo: musculoKey,
-                gif: `gifs/${g.archivo}`
+                gif: _gifValue(g.archivo)
             });
         });
     });
@@ -3617,22 +3646,138 @@ function copiarURLArchivo(url) {
     navigator.clipboard.writeText(url).then(() => toast('URL copiada 📋', 'var(--accent)'));
 }
 
-// Cargar GIFs de Cloudinary al iniciar
-function cargarGifsCloudinary() {
-    const gifs = DATOS_GLOBALES.archivos?.gifs || [];
-    gifs.forEach(g => {
-        if (g.musculo && GIFS_POR_MUSCULO[g.musculo]) {
-            // Evitar duplicados
-            const yaExiste = GIFS_POR_MUSCULO[g.musculo].some(x => x.archivo === g.url);
-            if (!yaExiste) {
-                GIFS_POR_MUSCULO[g.musculo].push({
-                    archivo: g.url,
-                    nombre: g.nombre,
-                    esCloudinary: true
-                });
+// Snapshot del catálogo por defecto (hardcoded) — sirve para reconstruir tras cambios
+const _GIFS_DEFAULT = JSON.parse(JSON.stringify(GIFS_POR_MUSCULO));
+
+// Reconstruye GIFS_POR_MUSCULO desde el snapshot + gifs subidos a Cloudinary +
+// overrides (renombres y movimientos) + ocultos. Se llama cada vez que se baja
+// data del server para tener un estado consistente.
+function aplicarOverridesGifs() {
+    // 1) Reset al default
+    for (const m of Object.keys(GIFS_POR_MUSCULO)) {
+        GIFS_POR_MUSCULO[m] = JSON.parse(JSON.stringify(_GIFS_DEFAULT[m] || []));
+    }
+    // 2) Agregar los GIFs subidos a Cloudinary
+    const gifsCloud = DATOS_GLOBALES.archivos?.gifs || [];
+    gifsCloud.forEach(g => {
+        if (!g.musculo) return;
+        if (!GIFS_POR_MUSCULO[g.musculo]) GIFS_POR_MUSCULO[g.musculo] = [];
+        if (GIFS_POR_MUSCULO[g.musculo].some(x => x.archivo === g.url)) return;
+        GIFS_POR_MUSCULO[g.musculo].push({
+            archivo: g.url,
+            nombre:  g.nombre,
+            esCloudinary: true
+        });
+    });
+    // 3) Aplicar overrides (renombre + cambio de músculo)
+    const overrides = DATOS_GLOBALES.archivos?.gifs_overrides || [];
+    overrides.forEach(ov => {
+        for (const m of Object.keys(GIFS_POR_MUSCULO)) {
+            const idx = GIFS_POR_MUSCULO[m].findIndex(g => g.archivo === ov.archivo);
+            if (idx < 0) continue;
+            const item = GIFS_POR_MUSCULO[m][idx];
+            if (ov.nombre)  item.nombre = ov.nombre;
+            if (ov.musculo && ov.musculo !== m) {
+                GIFS_POR_MUSCULO[m].splice(idx, 1);
+                if (!GIFS_POR_MUSCULO[ov.musculo]) GIFS_POR_MUSCULO[ov.musculo] = [];
+                GIFS_POR_MUSCULO[ov.musculo].push(item);
             }
+            break;
         }
     });
+    // 4) Ocultar los marcados como borrados
+    const ocultos = new Set(DATOS_GLOBALES.archivos?.gifs_ocultos || []);
+    if (ocultos.size > 0) {
+        for (const m of Object.keys(GIFS_POR_MUSCULO)) {
+            GIFS_POR_MUSCULO[m] = GIFS_POR_MUSCULO[m].filter(g => !ocultos.has(g.archivo));
+        }
+    }
+}
+
+// Mantengo el nombre viejo como alias por compatibilidad con descargarDeLaRed
+function cargarGifsCloudinary() { aplicarOverridesGifs(); }
+
+// ── Edición y eliminación de GIFs en la biblioteca (solo dev/master) ──
+let _editGifArchivo = null;
+
+function editarGifBiblioteca(archivo, musculoActual) {
+    if (!esMasterSession) return;
+    _editGifArchivo = archivo;
+    let nombreActual = '';
+    for (const m in GIFS_POR_MUSCULO) {
+        const found = GIFS_POR_MUSCULO[m].find(g => g.archivo === archivo);
+        if (found) { nombreActual = found.nombre; break; }
+    }
+    document.getElementById('editgif-nombre').value   = nombreActual;
+    document.getElementById('editgif-musculo').value  = musculoActual;
+    document.getElementById('editgif-preview').src    = _gifSrc(archivo);
+    document.getElementById('modal-editar-gif-bib').style.display = 'flex';
+}
+
+function cerrarModalEditarGif() {
+    document.getElementById('modal-editar-gif-bib').style.display = 'none';
+    _editGifArchivo = null;
+}
+
+async function guardarEdicionGifBib() {
+    if (!_editGifArchivo) return;
+    const nuevoNombre  = document.getElementById('editgif-nombre').value.trim();
+    const nuevoMusculo = document.getElementById('editgif-musculo').value;
+    if (!nuevoNombre) { toast('Poné un nombre', 'var(--danger)'); return; }
+
+    if (!DATOS_GLOBALES.archivos) DATOS_GLOBALES.archivos = { fotos: [], gifs: [] };
+
+    // Si es un upload de Cloudinary, modifico directamente la entrada
+    const gifsCloud = DATOS_GLOBALES.archivos.gifs || [];
+    const cloud = gifsCloud.find(g => g.url === _editGifArchivo);
+    if (cloud) {
+        cloud.nombre  = nuevoNombre;
+        cloud.musculo = nuevoMusculo;
+    } else {
+        // GIF local: lo guardo como override
+        if (!DATOS_GLOBALES.archivos.gifs_overrides) DATOS_GLOBALES.archivos.gifs_overrides = [];
+        const idx = DATOS_GLOBALES.archivos.gifs_overrides.findIndex(o => o.archivo === _editGifArchivo);
+        const ov = { archivo: _editGifArchivo, nombre: nuevoNombre, musculo: nuevoMusculo };
+        if (idx >= 0) DATOS_GLOBALES.archivos.gifs_overrides[idx] = ov;
+        else DATOS_GLOBALES.archivos.gifs_overrides.push(ov);
+    }
+
+    aplicarOverridesGifs();
+    await subirArchivosAlServidor();
+
+    // Refrescar tabs y grilla
+    const tabsEl = document.getElementById('gif-tabs');
+    const musculos = Object.keys(GIFS_POR_MUSCULO);
+    tabsEl.innerHTML = musculos.map(m =>
+        `<div class="gif-musculo-tab ${m === nuevoMusculo ? 'activo' : ''}" onclick="gifCambiarMusculo('${m}', this)">${m}</div>`
+    ).join('');
+    renderGifGrid(nuevoMusculo);
+
+    cerrarModalEditarGif();
+    toast('GIF actualizado ✅');
+}
+
+async function eliminarGifBiblioteca(archivo, musculo) {
+    if (!esMasterSession) return;
+    if (!confirm('¿Eliminar este GIF de la biblioteca?\nLas rutinas que ya lo usen seguirán funcionando.')) return;
+
+    if (!DATOS_GLOBALES.archivos) DATOS_GLOBALES.archivos = { fotos: [], gifs: [] };
+
+    // Si es Cloudinary, lo saco del array de uploads
+    if (DATOS_GLOBALES.archivos.gifs) {
+        DATOS_GLOBALES.archivos.gifs = DATOS_GLOBALES.archivos.gifs.filter(g => g.url !== archivo);
+    }
+    // Marcar como oculto (cubre tanto local como cloud por si quedó referencia)
+    if (!DATOS_GLOBALES.archivos.gifs_ocultos) DATOS_GLOBALES.archivos.gifs_ocultos = [];
+    if (!DATOS_GLOBALES.archivos.gifs_ocultos.includes(archivo)) {
+        DATOS_GLOBALES.archivos.gifs_ocultos.push(archivo);
+    }
+
+    aplicarOverridesGifs();
+    await subirArchivosAlServidor();
+
+    renderGifGrid(musculo);
+    toast('GIF eliminado ✅');
 }
 
 window.onload = descargarDeLaRed;
