@@ -73,7 +73,8 @@ const DDL = [
     `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS objetivo       TEXT`,
     `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS descripcion    TEXT`,
     `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS ejercicios     JSONB DEFAULT '[]'::jsonb`,
-    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS creada_en      TEXT`
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS creada_en      TEXT`,
+    `ALTER TABLE biblioteca ADD COLUMN IF NOT EXISTS tipo           TEXT DEFAULT 'dia'`
 ];
 
 async function logSchema() {
@@ -199,7 +200,8 @@ app.get('/api/datos', async (req, res) => {
             objetivo:    r.objetivo,
             descripcion: r.descripcion,
             ejercicios:  r.ejercicios,
-            creadaEn:    r.creada_en
+            creadaEn:    r.creada_en,
+            tipo:        r.tipo || 'dia'
         }));
 
         const cfg = {};
@@ -419,13 +421,14 @@ app.put('/api/rutinas', async (req, res) => {
 // ─── BIBLIOTECA ────────────────────────────────
 app.post('/api/biblioteca', async (req, res) => {
     try {
-        const { nombre, objetivo, descripcion, ejercicios } = req.body;
+        const { nombre, objetivo, descripcion, ejercicios, tipo } = req.body;
         const id = Date.now().toString() + Math.random().toString(36).slice(2, 7);
         const creada = new Date().toLocaleDateString('es-PY');
+        const tipoOk = tipo === 'semana' ? 'semana' : 'dia';
         await pool.query(
-            `INSERT INTO biblioteca (id, nombre, objetivo, descripcion, ejercicios, creada_en)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [id, nombre, objetivo || null, descripcion || null, JSON.stringify(ejercicios || []), creada]
+            `INSERT INTO biblioteca (id, nombre, objetivo, descripcion, ejercicios, creada_en, tipo)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [id, nombre, objetivo || null, descripcion || null, JSON.stringify(ejercicios || (tipoOk === 'semana' ? {} : [])), creada, tipoOk]
         );
         res.json({ ok: true, id });
     } catch (e) {
@@ -437,12 +440,13 @@ app.post('/api/biblioteca', async (req, res) => {
 app.put('/api/biblioteca/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, objetivo, descripcion, ejercicios } = req.body;
+        const { nombre, objetivo, descripcion, ejercicios, tipo } = req.body;
+        const tipoOk = tipo === 'semana' ? 'semana' : 'dia';
         await pool.query(
             `UPDATE biblioteca
-             SET nombre = $1, objetivo = $2, descripcion = $3, ejercicios = $4
-             WHERE id = $5`,
-            [nombre, objetivo || null, descripcion || null, JSON.stringify(ejercicios || []), id]
+             SET nombre = $1, objetivo = $2, descripcion = $3, ejercicios = $4, tipo = $5
+             WHERE id = $6`,
+            [nombre, objetivo || null, descripcion || null, JSON.stringify(ejercicios || (tipoOk === 'semana' ? {} : [])), tipoOk, id]
         );
         res.json({ ok: true });
     } catch (e) {
@@ -499,6 +503,6 @@ app.post('/api/generar-rutina', async (req, res) => {
     }
     await initDB();
     app.listen(PORT, () => {
-        console.log(`🚀 SERVIDOR v9.0.2 ACTIVO EN PUERTO ${PORT}`);
+        console.log(`🚀 SERVIDOR v9.1.0 ACTIVO EN PUERTO ${PORT}`);
     });
 })();

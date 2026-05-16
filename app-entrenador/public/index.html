@@ -301,6 +301,32 @@
     </div>
 </div>
 
+<!-- MODAL GUARDAR RUTINA EN BIBLIOTECA (desde panel profe) -->
+<div id="modal-guardar-bib" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:1003;align-items:center;justify-content:center;padding:20px;">
+    <div class="modal-box">
+        <h3>💾 GUARDAR EN BIBLIOTECA</h3>
+        <div style="font-size:0.75rem;color:#aaa;margin-bottom:8px;">Elegí qué guardar:</div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <label style="flex:1;background:#1a1a2a;border:1px solid #333;border-radius:8px;padding:10px;cursor:pointer;font-size:0.8rem;">
+                <input type="radio" name="gbib-tipo" value="dia" checked onchange="actualizarPreviewGuardarBib()" style="margin-right:6px;">
+                📅 Solo este día <span id="gbib-label-dia" style="color:var(--primary);font-weight:bold;"></span>
+            </label>
+            <label style="flex:1;background:#1a1a2a;border:1px solid #333;border-radius:8px;padding:10px;cursor:pointer;font-size:0.8rem;">
+                <input type="radio" name="gbib-tipo" value="semana" onchange="actualizarPreviewGuardarBib()" style="margin-right:6px;">
+                📆 Toda la semana
+            </label>
+        </div>
+        <input type="text" id="gbib-nombre" placeholder="Nombre (ej: Push A, Semana 1 Fuerza)">
+        <input type="text" id="gbib-objetivo" placeholder="Objetivo (ej: Fuerza, Volumen, Pérdida de peso)">
+        <textarea id="gbib-descripcion" placeholder="Descripción opcional" style="min-height:50px;font-size:0.85rem;"></textarea>
+        <div id="gbib-preview" style="font-size:0.75rem;color:#aaa;margin:8px 0;padding:10px;background:#111;border-radius:8px;max-height:200px;overflow-y:auto;"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button onclick="confirmarGuardarEnBib()" style="flex:1;background:#ffa94d;color:black;font-weight:bold;">💾 GUARDAR</button>
+            <button onclick="cerrarModalGuardarBib()" class="secondary" style="flex:1;margin:0;">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL EDITAR EJERCICIO -->
 <div id="modal-edit-ej" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:1001;align-items:center;justify-content:center;padding:20px;">
     <div class="modal-box">
@@ -539,6 +565,7 @@
         <input type="hidden" id="p-gif-selector" value="">
         <button onclick="asignarRutina()">ASIGNAR EJERCICIO</button>
         <button onclick="abrirModalAplicarBib()" style="background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;">📚 APLICAR RUTINA DE BIBLIOTECA</button>
+        <button onclick="abrirModalGuardarBib()" style="background:#3a2a1a;color:#ffa94d;border:1px solid #ffa94d;margin-top:5px;">💾 GUARDAR RUTINA EN BIBLIOTECA</button>
         <button class="secondary" style="background:var(--accent);color:black;" onclick="verProgreso('profe')">GESTIONAR PLAN & GRÁFICOS</button>
         <button class="secondary" style="background:#1a1a3a;color:var(--primary);border:1px solid var(--primary);margin-top:5px;" onclick="abrirCalendarioProfe()">📅 CALENDARIO DEL ALUMNO</button>
         <div id="visor-progreso-profe" class="hidden">
@@ -2297,18 +2324,157 @@ function renderBibliotecaDev() {
     if (!cont) return;
     const bib = DATOS_GLOBALES.biblioteca || [];
     if (!bib.length) { cont.innerHTML = '<p style="color:#555;font-size:0.8rem;text-align:center;padding:10px;">No hay rutinas en la biblioteca aún.</p>'; return; }
-    cont.innerHTML = bib.map(r => `
+    cont.innerHTML = bib.map(r => {
+        const tipo = r.tipo === 'semana' ? 'semana' : 'dia';
+        const badge = tipo === 'semana'
+            ? `<span style="background:#3a2a1a;color:#ffa94d;font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:6px;">📆 SEMANA</span>`
+            : `<span style="background:#1a3a1a;color:var(--primary);font-size:0.6rem;padding:2px 6px;border-radius:4px;margin-left:6px;">📅 DÍA</span>`;
+        let resumenEjs = '';
+        let totalEjs = 0;
+        if (tipo === 'semana' && r.ejercicios && typeof r.ejercicios === 'object' && !Array.isArray(r.ejercicios)) {
+            resumenEjs = _DIAS_SEMANA.map(d => {
+                const ejs = r.ejercicios[d] || [];
+                totalEjs += ejs.length;
+                return ejs.length ? `<b>${d.charAt(0).toUpperCase()+d.slice(1)}:</b> ${ejs.length} ej.` : '';
+            }).filter(Boolean).join(' · ');
+        } else {
+            const ejs = Array.isArray(r.ejercicios) ? r.ejercicios : [];
+            totalEjs = ejs.length;
+            resumenEjs = ejs.map(e => `• ${e.nombre} (${e.series})`).join('<br>');
+        }
+        return `
         <div class="rutina-bib-item">
-            <h4>${r.nombre}</h4>
-            <div class="rutina-bib-meta">🎯 ${r.objetivo || 'Sin objetivo'} · 📅 ${r.creadaEn || ''} · ${r.ejercicios?.length || 0} ejercicios</div>
+            <h4>${r.nombre} ${badge}</h4>
+            <div class="rutina-bib-meta">🎯 ${r.objetivo || 'Sin objetivo'} · 📅 ${r.creadaEn || ''} · ${totalEjs} ejercicios</div>
             ${r.descripcion ? `<div style="font-size:0.75rem;color:#888;font-style:italic;margin-bottom:6px;">${r.descripcion}</div>` : ''}
-            <div class="rutina-bib-ejs">${(r.ejercicios || []).map(e => `• ${e.nombre} (${e.series})`).join('<br>')}</div>
+            <div class="rutina-bib-ejs">${resumenEjs}</div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                <button class="btn-bib-edit" onclick="abrirModalBib('${r.id}')">✏️ EDITAR</button>
+                ${tipo === 'dia' ? `<button class="btn-bib-edit" onclick="abrirModalBib('${r.id}')">✏️ EDITAR</button>` : ''}
                 <button class="btn-bib-del" onclick="bibEliminar('${r.id}')">X</button>
             </div>
-        </div>`
-    ).join('');
+        </div>`;
+    }).join('');
+}
+
+// ── PROFE: Guardar rutina actual en biblioteca (día o semana) ──
+let _gbibAlumno = null;
+let _gbibDia    = null;
+const _DIAS_SEMANA = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+
+function abrirModalGuardarBib() {
+    const al  = document.getElementById('p-nombre-alumno').value;
+    const dia = document.getElementById('p-dia-semana').value || 'lunes';
+    if (!al) { toast('Seleccioná un alumno primero', 'var(--danger)'); return; }
+
+    _gbibAlumno = al;
+    _gbibDia    = dia;
+
+    document.getElementById('gbib-label-dia').innerText = `(${dia.toUpperCase()})`;
+    document.getElementById('gbib-nombre').value      = '';
+    document.getElementById('gbib-objetivo').value    = '';
+    document.getElementById('gbib-descripcion').value = '';
+    document.querySelector('input[name="gbib-tipo"][value="dia"]').checked = true;
+
+    actualizarPreviewGuardarBib();
+    document.getElementById('modal-guardar-bib').style.display = 'flex';
+}
+
+function cerrarModalGuardarBib() {
+    document.getElementById('modal-guardar-bib').style.display = 'none';
+    _gbibAlumno = null;
+    _gbibDia    = null;
+}
+
+function actualizarPreviewGuardarBib() {
+    const tipo = document.querySelector('input[name="gbib-tipo"]:checked').value;
+    const al   = _gbibAlumno;
+    const dia  = _gbibDia;
+    const cont = document.getElementById('gbib-preview');
+    if (!al) { cont.innerHTML = ''; return; }
+
+    if (tipo === 'dia') {
+        const ejs = DATOS_GLOBALES.rutinas?.[al]?.[dia] || [];
+        if (!ejs.length) {
+            cont.innerHTML = `<span style="color:var(--danger);">⚠️ ${dia.toUpperCase()} está vacío. Agregá ejercicios antes de guardar.</span>`;
+            return;
+        }
+        cont.innerHTML = `<div style="color:#ddd;margin-bottom:6px;">${ejs.length} ejercicios en ${dia.toUpperCase()}:</div>` +
+            ejs.map(e => `• ${e.nombre} <span style="color:#888;">(${Array.isArray(e.series) ? e.series.length + ' series' : e.series})</span>`).join('<br>');
+    } else {
+        const rut = DATOS_GLOBALES.rutinas?.[al] || {};
+        let totalEjs = 0;
+        const filas = _DIAS_SEMANA.map(d => {
+            const ejs = rut[d] || [];
+            totalEjs += ejs.length;
+            return `<div>📅 <b>${d.toUpperCase()}</b>: ${ejs.length > 0 ? `${ejs.length} ej.` : '<span style="color:#666;">vacío</span>'}</div>`;
+        }).join('');
+        if (totalEjs === 0) {
+            cont.innerHTML = `<span style="color:var(--danger);">⚠️ La semana está vacía. Agregá ejercicios antes de guardar.</span>`;
+        } else {
+            cont.innerHTML = `<div style="color:#ddd;margin-bottom:6px;">Total: ${totalEjs} ejercicios en la semana:</div>` + filas;
+        }
+    }
+}
+
+// Convierte un ejercicio en formato rutina → formato biblioteca
+function _rutinaEjABibEj(ej) {
+    return {
+        nombre: ej.nombre,
+        series: Array.isArray(ej.series) ? `${ej.series.length}` : (ej.series || '3'),
+        gif:    ej.gif || ''
+    };
+}
+
+async function confirmarGuardarEnBib() {
+    const tipo        = document.querySelector('input[name="gbib-tipo"]:checked').value;
+    const nombre      = document.getElementById('gbib-nombre').value.trim();
+    const objetivo    = document.getElementById('gbib-objetivo').value.trim();
+    const descripcion = document.getElementById('gbib-descripcion').value.trim();
+    const al  = _gbibAlumno;
+    const dia = _gbibDia;
+
+    if (!nombre) { toast('Poné un nombre a la rutina', 'var(--danger)'); return; }
+    if (!al)     { toast('No hay alumno seleccionado', 'var(--danger)'); return; }
+
+    let ejercicios;
+    if (tipo === 'dia') {
+        const ejs = DATOS_GLOBALES.rutinas?.[al]?.[dia] || [];
+        if (!ejs.length) { toast(`${dia.toUpperCase()} está vacío`, 'var(--danger)'); return; }
+        ejercicios = ejs.map(_rutinaEjABibEj);
+    } else {
+        const rut = DATOS_GLOBALES.rutinas?.[al] || {};
+        const semana = {};
+        let total = 0;
+        for (const d of _DIAS_SEMANA) {
+            const ejs = rut[d] || [];
+            semana[d] = ejs.map(_rutinaEjABibEj);
+            total += ejs.length;
+            // Preservar título/mensaje del día si existe
+            const metaKey = `_meta_${d}`;
+            if (rut[metaKey]) semana[metaKey] = rut[metaKey];
+        }
+        if (total === 0) { toast('La semana está vacía', 'var(--danger)'); return; }
+        ejercicios = semana;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/biblioteca`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, objetivo, descripcion, ejercicios, tipo })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            await descargarDeLaRed();
+            cerrarModalGuardarBib();
+            toast(`✅ Guardado en biblioteca (${tipo === 'semana' ? 'semana completa' : dia})`);
+        } else {
+            toast('Error al guardar', 'var(--danger)');
+        }
+    } catch (e) {
+        console.error('Error guardando en biblioteca:', e);
+        toast('Error de conexión', 'var(--danger)');
+    }
 }
 
 // ── PROFE: Aplicar rutina a alumno ──
@@ -2327,13 +2493,23 @@ function abrirModalAplicarBib() {
 
     // Mostrar lista de rutinas disponibles
     const info = document.getElementById('aplicar-rutina-info');
-    info.innerHTML = bib.map(r =>
-        `<div style="padding:8px;border-bottom:1px solid #222;cursor:pointer;" onclick="seleccionarRutinaBib('${r.id}', this)">
-            <b style="color:var(--primary);">${r.nombre}</b>
-            <span style="font-size:0.7rem;color:#888;"> · ${r.ejercicios?.length || 0} ej.</span>
+    info.innerHTML = bib.map(r => {
+        const tipo = r.tipo === 'semana' ? 'semana' : 'dia';
+        const badge = tipo === 'semana'
+            ? `<span style="background:#3a2a1a;color:#ffa94d;font-size:0.55rem;padding:1px 5px;border-radius:3px;margin-left:4px;">📆 SEM</span>`
+            : `<span style="background:#1a3a1a;color:var(--primary);font-size:0.55rem;padding:1px 5px;border-radius:3px;margin-left:4px;">📅 DÍA</span>`;
+        let count = 0;
+        if (tipo === 'semana' && r.ejercicios && typeof r.ejercicios === 'object' && !Array.isArray(r.ejercicios)) {
+            for (const d of _DIAS_SEMANA) count += (r.ejercicios[d] || []).length;
+        } else {
+            count = (Array.isArray(r.ejercicios) ? r.ejercicios : []).length;
+        }
+        return `<div style="padding:8px;border-bottom:1px solid #222;cursor:pointer;" onclick="seleccionarRutinaBib('${r.id}', this)">
+            <b style="color:var(--primary);">${r.nombre}</b>${badge}
+            <span style="font-size:0.7rem;color:#888;"> · ${count} ej.</span>
             ${r.objetivo ? `<span style="font-size:0.7rem;color:#888;"> · ${r.objetivo}</span>` : ''}
-        </div>`
-    ).join('');
+        </div>`;
+    }).join('');
 
     _bibAplicarRutina = null;
     document.getElementById('modal-aplicar-bib').style.display = 'flex';
@@ -2343,6 +2519,14 @@ function seleccionarRutinaBib(id, el) {
     _bibAplicarRutina = id;
     document.querySelectorAll('#aplicar-rutina-info div').forEach(d => d.style.background = '');
     el.style.background = '#1a3a1a';
+    // Si la rutina es semanal ocultamos el selector de día
+    const rut = DATOS_GLOBALES.biblioteca.find(r => r.id === id);
+    const selDia = document.getElementById('aplicar-dia');
+    if (rut && rut.tipo === 'semana') {
+        selDia.style.display = 'none';
+    } else {
+        selDia.style.display = '';
+    }
 }
 
 function cerrarModalAplicar() {
@@ -2353,14 +2537,42 @@ function cerrarModalAplicar() {
 async function confirmarAplicarBib() {
     if (!_bibAplicarRutina) { toast('Seleccioná una rutina', 'var(--danger)'); return; }
     const al  = document.getElementById('aplicar-alumno').value;
-    const dia = document.getElementById('aplicar-dia').value;
     const rutina = DATOS_GLOBALES.biblioteca.find(r => r.id === _bibAplicarRutina);
-    if (!rutina || !al || !dia) return;
+    if (!rutina || !al) return;
 
+    if (rutina.tipo === 'semana') {
+        // Aplicar semana completa: reemplaza los 7 días del alumno
+        if (!confirm(`⚠️ Esto va a REEMPLAZAR toda la semana de ${al.toUpperCase()} con la rutina "${rutina.nombre}".\nLos ejercicios actuales se perderán.\n\n¿Continuar?`)) return;
+        if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = {};
+        const semana = rutina.ejercicios || {};
+        for (const d of _DIAS_SEMANA) {
+            const ejs = Array.isArray(semana[d]) ? semana[d] : [];
+            DATOS_GLOBALES.rutinas[al][d] = ejs.map(ej => ({
+                nombre: ej.nombre,
+                series: ej.series,
+                gif:    ej.gif || '',
+                peso:   '',
+                rpe:    0,
+                nota:   ''
+            }));
+            const metaKey = `_meta_${d}`;
+            if (semana[metaKey]) DATOS_GLOBALES.rutinas[al][metaKey] = semana[metaKey];
+            else if (DATOS_GLOBALES.rutinas[al][metaKey]) delete DATOS_GLOBALES.rutinas[al][metaKey];
+        }
+        await subirALaRed();
+        cerrarModalAplicar();
+        toast(`✅ Semana "${rutina.nombre}" aplicada a ${al.toUpperCase()}`);
+        return;
+    }
+
+    // Rutina diaria (flujo original): agrega ejercicios al día seleccionado
+    const dia = document.getElementById('aplicar-dia').value;
+    if (!dia) return;
     if (!DATOS_GLOBALES.rutinas[al]) DATOS_GLOBALES.rutinas[al] = { lunes:[], martes:[], miercoles:[], jueves:[], viernes:[], sabado:[], domingo:[] };
     if (!DATOS_GLOBALES.rutinas[al][dia]) DATOS_GLOBALES.rutinas[al][dia] = [];
 
-    rutina.ejercicios.forEach(ej => {
+    const ejs = Array.isArray(rutina.ejercicios) ? rutina.ejercicios : [];
+    ejs.forEach(ej => {
         DATOS_GLOBALES.rutinas[al][dia].push({
             nombre: ej.nombre,
             series: ej.series,
