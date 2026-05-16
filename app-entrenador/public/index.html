@@ -353,6 +353,29 @@
         <h3>📹 ELEGÍ LA TÉCNICA</h3>
         <button onclick="cerrarModalGifVisual()" style="width:auto;padding:6px 14px;background:#444;color:white;font-size:0.8rem;margin:0;">✖</button>
     </div>
+    <div style="padding:8px 12px;border-bottom:1px solid #222;">
+        <button onclick="toggleSubirGifInline()" style="width:100%;background:#1a3a1a;color:var(--primary);border:1px solid var(--primary);font-size:0.8rem;padding:8px;margin:0;">⬆️ SUBIR NUEVO GIF</button>
+        <div id="subir-gif-inline" style="display:none;margin-top:8px;background:#111;border:1px solid #333;border-radius:8px;padding:10px;">
+            <div style="font-size:0.7rem;color:#888;margin-bottom:4px;">Músculo destino:</div>
+            <select id="upgif-musculo" style="margin-bottom:6px;">
+                <option value="🏋️ Pectoral">🏋️ Pectoral</option>
+                <option value="🦴 Espalda">🦴 Espalda</option>
+                <option value="💪 Bíceps">💪 Bíceps</option>
+                <option value="🔺 Tríceps">🔺 Tríceps</option>
+                <option value="🏔️ Deltoides">🏔️ Deltoides</option>
+                <option value="🍑 Glúteos">🍑 Glúteos</option>
+                <option value="🦵 Cuádriceps">🦵 Cuádriceps</option>
+                <option value="🦿 Isquiotibiales">🦿 Isquiotibiales</option>
+                <option value="🦶 Pantorrilla">🦶 Pantorrilla</option>
+                <option value="🧘 Abdomen/Core">🧘 Abdomen/Core</option>
+            </select>
+            <input type="text" id="upgif-nombre" placeholder="Nombre del ejercicio (ej: Press Banca)" style="margin-bottom:6px;">
+            <input type="file" id="upgif-file" accept="image/gif,image/jpeg,image/png" style="font-size:0.75rem;margin-bottom:6px;">
+            <div id="upgif-preview" style="margin-bottom:6px;"></div>
+            <div id="upgif-progress" style="display:none;background:#333;height:4px;border-radius:4px;margin-bottom:6px;"><div id="upgif-bar" style="height:100%;background:var(--primary);width:0;border-radius:4px;transition:width 0.3s;"></div></div>
+            <button id="btn-upgif-subir" onclick="subirGifInline()" style="width:100%;background:var(--success);color:white;padding:8px;font-size:0.8rem;margin:0;">☁️ SUBIR Y AGREGAR A BIBLIOTECA</button>
+        </div>
+    </div>
     <div class="gif-musculo-tabs" id="gif-tabs"></div>
     <div class="gif-grid" id="gif-grid"></div>
     <div class="gif-confirm-bar">
@@ -2844,6 +2867,121 @@ function aplicarGifSeleccionado(ruta) {
 function cerrarModalGifVisual() {
     document.getElementById('modal-gif-visual').style.display = 'none';
     _gifTarget = null;
+    // Cerrar la sección de subida también
+    const sub = document.getElementById('subir-gif-inline');
+    if (sub) sub.style.display = 'none';
+}
+
+// ── Subida inline de GIF desde el modal selector ──
+function toggleSubirGifInline() {
+    const div = document.getElementById('subir-gif-inline');
+    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+    if (div.style.display === 'block') {
+        document.getElementById('upgif-nombre').value = '';
+        document.getElementById('upgif-file').value = '';
+        document.getElementById('upgif-preview').innerHTML = '';
+        document.getElementById('upgif-bar').style.width = '0';
+        document.getElementById('upgif-progress').style.display = 'none';
+    }
+}
+
+// Preview cuando elige archivo
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'upgif-file') {
+        const f = e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('upgif-preview').innerHTML =
+                `<img src="${ev.target.result}" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid #333;">`;
+        };
+        reader.readAsDataURL(f);
+        // Sugerir nombre desde el nombre del archivo si está vacío
+        const nombreEl = document.getElementById('upgif-nombre');
+        if (!nombreEl.value.trim()) {
+            nombreEl.value = f.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+        }
+    }
+});
+
+async function subirGifInline() {
+    const fileEl   = document.getElementById('upgif-file');
+    const nombre   = document.getElementById('upgif-nombre').value.trim();
+    const musculo  = document.getElementById('upgif-musculo').value;
+    const btn      = document.getElementById('btn-upgif-subir');
+    const progress = document.getElementById('upgif-progress');
+    const bar      = document.getElementById('upgif-bar');
+
+    if (!fileEl.files[0]) { toast('Elegí un archivo primero', 'var(--danger)'); return; }
+    if (!nombre)          { toast('Poné un nombre al ejercicio', 'var(--danger)'); return; }
+
+    btn.disabled = true;
+    btn.innerText = '⏳ SUBIENDO...';
+    progress.style.display = 'block';
+    bar.style.width = '20%';
+
+    try {
+        const formData = new FormData();
+        formData.append('file', fileEl.files[0]);
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+        formData.append('folder', 'aguila_corp/gifs');
+
+        bar.style.width = '50%';
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if (!data.secure_url) throw new Error(data.error?.message || 'Cloudinary no devolvió URL');
+
+        bar.style.width = '80%';
+
+        // Agregar a la lista en memoria del músculo correspondiente
+        if (!GIFS_POR_MUSCULO[musculo]) GIFS_POR_MUSCULO[musculo] = [];
+        GIFS_POR_MUSCULO[musculo].push({
+            archivo: data.secure_url,
+            nombre:  nombre,
+            esCloudinary: true
+        });
+
+        // Persistir en DATOS_GLOBALES.archivos para que sobreviva refresh
+        if (!DATOS_GLOBALES.archivos)       DATOS_GLOBALES.archivos = { fotos: [], gifs: [] };
+        if (!DATOS_GLOBALES.archivos.gifs)  DATOS_GLOBALES.archivos.gifs = [];
+        DATOS_GLOBALES.archivos.gifs.push({
+            nombre,
+            url: data.secure_url,
+            musculo,
+            fecha: new Date().toLocaleDateString('es-PY')
+        });
+
+        // Guardar archivos en el server
+        await subirArchivosAlServidor();
+
+        bar.style.width = '100%';
+
+        // Refrescar la grilla del músculo recién usado y dejarlo pre-seleccionado
+        _gifSeleccionado = data.secure_url;
+        // Actualizar tabs y seleccionar el músculo recién usado
+        const tabsEl = document.getElementById('gif-tabs');
+        const musculos = Object.keys(GIFS_POR_MUSCULO);
+        tabsEl.innerHTML = musculos.map((m, i) =>
+            `<div class="gif-musculo-tab ${m === musculo ? 'activo' : ''}" onclick="gifCambiarMusculo('${m}', this)">${m}</div>`
+        ).join('');
+        renderGifGrid(musculo);
+
+        toast(`✅ GIF subido y agregado a ${musculo}`);
+
+        // Reset y cerrar formulario
+        toggleSubirGifInline();
+    } catch (e) {
+        console.error('Error subir GIF inline:', e);
+        toast(`Error: ${e.message}`, 'var(--danger)', 4000);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = '☁️ SUBIR Y AGREGAR A BIBLIOTECA';
+        progress.style.display = 'none';
+        bar.style.width = '0';
+    }
 }
 
 // ══════════════════════════════════════════════
